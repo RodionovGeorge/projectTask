@@ -1,9 +1,9 @@
 <template>
-<div class="column no-wrap" style="border: 1px solid black; width: 850px; padding: 0 10px 10px 10px; margin:10px 0 10px 10px">
+<div class="column no-wrap" style="border: 1px solid black; width: 850px; padding: 0 10px 10px 10px;">
   <div class="text-h6">Отзыв</div>
   <div class="row">
     <div style="width:250px; display:flex; align-items: center;">Степень решенности</div>
-    <div style="width:578px; display:flex; align-items: center; overflow-wrap: normal">{{degreeOfSolution}}</div>
+    <div style="width:578px; display:flex; align-items: center; overflow-wrap: normal">{{decisionStage}}</div>
     <div style="width:250px; display:flex; align-items: center;">Время проверки</div>
     <div style="width:578px; display:flex; align-items: center; overflow-wrap: normal">{{localeCheckDate}}</div>
     <div style="width:250px; display:flex; align-items: center;">Проверенное решение</div>
@@ -18,7 +18,7 @@
 export default {
   name: 'TeacherFeedback',
   props: {
-    degreeOfSolution: {
+    decisionStage: {
       type: String,
       default: 'Пока не решена'
     },

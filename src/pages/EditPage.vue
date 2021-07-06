@@ -14,9 +14,13 @@
         </q-item>
       </div>
       <TaskEditor></TaskEditor>
+      <div>
+        <div class="text-h6" style="display:flex; align-items:center;">Степень решения задачи</div>
+        <q-select v-model="decisionStage" :options="decisionStageOption" outlined square color="black" style="width:200px"/>
+      </div>
       <div class="column">
         <div class="text-h6">Комментарий к решению</div>
-        <q-input v-model="teacherCommentary" type="textarea" outlined square autogrow style="width: 850px"/>
+        <q-input v-model="teacherCommentary" type="textarea" outlined square autogrow color="black" style="width: 850px"/>
       </div>
       <div class="row q-gutter-x-md justify-center">
         <q-btn label="Back" text-color="black" style="width:100px"/>
@@ -43,7 +47,9 @@ export default {
       menuInformation: [{ title: 'My profile' },
         { title: 'My tasks' },
         { title: 'My questions' }],
-      teacherCommentary: ''
+      teacherCommentary: '',
+      decisionStage: '',
+      decisionStageOption: ['Пока не решена', 'Есть идея', 'Почти решена', 'Полностью решена']
     }
   },
   props: {

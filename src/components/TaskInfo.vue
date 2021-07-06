@@ -1,5 +1,5 @@
 <template>
-  <div class="column no-wrap" style="border: 1px solid black; width: 850px; padding: 10px; margin: 0 0 10px 10px;">
+  <div class="column no-wrap" style="border: 1px solid black; width: 850px; padding: 10px;">
     <div class="row">
       <div class="text-h6" style="width:250px; display:flex; align-items: center;">Название задачи</div>
       <div style="width:578px; display:flex; align-items: center; overflow-wrap: normal">{{problemName}}</div>
@@ -53,9 +53,7 @@ export default {
       authorCommentary: 'Комментарий',
       problemDateStart: '20.01.2000',
       problemDateEnd: '20.01.2020',
-      problemDiscipline: 'Область математики',
-      isAuthor: false,
-      isStudent: false
+      problemDiscipline: 'Область математики'
     }
   },
   props: {

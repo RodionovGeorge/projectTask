@@ -1,6 +1,6 @@
 <template>
 <div class="column no-wrap">
-  <div class="row" style="display: flex; justify-content: space-between; width: 850px; margin: 0 0 10px 0">
+  <div class="row bg-white" style="display: flex; justify-content: space-between; width: 850px; margin: 0 0 10px 0; position: sticky; top:55px">
     <div class="row q-gutter-x-md">
       <q-btn label="Prev page" :disable="disablePrevPageBtn" @click="prevPage"/>
       <q-btn label="Next page" :disable="disableNextPageBtn" @click="nextPage"/>
