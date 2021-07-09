@@ -1,35 +1,107 @@
 <template>
-<q-page class="column items-center q-py-md">
-  <div class="row no-wrap q-gutter-x-md">
-    <div class="column q-gutter-y-md">
-      <div class="row q-pa-sm" style="border: 1px solid black">
-        <div class="text-h6" style="width:250px; display:flex; align-items: center; ">Автор решения</div>
-        <q-item clickable v-ripple class="q-pa-none">
-          <q-item-section side>
-            <q-avatar square>
-              <img :src="authorAvatarPath" alt="">
+<q-page
+  class="column items-center q-py-md"
+>
+  <div
+    class="row no-wrap q-gutter-x-md"
+  >
+    <div
+      class="column q-gutter-y-md"
+    >
+      <div
+        class="row q-pa-sm"
+        style="border: 1px solid black"
+      >
+        <div
+          class="text-h6"
+          style="width:250px; display:flex; align-items: center;"
+        >
+          Автор решения
+        </div>
+        <q-item
+          clickable
+          v-ripple
+          class="q-pa-none"
+        >
+          <q-item-section
+            side
+          >
+            <q-avatar
+              square
+            >
+              <img
+                :src="authorAvatarPath"
+                alt=""
+              />
             </q-avatar>
           </q-item-section>
-          <q-item-section>{{ authorFullName }} ({{authorGroup}})</q-item-section>
+          <q-item-section>
+            {{ authorFullName }} ({{authorGroup}})
+          </q-item-section>
         </q-item>
       </div>
-      <TaskEditor></TaskEditor>
+      <TaskEditor>
+      </TaskEditor>
       <div>
-        <div class="text-h6" style="display:flex; align-items:center;">Степень решения задачи</div>
-        <q-select v-model="decisionStage" :options="decisionStageOption" outlined square color="black" style="width:200px"/>
+        <div
+          class="text-h6"
+          style="display:flex; align-items:center;"
+        >
+          Степень решения задачи
+        </div>
+        <q-select
+          v-model="decisionStage"
+          :options="decisionStageOption"
+          outlined
+          square
+          color="black"
+          style="width:200px"
+        />
       </div>
-      <div class="column">
-        <div class="text-h6">Комментарий к решению</div>
-        <q-input v-model="teacherCommentary" type="textarea" outlined square autogrow color="black" style="width: 850px"/>
+      <div
+        class="column"
+      >
+        <div
+          class="text-h6"
+        >
+          Комментарий к решению
+        </div>
+        <q-input
+          v-model="teacherCommentary"
+          type="textarea"
+          outlined
+          square
+          autogrow
+          color="black"
+          style="width: 850px"
+        />
       </div>
-      <div class="row q-gutter-x-md justify-center">
-        <q-btn label="Back" text-color="black" style="width:100px"/>
-        <q-btn label="Submit" text-colot="black" style="width:100px"/>
+      <div
+        class="row q-gutter-x-md justify-center"
+      >
+        <q-btn
+          label="Back"
+          text-color="black"
+          style="width:100px"
+        />
+        <q-btn
+          label="Submit"
+          text-colot="black"
+          style="width:100px"
+        />
       </div>
     </div>
     <div>
-      <q-list bordered separator style="width:150px">
-        <MainMenuButton v-for="link in menuInformation" :key="link.title" v-bind="link"/>
+      <q-list
+        bordered
+        separator
+        style="width:150px"
+      >
+        <MainMenuButton
+          v-for="link in menuInformation"
+          :key="link.title"
+          v-bind="link"
+        />
       </q-list>
     </div>
   </div>

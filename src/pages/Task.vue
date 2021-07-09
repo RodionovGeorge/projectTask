@@ -1,67 +1,209 @@
 <template>
-<q-page class="column items-center q-pt-md">
-  <div class="row no-wrap q-gutter-x-md">
-    <div class="column q-gutter-y-md">
-      <TaskInfo></TaskInfo>
-      <q-btn @click="inputFileDialog = true" label="Добавить ответ" style="width: 850px;" :class="newAttemptButtonClass" no-caps/>
-      <AttemptForStudent v-bind="studentCurrentAttempt" :class="currentAttemptClass"></AttemptForStudent>
-      <div :class="editCurrentAttemptClass">
-        <q-btn label="Редактировать ответ" no-caps/>
-        <q-btn label="Удалить ответ" no-caps/>
+<q-page
+  class="column items-center q-pt-md"
+>
+  <div
+    class="row no-wrap q-gutter-x-md"
+  >
+    <div
+      class="column q-gutter-y-md items-center"
+    >
+      <TaskInfo>
+      </TaskInfo>
+      <!-- Current attempt block -->
+      <q-btn
+        @click="inputFileDialog = true"
+        label="Добавить попытку" style="width: 200px"
+        v-show="!newAttemptButtonHide"
+        no-caps
+      />
+      <AttemptForStudent
+        v-bind="studentCurrentAttempt"
+        v-show="!currentAttemptHide"
+        style="border: 1px solid black"
+      >
+      </AttemptForStudent>
+      <div
+        class="row items-center q-gutter-x-md justify-center"
+        v-show="!editCurrentAttemptHide"
+      >
+        <q-btn
+          label="Редактировать ответ"
+          no-caps
+        />
+        <q-btn
+          label="Удалить ответ"
+          no-caps
+        />
       </div>
-      <TeacherFeedback v-bind="currentTeacherFeedback" :class="currentTeacherFeedbackClass"></TeacherFeedback>
-      <div style="border: 1px solid black; padding: 0 10px 10px 10px; width:850px">
-        <div class="text-h6">Обсуждение попытки</div>
-        <div class="q-gutter-y-sm">
-          <q-virtual-scroll style="max-height: 400px" :items="commentaryInformation">
-            <template v-slot="{ item }">
-              <q-item>
-                <q-item-section avatar>
-                  <q-avatar>
-                    <img :src="item.avatarPath" alt="123">
-                  </q-avatar>
-                </q-item-section>
-                <q-item-section>
-                  <q-item-label>
-                    {{ item.authorFullName }} - {{ item.commentaryDate }}
-                  </q-item-label>
-                  <q-item-label>
-                    {{ item.commentaryText }}
-                  </q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <q-btn icon="delete" dense flat size="15px"/>
-                </q-item-section>
-              </q-item>
+      <TeacherFeedback
+        v-bind="currentTeacherFeedback"
+        v-show="!currentTeacherFeedbackHide"
+        style="border: 1px solid black"
+      >
+      </TeacherFeedback>
+      <div
+        style="border: 1px solid black; padding: 0 10px 10px 10px; margin-bottom: 10px;
+        width:850px"
+      >
+        <div
+          class="text-h6"
+        >
+          Обсуждение попытки
+        </div>
+        <div
+          class="q-gutter-y-sm"
+        >
+          <q-virtual-scroll
+            style="max-height: 400px"
+            :items="currentAttemptCommentaries"
+          >
+            <template
+              v-slot="{ item }"
+            >
+              <Commentary
+                @deleted="onDeletedCurrentCommentary"
+                v-bind="item"
+              >
+              </Commentary>
             </template>
           </q-virtual-scroll>
-          <div class="row" style="width: 840px; display: flex; justify-content: space-between; padding-right: 10px">
-            <q-input v-model="currentCommentary" autogrow outlined placeholder="Напишите комментарий" color="black"
-                     style="width:700px"/>
-            <q-btn label="Отправить" style="height: 50px; width:100px"/>
+          <div
+            class="row"
+            style="width: 840px; display: flex; justify-content: space-between; padding-right: 10px"
+          >
+            <q-input
+              v-model="currentCommentary"
+              autogrow
+              outlined
+              placeholder="Напишите комментарий"
+              color="black"
+              style="width:700px"
+            />
+            <q-btn
+              label="Отправить"
+              style="height: 50px; width:100px"
+            />
+          </div>
+        </div>
+      </div>
+      <!-- Previous attempt block -->
+      <div
+        v-show="previousAttemptsExists"
+      >
+        <div
+          class="text-h5"
+        >
+          Предыдущие попытки
+        </div>
+        <div class="q-gutter-y-xs">
+          <q-pagination
+            class="flex flex-center"
+            v-model="currentPreviousAttempt"
+            :max="previousAttemptCount"
+            boundary-numbers
+          />
+          <div>
+            <AttemptForStudent
+              v-bind="studentCurrentAttempt"
+              v-show="!previousAttemptHide"
+              style="border-style: solid; border-width: 1px 1px 0 1px;"
+            >
+            </AttemptForStudent>
+            <TeacherFeedback
+              v-bind="currentTeacherFeedback"
+              v-show="!previousTeacherFeedbackHide"
+              style="border-style: solid; border-width: 1px 1px 0 1px;"
+            >
+            </TeacherFeedback>
+            <div
+              style="padding: 0 10px 10px 10px; margin-bottom: 10px; width:850px; border: 1px solid black"
+            >
+              <div
+                class="text-h6"
+              >
+                Обсуждение попытки
+              </div>
+              <div
+                class="q-gutter-y-sm"
+              >
+                <q-virtual-scroll
+                  style="max-height: 400px"
+                  :items="previousAttemptCommentaries"
+                >
+                  <template
+                    v-slot="{ item }"
+                  >
+                    <Commentary
+                      @deleted="onDeletedPreviousCommentary"
+                      v-bind="item"
+                    >
+                    </Commentary>
+                  </template>
+                </q-virtual-scroll>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
     <div>
-      <q-list bordered separator style="width:150px">
-        <MainMenuButton v-for="link in menuInformation" :key="link.title" v-bind="link"/>
+      <q-list
+        bordered
+        separator
+        style="width:150px"
+      >
+        <MainMenuButton
+          v-for="link in menuInformation"
+          :key="link.title"
+          v-bind="link"
+        />
       </q-list>
     </div>
   </div>
-  <q-dialog v-model="inputFileDialog">
-    <q-uploader url="https://localhost:80" label="Выберите файл (pdf, TeX, LaTeX)" :filter="checkFileType" @rejected="onRejected" @failed="onUploaded" max-files="1"/>
+  <q-dialog
+    v-model="inputFileDialog"
+  >
+    <q-uploader
+      url="https://localhost:80"
+      label="Выберите файл (pdf, TeX, LaTeX)"
+      :filter="checkFileType"
+      @rejected="onRejected"
+      @failed="onUploaded"
+      max-files="1"
+    />
   </q-dialog>
-  <q-dialog v-model="rejectedFileDialog" persistent transition-show="scale" transition-hide="scale">
-    <q-card class="bg-red text-white" style="width: 300px">
+  <q-dialog
+    v-model="rejectedFileDialog"
+    persistent
+    transition-show="scale"
+    transition-hide="scale"
+  >
+    <q-card
+      class="bg-red text-white"
+      style="width: 300px"
+    >
       <q-card-section>
-        <div class="text-h6">Ошибка</div>
+        <div
+          class="text-h6"
+        >
+          Ошибка
+        </div>
       </q-card-section>
-      <q-card-section class="q-pt-none">
+      <q-card-section
+        class="q-pt-none"
+      >
         Файл не подходит!
       </q-card-section>
-      <q-card-actions align="right" class="bg-white text-black">
-        <q-btn flat label="OK" v-close-popup />
+      <q-card-actions
+        align="right"
+        class="bg-white text-black"
+      >
+        <q-btn
+          flat
+          label="OK"
+          v-close-popup
+        />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -73,8 +215,9 @@ import MainMenuButton from 'components/MainMenuButton'
 import TaskInfo from 'components/TaskInfo'
 import AttemptForStudent from 'components/AttemptForStudent'
 import TeacherFeedback from 'components/TeacherFeedback'
+import Commentary from 'components/Commentary'
 export default {
-  components: { MainMenuButton, TaskInfo, AttemptForStudent, TeacherFeedback },
+  components: { MainMenuButton, TaskInfo, AttemptForStudent, TeacherFeedback, Commentary },
   name: 'Task',
   data () {
     return {
@@ -85,19 +228,21 @@ export default {
       menuInformation: [{ title: 'My profile' },
         { title: 'My tasks' },
         { title: 'My questions' }],
-      studentPreviousAttempts: [],
-      previousTeacherFeedback: [],
-      /* studentCurrentAttempt: {
-        attemptNumber: 2,
-        checkStatus: 'Проверяется',
-        dateOfLastChange: new Date()
-      } */
+      previousAttemptCount: NaN,
+      currentPreviousAttempt: NaN,
+      studentPreviousAttempt: {},
+      previousTeacherFeedback: {},
+      previousAttemptCommentaries: [
+        { commentaryID: 0, commentaryText: '111 1111 11111111 11111111 1111111 1111111111 1111111111 111111111111 11111111111 111111111111 1111111', avatarPath: 'https://cdn.quasar.dev/img/avatar2.jpg', authorFullName: 'Некто Нектович', commentaryDate: 'Четверг, 12.04.21, 21:12' },
+        { commentaryID: 1, commentaryText: '2', avatarPath: 'https://cdn.quasar.dev/img/avatar2.jpg', authorFullName: 'Некто Нектович', commentaryDate: 'Четверг, 12.04.21, 21:12' },
+        { commentaryID: 2, commentaryText: '3', avatarPath: 'https://cdn.quasar.dev/img/avatar2.jpg', authorFullName: 'Некто Нектович', commentaryDate: 'Четверг, 12.04.21, 21:12' }
+      ],
       studentCurrentAttempt: { attemptNumber: 1 },
       currentTeacherFeedback: { decisionStage: 'Решена' },
-      commentaryInformation: [
-        { commentaryText: '111 1111 11111111 11111111 1111111 1111111111 1111111111 111111111111 11111111111 111111111111 1111111', avatarPath: 'https://cdn.quasar.dev/img/avatar2.jpg', authorFullName: 'Некто Нектович', commentaryDate: 'Четверг, 12.04.21, 21:12' },
-        { commentaryText: '2', avatarPath: 'https://cdn.quasar.dev/img/avatar2.jpg', authorFullName: 'Некто Нектович', commentaryDate: 'Четверг, 12.04.21, 21:12' },
-        { commentaryText: '3', avatarPath: 'https://cdn.quasar.dev/img/avatar2.jpg', authorFullName: 'Некто Нектович', commentaryDate: 'Четверг, 12.04.21, 21:12' }]
+      currentAttemptCommentaries: [
+        { commentaryID: 5, commentaryText: '111 1111 11111111 11111111 1111111 1111111111 1111111111 111111111111 11111111111 111111111111 1111111', avatarPath: 'https://cdn.quasar.dev/img/avatar2.jpg', authorFullName: 'Некто Нектович', commentaryDate: 'Четверг, 12.04.21, 21:12' },
+        { commentaryID: 6, commentaryText: '2', avatarPath: 'https://cdn.quasar.dev/img/avatar2.jpg', authorFullName: 'Некто Нектович', commentaryDate: 'Четверг, 12.04.21, 21:12' },
+        { commentaryID: 7, commentaryText: '3', avatarPath: 'https://cdn.quasar.dev/img/avatar2.jpg', authorFullName: 'Некто Нектович', commentaryDate: 'Четверг, 12.04.21, 21:12' }]
     }
   },
   methods: {
@@ -108,38 +253,51 @@ export default {
       this.rejectedFileDialog = true
     },
     onUploaded (info) {
-      if (Object.keys(this.studentCurrentAttempt).length !== 0) {
+      /* if (Object.keys(this.studentCurrentAttempt).length !== 0) {
         this.studentPreviousAttempts.push(this.studentCurrentAttempt)
       }
       this.studentCurrentAttempt = [{ attemptNumber: this.studentPreviousAttempts.length + 1, dateOfLastChange: new Date() }]
-      this.inputFileDialog = false
+      this.inputFileDialog = false */
+    },
+    onDeletedPreviousCommentary (ID) {
+      const searchID = (element, index, array) => { return element.commentaryID === ID }
+      const commentaryIndex = this.previousAttemptCommentaries.findIndex(searchID)
+      this.previousAttemptCommentaries.splice(commentaryIndex, commentaryIndex + 1)
+    },
+    onDeletedCurrentCommentary (ID) {
+      const searchID = (element, index, array) => { return element.commentaryID === ID }
+      const commentaryIndex = this.currentAttemptCommentaries.findIndex(searchID)
+      this.currentAttemptCommentaries.splice(commentaryIndex, commentaryIndex + 1)
     }
   },
+  mounted () {
+    // Запрос предыдущих попыток у сервера
+    // Смотрим ответ, в зависимости от этого инициализируем previousAttemptCount
+    this.previousAttemptCount = 5
+    this.currentPreviousAttempt = this.previousAttemptCount
+  },
   computed: {
-    currentAttemptClass () {
-      return {
-        hidden: Object.keys(this.studentCurrentAttempt).length === 0
-      }
+    currentAttemptHide () {
+      return Object.keys(this.studentCurrentAttempt).length === 0
     },
-    currentTeacherFeedbackClass () {
-      return {
-        hidden: Object.keys(this.currentTeacherFeedback).length === 0
-      }
+    currentTeacherFeedbackHide () {
+      return Object.keys(this.currentTeacherFeedback).length === 0
     },
-    newAttemptButtonClass () {
-      return {
-        hidden: Object.keys(this.studentCurrentAttempt).length !== 0
-      }
+    previousAttemptHide () {
+      return Object.keys(this.studentCurrentAttempt).length === 0
     },
-    editCurrentAttemptClass () {
-      return {
-        row: true,
-        'items-center': true,
-        'q-gutter-x-md': true,
-        'justify-center': true,
-        hidden: (Object.keys(this.studentCurrentAttempt).length === 0 && Object.keys(this.currentTeacherFeedback).length === 0) ||
+    previousTeacherFeedbackHide () {
+      return Object.keys(this.currentTeacherFeedback).length === 0
+    },
+    newAttemptButtonHide () {
+      return Object.keys(this.studentCurrentAttempt).length !== 0 && Object.keys(this.currentTeacherFeedback).length === 0
+    },
+    editCurrentAttemptHide () {
+      return (Object.keys(this.studentCurrentAttempt).length === 0 && Object.keys(this.currentTeacherFeedback).length === 0) ||
           (Object.keys(this.studentCurrentAttempt).length !== 0 && Object.keys(this.currentTeacherFeedback).length !== 0)
-      }
+    },
+    previousAttemptsExists () {
+      return this.previousAttemptCount !== 0
     }
   }
 }

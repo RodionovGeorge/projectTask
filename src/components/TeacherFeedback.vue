@@ -1,5 +1,5 @@
 <template>
-<div class="column no-wrap" style="border: 1px solid black; width: 850px; padding: 0 10px 10px 10px;">
+<div class="column no-wrap" style="width: 850px; padding: 0 10px 10px 10px;">
   <div class="text-h6">Отзыв</div>
   <div class="row">
     <div style="width:250px; display:flex; align-items: center;">Степень решенности</div>

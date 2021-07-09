@@ -1,10 +1,24 @@
 <template>
-  <q-page class="column items-center">
-    <div class="row q-gutter-x-md q-pt-md no-wrap">
+  <q-page
+    class="column items-center"
+  >
+    <div
+      class="row q-gutter-x-md q-pt-md no-wrap"
+    >
       <MainTableOfProblems/>
-      <div class="col-auto">
-        <q-list bordered separator style="width:150px">
-          <MainMenuButton v-for="link in menuInformation" :key="link.title" v-bind="link"/>
+      <div
+        class="col-auto"
+      >
+        <q-list
+          bordered
+          separator
+          style="width:150px"
+        >
+          <MainMenuButton
+            v-for="link in menuInformation"
+            :key="link.title"
+            v-bind="link"
+          />
         </q-list>
       </div>
     </div>

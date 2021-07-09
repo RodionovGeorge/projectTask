@@ -1,16 +1,47 @@
 <template>
-  <div class="column q-gutter-y-md">
-    <div class="row">
-      <q-input v-model="filter" placeholder="Search" square outlined style="width:645px">
-        <template v-slot:append>
-          <q-icon name="search"/>
+  <div
+    class="column q-gutter-y-md"
+  >
+    <div
+      class="row"
+    >
+      <q-input
+        v-model="filter"
+        placeholder="Search"
+        square
+        outlined
+        style="width:645px"
+      >
+        <template
+          v-slot:append
+        >
+          <q-icon
+            name="search"
+          />
         </template>
       </q-input>
-      <q-select square outlined :options="namesOfSearchColumns" options-dense style="width:205px" v-model="currentColumnForSearch"></q-select>
+      <q-select
+        square
+        outlined
+        :options="namesOfSearchColumns"
+        options-dense
+        style="width:205px"
+        v-model="currentColumnForSearch"
+        />
     </div>
-    <q-table wrap-cells style="width:850px; border-radius: 0" flat bordered :data="data" :columns="columns"
-             row-key="problemID" :visible-columns="visibleColumns" :filter="filter" :filter-method="filterByCurrentColumn" no-data-label="hello">
-    </q-table>
+    <q-table
+      wrap-cells
+      style="width:850px;border-radius: 0"
+      flat
+      bordered
+      :data="data"
+      :columns="columns"
+      row-key="problemID"
+      :visible-columns="visibleColumns"
+      :filter="filter"
+      :filter-method="filterByCurrentColumn"
+      no-data-label="hello"
+    />
   </div>
 </template>
 

@@ -1,27 +1,93 @@
 <template>
-<div class="column no-wrap">
-  <div class="row bg-white" style="display: flex; justify-content: space-between; width: 850px; margin: 0 0 10px 0; position: sticky; top:55px">
-    <div class="row q-gutter-x-md">
-      <q-btn label="Prev page" :disable="disablePrevPageBtn" @click="prevPage"/>
-      <q-btn label="Next page" :disable="disableNextPageBtn" @click="nextPage"/>
+<div
+  class="column no-wrap"
+>
+  <div
+    class="row bg-white"
+    style="display: flex; justify-content: space-between; width: 850px; margin: 0 0 10px 0; position: sticky; top:55px"
+  >
+    <div
+      class="row q-gutter-x-md"
+    >
+      <q-btn
+        label="Prev page"
+        :disable="disablePrevPageBtn"
+        @click="prevPage"
+      />
+      <q-btn
+        label="Next page"
+        :disable="disableNextPageBtn"
+        @click="nextPage"
+      />
     </div>
-    <div class="row q-gutter-x-md">
-      <q-btn label="Color" @click="showColorPicker = true"/>
-      <q-btn label="Undo" @click="undo"/>
-      <div style="display:flex; align-items: center;">Ширина линии</div>
-      <q-slider v-model="currentWidthOfLine" :min="1" :max="5" style="width: 100px; margin-right: 10px"/>
+    <div
+      class="row q-gutter-x-md"
+    >
+      <q-btn
+        label="Color"
+        @click="showColorPicker = true"
+      />
+      <q-btn
+        label="Undo"
+        @click="undo"
+      />
+      <div
+        style="display:flex; align-items: center;"
+      >
+        Ширина линии
+      </div>
+      <q-slider
+        v-model="currentWidthOfLine"
+        :min="1"
+        :max="5"
+        style="width: 100px;margin-right: 10px"
+      />
     </div>
-    <q-btn label="Show task" @click="showProblem = true"/>
-    <q-dialog v-model="showColorPicker">
-      <q-color format-model="rgb" default-value="#FF0000" v-model="currentColor"/>
+    <q-btn
+      label="Show task"
+      @click="showProblem = true"
+    />
+    <q-dialog
+      v-model="showColorPicker"
+    >
+      <q-color
+        format-model="rgb"
+        default-value="#FF0000"
+        v-model="currentColor"
+      />
     </q-dialog>
   </div>
-  <svg id="canvas" @mouseup="onMouseUp" @mousedown="onMouseDown" @mousemove="onMouseMove" :width="width" :height="height" style="border: 1px solid black">
-    <image :href="imagePaths[currentPage]" :height="height" :width="width"/>
-    <polyline v-for="(pointsForPolyline, index) in polylineArrayOnPages[currentPage]" :key="index" :points="pointsForPolyline.points" :stroke="pointsForPolyline.color" fill="none" :stroke-width="pointsForPolyline.width"/>
+  <svg
+    id="canvas"
+    @mouseup="onMouseUp"
+    @mousedown="onMouseDown"
+    @mousemove="onMouseMove"
+    :width="width"
+    :height="height"
+    style="border: 1px solid black"
+  >
+    <image
+      :href="imagePaths[currentPage]"
+      :height="height"
+      :width="width"
+    />
+    <polyline
+      v-for="(pointsForPolyline, index) in polylineArrayOnPages[currentPage]"
+      :key="index"
+      :points="pointsForPolyline.points"
+      :stroke="pointsForPolyline.color"
+      fill="none"
+      :stroke-width="pointsForPolyline.width"
+    />
   </svg>
-  <q-dialog v-model="showProblem">
-    <q-pdfviewer v-model="showProblem" :src="problemPath"></q-pdfviewer>
+  <q-dialog
+    v-model="showProblem"
+  >
+    <q-pdfviewer
+      v-model="showProblem"
+      :src="problemPath"
+    >
+    </q-pdfviewer>
   </q-dialog>
 </div>
 </template>

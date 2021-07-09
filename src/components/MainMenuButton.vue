@@ -1,6 +1,13 @@
 <template>
-  <q-item clickable target="_self" :to="link" class="text-black">
-    <q-item-section>{{title}}</q-item-section>
+  <q-item
+    clickable
+    target="_self"
+    :to="link"
+    class="text-black"
+  >
+    <q-item-section>
+      {{title}}
+    </q-item-section>
   </q-item>
 </template>
 
