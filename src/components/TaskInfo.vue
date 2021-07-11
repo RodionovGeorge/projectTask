@@ -1,27 +1,36 @@
 <template>
   <div
     class="column no-wrap"
-    style="border: 1px solid black; width: 850px; padding: 10px;"
+    style="width: 850px; padding: 0 10px 10px 10px"
   >
     <div
       class="row"
     >
       <div
-        class="text-h6" style="width:250px; display:flex; align-items: center;"
+        class="text-h6"
       >
-        Название задачи
+        Описание задачи
       </div>
       <div
-        style="width:578px; display:flex; align-items: center; overflow-wrap: normal"
+        class="row"
       >
-        {{problemName}}
+        <div
+          style="width:250px; display:flex; align-items: center;"
+        >
+          Название задачи
+        </div>
+        <div
+          style="width:578px; display:flex; align-items: center; overflow-wrap: normal"
+        >
+          {{ problemName }}
+        </div>
       </div>
     </div>
     <div
       class="row"
     >
       <div
-        class="text-h6" style="width:250px; display:flex; align-items: center;"
+        style="width:250px; display:flex; align-items: center;"
       >
         Автор
       </div>
@@ -51,7 +60,7 @@
       class="row"
     >
       <div
-        class="text-h6" style="width:250px; display:flex; align-items: center;"
+        style="width:250px; display:flex; align-items: center;"
       >
         Предмет
       </div>
@@ -65,7 +74,7 @@
       class="row"
     >
       <div
-        class="text-h6" style="width:250px; display:flex; align-items: center;"
+        style="width:250px; display:flex; align-items: center;"
       >
         Дата начала
       </div>
@@ -79,7 +88,7 @@
       class="row"
     >
       <div
-        class="text-h6" style="width:250px; display:flex; align-items: center;"
+        style="width:250px; display:flex; align-items: center;"
       >
         Дата окончания
       </div>
@@ -93,7 +102,7 @@
       class="row"
     >
       <div
-        class="text-h6" style="width:250px; height: 32px; display:flex; align-items: center;"
+        style="width:250px; height: 32px; display:flex; align-items: center;"
       >
         Комментарий к задаче
       </div>
@@ -107,7 +116,6 @@
       class="row q-gutter-x-md"
     >
       <div
-        class="text-h6"
         style="width:250px; display:flex; align-items: center;"
       >
         Показать условие задачи

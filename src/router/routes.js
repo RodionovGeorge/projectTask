@@ -7,7 +7,7 @@ const routes = [
       { path: '', component: () => import('pages/Index.vue') },
       { path: '/login', component: () => import('pages/Login.vue') },
       { path: '/my', component: () => import('pages/MainPage') },
-      { path: '/my/task', component: () => import('pages/Task') },
+      { path: '/my/task', component: () => import('pages/TaskS') },
       { path: '/my/newTask', component: () => import('pages/OpeningTaskPage') },
       { path: '/editTask', component: () => import('pages/EditPage') }
     ]

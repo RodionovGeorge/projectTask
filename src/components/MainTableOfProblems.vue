@@ -1,12 +1,13 @@
 <template>
   <div
-    class="column q-gutter-y-md"
+    class="column content-background content-shadow q-pa-xs"
   >
     <div
-      class="row"
+      class="row q-gutter-x-xs"
     >
       <q-input
         v-model="filter"
+        color="black"
         placeholder="Search"
         square
         outlined
@@ -23,6 +24,7 @@
       <q-select
         square
         outlined
+        color="black"
         :options="namesOfSearchColumns"
         options-dense
         style="width:205px"
@@ -30,8 +32,9 @@
         />
     </div>
     <q-table
+      class="q-mt-sm"
       wrap-cells
-      style="width:850px;border-radius: 0"
+      style="max-width:900px; border-radius: 0"
       flat
       bordered
       :data="data"

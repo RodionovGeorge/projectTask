@@ -3,7 +3,9 @@
     class="row justify-center items-center"
   >
     <q-card
-      flat square style="width:300px"
+      flat
+      square
+      style="width:300px"
     >
       <q-card-section>
         <h5
@@ -12,7 +14,7 @@
           Log in
         </h5>
         <q-form
-          class="q-gutter-y-md"
+          class="q-gutter-y-sm"
         >
           <q-input
             v-model="login"

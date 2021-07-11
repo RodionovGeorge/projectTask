@@ -12,31 +12,35 @@
     </q-item-section>
     <q-item-section>
       <q-item-label>
-        {{ authorFullName }} - {{ commentaryDate }}
-      </q-item-label>
-      <q-item-label>
-        {{ commentaryText }}
+        {{ studentFullName }}
       </q-item-label>
     </q-item-section>
     <q-item-section
       side
     >
       <q-btn
-        icon="delete"
+        icon="bi-arrow-right"
         dense
         flat
         size="15px"
-        @click="deleted"
-      />
+        @click="selected"
+      >
+        <q-badge
+          color="red"
+          rounded
+          floating
+          v-show="newInformation"
+        />
+      </q-btn>
     </q-item-section>
   </q-item>
 </template>
 
 <script>
 export default {
-  name: 'Commentary',
+  name: 'StudentForTask',
   props: {
-    commentaryID: {
+    studentID: {
       type: Number,
       default: 1
     },
@@ -44,22 +48,18 @@ export default {
       type: String,
       default: 'https://cdn.quasar.dev/img/avatar2.jpg'
     },
-    authorFullName: {
+    studentFullName: {
       type: String,
       default: 'Некто Нектович'
     },
-    commentaryDate: {
-      type: String,
-      default: 'Четверг, 12.04.21, 21:12'
-    },
-    commentaryText: {
-      type: String,
-      default: 'Hello world!'
+    newInformation: {
+      type: Boolean,
+      default: false
     }
   },
   methods: {
-    deleted () {
-      this.$emit('deleted', this.commentaryID)
+    selected () {
+      // Передача ID студента через событие
     }
   }
 }

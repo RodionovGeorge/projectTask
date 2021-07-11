@@ -1,7 +1,6 @@
 <template>
 <div
-  class="column no-wrap"
-  style="width: 850px; padding: 0 10px 10px 10px;"
+  class="column no-wrap student-attempt"
 >
   <div
     class="text-h6"
@@ -9,48 +8,60 @@
     Попытка
   </div>
   <div
-    class="row"
+    class="row q-gutter-x-sm"
   >
     <div
-      style="width:250px; display:flex; align-items: center;"
+      class="student-attempt-titles"
     >
-      Номер попытки
+      Номер попытки:
     </div>
     <div
-      style="width:578px; display:flex; align-items: center; overflow-wrap: normal"
+      class="student-attempt-data"
     >
-      Попытка {{attemptNumber}}
+      Попытка {{ attemptNumber }}
+    </div>
+  </div>
+  <div
+    class="row q-gutter-x-sm"
+  >
+    <div
+      class="student-attempt-titles"
+    >
+      Статус ответа на попытку:
     </div>
     <div
-      style="width:250px; display:flex; align-items: center;"
+      class="student-attempt-data"
     >
-      Статус ответа на попытку
+      {{ checkStatus }}
+    </div>
+  </div>
+  <div
+    class="row q-gutter-x-sm"
+  >
+    <div
+      class="student-attempt-titles"
+    >
+      Последнее изменение:
     </div>
     <div
-      style="width:578px; display:flex; align-items: center; overflow-wrap: normal"
+      class="student-attempt-data"
     >
-      {{checkStatus}}
+      {{ localeDateOfLastChange }}
     </div>
+  </div>
+  <div
+    class="row q-gutter-x-sm"
+  >
     <div
-      style="width:250px; display:flex; align-items: center;"
+      class="student-attempt-titles"
     >
-      Последнее изменение
-    </div>
-    <div
-      style="width:578px; display:flex; align-items: center; overflow-wrap: normal"
-    >
-      {{localeDateOfLastChange}}
-    </div>
-    <div
-      style="width:250px; display:flex; align-items: center;"
-    >
-      Файл с решением
+      Файл с решением:
     </div>
     <a
-      style="width:578px; display:flex; align-items: center; overflow-wrap: normal"
+      class="student-attempt-data"
       :href="pathToSolution"
     >
-      {{fileName}}
+      {{ fileName }}
     </a>
   </div>
 </div>

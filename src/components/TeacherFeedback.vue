@@ -1,15 +1,77 @@
 <template>
-<div class="column no-wrap" style="width: 850px; padding: 0 10px 10px 10px;">
-  <div class="text-h6">Отзыв</div>
-  <div class="row">
-    <div style="width:250px; display:flex; align-items: center;">Степень решенности</div>
-    <div style="width:578px; display:flex; align-items: center; overflow-wrap: normal">{{decisionStage}}</div>
-    <div style="width:250px; display:flex; align-items: center;">Время проверки</div>
-    <div style="width:578px; display:flex; align-items: center; overflow-wrap: normal">{{localeCheckDate}}</div>
-    <div style="width:250px; display:flex; align-items: center;">Проверенное решение</div>
-    <a style="width:578px; display:flex; align-items: center; overflow-wrap: normal" :href="pathToProvenSolution">{{fileName}}</a>
-    <div style="width:250px; display:flex; align-items: center;">Комментарий</div>
-    <div style="width:578px; display:flex; align-items: center; overflow-wrap: normal">{{teacherCommentary}}</div>
+<div
+  class="column no-wrap  teacher-feedback"
+>
+  <div
+    class="text-h6"
+  >
+    Отзыв
+  </div>
+  <div
+    class="row q-gutter-x-sm"
+  >
+    <div
+      class="teacher-feedback-titles"
+    >
+      Степень решенности:
+    </div>
+    <div
+      class="teacher-feedback-data"
+    >
+      {{ decisionStage }}
+    </div>
+  </div>
+  <div
+    class="row q-gutter-x-sm"
+  >
+    <div
+      class="teacher-feedback-titles"
+    >
+      Время проверки:
+    </div>
+    <div
+      v-if="pathToProvenSolution !== '-'"
+      class="teacher-feedback-data"
+    >
+      {{ localeCheckDate }}
+    </div>
+    <div
+      v-else
+      class="teacher-feedback-data"
+    >
+      -
+    </div>
+  </div>
+  <div class="row q-gutter-x-sm">
+    <div
+      class="teacher-feedback-titles"
+    >
+      Проверенное решение:
+    </div>
+    <a
+      v-if="pathToProvenSolution !== '-'"
+      class="teacher-feedback-data" :href="pathToProvenSolution"
+    >
+      {{ fileName }}
+    </a>
+    <div
+      v-else
+      class="teacher-feedback-data"
+    >
+      -
+    </div>
+  </div>
+  <div class="row q-gutter-x-sm no-wrap">
+    <div
+      class="teacher-feedback-titles"
+    >
+      Комментарий:
+    </div>
+    <div
+      class="teacher-feedback-data"
+    >
+      {{ teacherCommentary }}
+    </div>
   </div>
 </div>
 </template>
@@ -20,7 +82,7 @@ export default {
   props: {
     decisionStage: {
       type: String,
-      default: 'Пока не решена'
+      default: '-'
     },
     checkDate: {
       type: Date,
@@ -30,11 +92,11 @@ export default {
     },
     pathToProvenSolution: {
       type: String,
-      default: 'pdfExample/OS1.pdf'
+      default: '-'
     },
     teacherCommentary: {
       type: String,
-      default: 'Комментарий'
+      default: '-'
     }
   },
   computed: {

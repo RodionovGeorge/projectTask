@@ -3,8 +3,7 @@
   class="column no-wrap"
 >
   <div
-    class="row bg-white"
-    style="display: flex; justify-content: space-between; width: 850px; margin: 0 0 10px 0; position: sticky; top:55px"
+    class="row bg-white editor-toolbar"
   >
     <div
       class="row q-gutter-x-md"
@@ -64,7 +63,7 @@
     @mousemove="onMouseMove"
     :width="width"
     :height="height"
-    style="border: 1px solid black"
+    class="editor-page"
   >
     <image
       :href="imagePaths[currentPage]"
@@ -82,6 +81,7 @@
   </svg>
   <q-dialog
     v-model="showProblem"
+    class="task-condition-dialog"
   >
     <q-pdfviewer
       v-model="showProblem"
@@ -136,12 +136,18 @@ export default {
       }
     },
     onMouseDown (event) {
-      const offset = document.getElementById('canvas').getBoundingClientRect()
-      this.mousePressed = true
-      this.polylineArrayOnPages[this.currentPage].push({ points: (event.x - offset.x).toString() + ', ' + (event.y - offset.y).toString(), color: this.currentColor, width: this.currentWidthOfLine })
+      if (!this.mousePressed) {
+        const offset = document.getElementById('canvas').getBoundingClientRect()
+        this.mousePressed = true
+        this.polylineArrayOnPages[this.currentPage].push({
+          points: (event.x - offset.x).toString() + ', ' + (event.y - offset.y).toString(),
+          color: this.currentColor,
+          width: this.currentWidthOfLine
+        })
+      }
     },
     onMouseUp (event) {
-      if (this.mousePressed === true) {
+      if (this.mousePressed) {
         const offset = document.getElementById('canvas').getBoundingClientRect()
         this.mousePressed = false
         Vue.set(this.polylineArrayOnPages[this.currentPage][this.polylineArrayOnPages[this.currentPage].length - 1], 'points',
@@ -149,7 +155,7 @@ export default {
       }
     },
     onMouseMove (event) {
-      if (this.mousePressed === true) {
+      if (this.mousePressed) {
         const offset = document.getElementById('canvas').getBoundingClientRect()
         Vue.set(this.polylineArrayOnPages[this.currentPage][this.polylineArrayOnPages[this.currentPage].length - 1], 'points',
           this.polylineArrayOnPages[this.currentPage][this.polylineArrayOnPages[this.currentPage].length - 1].points + ' ' + (event.x - offset.x).toString() + ', ' + (event.y - offset.y).toString())
