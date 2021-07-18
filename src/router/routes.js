@@ -9,7 +9,8 @@ const routes = [
       { path: '/my', component: () => import('pages/MainPage') },
       { path: '/my/task', component: () => import('pages/TaskS') },
       { path: '/my/newTask', component: () => import('pages/OpeningTaskPage') },
-      { path: '/editTask', component: () => import('pages/EditPage') }
+      { path: '/editTask', component: () => import('pages/EditPage') },
+      { path: '/my/Ttask', component: () => import('pages/TaskT') }
     ]
   },
 

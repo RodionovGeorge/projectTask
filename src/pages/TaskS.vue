@@ -5,7 +5,9 @@
   <div
     class="column q-gutter-y-sm items-center"
   >
-    <TaskInfo class="content-background content-shadow"/>
+    <TaskInfo
+      class="content-background content-shadow"
+    />
     <!-- Current attempt block -->
     <q-btn
       @click="inputFileDialog = true"

@@ -11,26 +11,44 @@
       >
         Описание задачи
       </div>
+      <!-- Потом добавить проверку на то, что текущий пользователь является преподавателем -->
+      <q-btn
+        flat
+        icon="bi-gear"
+        @click="onEditTaskClick"
+      />
+      <q-btn
+        v-if="!taskActive"
+        flat
+        icon="bi-sunrise"
+        @click="onSunriseClick"
+      />
+      <q-btn
+        v-else
+        flat
+        icon="bi-sunset"
+        @click="onSunsetClick"
+      />
+    </div>
+    <div
+      class="row"
+    >
       <div
-        class="row"
+        style="width:250px"
       >
-        <div
-          style="width:250px; display:flex; align-items: center;"
-        >
-          Название задачи
-        </div>
-        <div
-          style="width:578px; display:flex; align-items: center; overflow-wrap: normal"
-        >
-          {{ problemName }}
-        </div>
+        Название задачи
+      </div>
+      <div
+        style="width:578px; overflow-wrap: normal"
+      >
+        {{ problemName }}
       </div>
     </div>
     <div
       class="row"
     >
       <div
-        style="width:250px; display:flex; align-items: center;"
+        style="width:250px"
       >
         Автор
       </div>
@@ -60,13 +78,11 @@
       class="row"
     >
       <div
-        style="width:250px; display:flex; align-items: center;"
+        style="width:250px"
       >
         Предмет
       </div>
-      <div
-        style="display:flex; align-items: center;"
-      >
+      <div>
         {{problemDiscipline}}
       </div>
     </div>
@@ -74,13 +90,11 @@
       class="row"
     >
       <div
-        style="width:250px; display:flex; align-items: center;"
+        style="width:250px"
       >
         Дата начала
       </div>
-      <div
-        style="display:flex; align-items: center;"
-      >
+      <div>
         {{problemDateStart}}
       </div>
     </div>
@@ -88,13 +102,11 @@
       class="row"
     >
       <div
-        style="width:250px; display:flex; align-items: center;"
+        style="width:250px"
       >
         Дата окончания
       </div>
-      <div
-        style="display:flex; align-items: center;"
-      >
+      <div>
         {{problemDateEnd}}
       </div>
     </div>
@@ -102,17 +114,47 @@
       class="row"
     >
       <div
-        style="width:250px; height: 32px; display:flex; align-items: center;"
+        style="width:250px; height: 32px"
       >
         Комментарий к задаче
       </div>
       <div
-        style="display:flex; align-items: center; width: 578px"
+        style="width: 578px"
       >
         {{authorCommentary}}
       </div>
     </div>
-    <div
+    <div class="row items-center">
+      <div
+        style="width: 250px"
+      >
+        Условия задачи
+      </div>
+      <div
+        class="q-gutter-x-sm"
+      >
+        <q-btn
+          flat
+          icon="bi-box-arrow-in-down"
+        />
+        <q-btn
+          flat
+          icon="bi-eye"
+          @click="showProblem = true"
+        />
+      </div>
+    </div>
+    <q-dialog
+      v-model="showProblem"
+      class="task-condition-dialog"
+    >
+      <q-pdfviewer
+        v-model="showProblem"
+        :src="problemPath"
+      >
+      </q-pdfviewer>
+    </q-dialog>
+    <!-- <div
       class="row q-gutter-x-md"
     >
       <div
@@ -135,7 +177,7 @@
         >
         </q-pdfviewer>
       </div>
-    </q-slide-transition>
+    </q-slide-transition> -->
   </div>
 </template>
 
@@ -144,7 +186,7 @@ export default {
   name: 'TaskInfo',
   data () {
     return {
-      problemVisible: false,
+      showProblem: false,
       problemName: 'Название задачи',
       authorCommentary: 'Комментарий',
       problemDateStart: '20.01.2000',
@@ -168,6 +210,21 @@ export default {
     problemPath: {
       type: String,
       default: 'pdfExample/OS1.pdf'
+    },
+    taskActive: { // Задача активна, то есть видна в общей таблице задач
+      type: Boolean,
+      default: true
+    }
+  },
+  methods: {
+    onSunriseClick () {
+      this.$emit('sunrise')
+    },
+    onSunsetClick () {
+      this.$emit('sunset')
+    },
+    onEditTaskClick () {
+      this.$emit('edit')
     }
   }
 }
