@@ -10,7 +10,9 @@ const routes = [
       { path: '/my/task', component: () => import('pages/TaskS') },
       { path: '/my/newTask', component: () => import('pages/OpeningTaskPage') },
       { path: '/editTask', component: () => import('pages/EditPage') },
-      { path: '/my/Ttask', component: () => import('pages/TaskT') }
+      { path: '/my/Ttask', component: () => import('pages/TaskT') },
+      { path: '/my/profile', component: () => import('pages/UserProfilePage') },
+      { path: '/registration', component: () => import('pages/RegistrationPage') }
     ]
   },
 
