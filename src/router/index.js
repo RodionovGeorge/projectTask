@@ -2,6 +2,7 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 
 import routes from './routes'
+import { Constants } from 'boot/Constants'
 
 Vue.use(VueRouter)
 
@@ -24,6 +25,14 @@ export default function (/* { store, ssrContext } */) {
     // quasar.conf.js -> build -> publicPath
     mode: process.env.VUE_ROUTER_MODE,
     base: process.env.VUE_ROUTER_BASE
+  })
+
+  Router.beforeEach((to, from, next) => {
+    if (!localStorage.getItem(Constants.ACCESS_TOKEN) && !Constants.PATHS_WITHOUT_AUTHENTICATION.includes(to.path)) {
+      next('/login')
+    } else {
+      next()
+    }
   })
 
   return Router

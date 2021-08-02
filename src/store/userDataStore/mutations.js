@@ -2,6 +2,6 @@
 export function someMutation (state) {
 }
 */
-export const updateAdminState = (state, isAdmin) => {
-  state.authUserData.isAdmin = isAdmin
+export function SET_USER_INFORMATION (state, userInformation) {
+  state.userData = userInformation
 }

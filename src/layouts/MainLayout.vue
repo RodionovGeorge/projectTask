@@ -30,108 +30,128 @@
 
     <q-drawer
       v-model="left"
-      show-if-above
       overlay
       :width="200"
       :breakpoint="400"
     >
-      <q-scroll-area
-        style="height: calc(100% - 150px); margin-top: 150px; border-right: 1px solid #ddd"
+      <div
+        v-if="isAuthenticated"
       >
-        <q-list
-          padding>
-          <q-item
-            clickable
-            v-ripple
-          >
-            <q-item-section
-              avatar
-            >
-              <q-icon
-                name="bi-house"
-              />
-            </q-item-section>
-            <q-item-section>
-              Главная
-            </q-item-section>
-          </q-item>
-
-          <q-item
-            active
-            clickable
-            v-ripple
-          >
-            <q-item-section
-              avatar
-            >
-              <q-icon
-                name="bi-person-square"
-              />
-            </q-item-section>
-            <q-item-section>
-              Профиль
-            </q-item-section>
-          </q-item>
-
-          <q-item
-            clickable
-            v-ripple
-          >
-            <q-item-section
-              avatar
-            >
-              <q-icon
-                name="bi-book"
-              />
-            </q-item-section>
-            <q-item-section>
-              Задачи
-            </q-item-section>
-          </q-item>
-
-          <q-item
-            clickable
-            v-ripple
-          >
-            <q-item-section
-              avatar
-            >
-              <q-icon
-                name="bi-box-arrow-left"
-              />
-            </q-item-section>
-            <q-item-section>
-              Выход
-            </q-item-section>
-          </q-item>
-        </q-list>
-      </q-scroll-area>
-
-      <q-img
-        class="absolute-top"
-        src="https://cdn.quasar.dev/img/material.png"
-        style="height: 150px"
-      >
-        <div
-          class="absolute-bottom bg-transparent column items-center"
+        <q-scroll-area
+          style="height: calc(100% - 150px); margin-top: 150px; border-right: 1px solid #ddd"
         >
-          <q-avatar
-            size="56px"
-            class="q-mb-sm">
-            <img
-              src="https://cdn.quasar.dev/img/boy-avatar.png"
+          <q-list
+            padding>
+            <q-item
+              clickable
+              v-ripple
             >
-          </q-avatar>
+              <q-item-section
+                avatar
+              >
+                <q-icon
+                  name="bi-house"
+                />
+              </q-item-section>
+              <q-item-section>
+                Главная
+              </q-item-section>
+            </q-item>
+
+            <q-item
+              active
+              clickable
+              v-ripple
+            >
+              <q-item-section
+                avatar
+              >
+                <q-icon
+                  name="bi-person-square"
+                />
+              </q-item-section>
+              <q-item-section>
+                Профиль
+              </q-item-section>
+            </q-item>
+
+            <q-item
+              clickable
+              v-ripple
+            >
+              <q-item-section
+                avatar
+              >
+                <q-icon
+                  name="bi-book"
+                />
+              </q-item-section>
+              <q-item-section>
+                Задачи
+              </q-item-section>
+            </q-item>
+
+            <q-item
+              clickable
+              v-ripple
+            >
+              <q-item-section
+                avatar
+              >
+                <q-icon
+                  name="bi-box-arrow-left"
+                />
+              </q-item-section>
+              <q-item-section>
+                Выход
+              </q-item-section>
+            </q-item>
+          </q-list>
+        </q-scroll-area>
+
+        <q-img
+          class="absolute-top"
+          src="https://cdn.quasar.dev/img/material.png"
+          style="height: 150px"
+        >
           <div
-            class="text-weight-bold"
+            class="absolute-bottom bg-transparent column items-center"
           >
-            Иванов И. И.
+            <q-avatar
+              size="56px"
+              class="q-mb-sm">
+              <img
+                src="https://cdn.quasar.dev/img/boy-avatar.png"
+              >
+            </q-avatar>
+            <div
+              class="text-weight-bold"
+            >
+              Иванов И. И.
+            </div>
+            <div>
+              email@gmail.ru
+            </div>
           </div>
-          <div>
-            email@gmail.ru
-          </div>
-        </div>
-      </q-img>
+        </q-img>
+      </div>
+      <q-item
+        clickable
+        v-ripple
+        v-else
+        to="/login"
+      >
+        <q-item-section
+          avatar
+        >
+          <q-icon
+            name="bi-box-arrow-right"
+          />
+        </q-item-section>
+        <q-item-section>
+          Войти
+        </q-item-section>
+      </q-item>
     </q-drawer>
 
     <q-footer>
@@ -149,11 +169,16 @@
 </template>
 
 <script>
-
+import { Constants } from 'boot/Constants'
 export default {
   data () {
     return {
       left: false
+    }
+  },
+  computed: {
+    isAuthenticated () {
+      return !!window.localStorage.getItem(Constants.ACCESS_TOKEN)
     }
   }
 }
