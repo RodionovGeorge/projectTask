@@ -34,18 +34,17 @@
       :width="200"
       :breakpoint="400"
     >
-      <div
-        v-if="isAuthenticated"
-      >
         <q-scroll-area
           style="height: calc(100% - 150px); margin-top: 150px; border-right: 1px solid #ddd"
+          v-if="isAuthenticated"
         >
           <q-list
-            padding>
+            padding
+          >
             <q-item
               clickable
               v-ripple
-            >
+              >
               <q-item-section
                 avatar
               >
@@ -113,6 +112,7 @@
           class="absolute-top"
           src="https://cdn.quasar.dev/img/material.png"
           style="height: 150px"
+          v-if="isAuthenticated"
         >
           <div
             class="absolute-bottom bg-transparent column items-center"
@@ -121,25 +121,24 @@
               size="56px"
               class="q-mb-sm">
               <img
-                src="https://cdn.quasar.dev/img/boy-avatar.png"
+                :src="avatarPath"
               >
             </q-avatar>
             <div
               class="text-weight-bold"
             >
-              Иванов И. И.
+              {{ name }}
             </div>
             <div>
-              email@gmail.ru
+              {{ email }}
             </div>
           </div>
         </q-img>
-      </div>
       <q-item
         clickable
         v-ripple
-        v-else
         to="/login"
+        v-else
       >
         <q-item-section
           avatar
@@ -169,16 +168,32 @@
 </template>
 
 <script>
-import { Constants } from 'boot/Constants'
 export default {
   data () {
     return {
-      left: false
+      left: false,
+      isAuthenticated: false
     }
   },
+  mounted () {
+    window.addEventListener('access-token-set', evt => {
+      this.isAuthenticated = true
+    })
+    window.addEventListener('access-token-reset', evt => {
+      this.isAuthenticated = false
+    })
+  },
   computed: {
-    isAuthenticated () {
-      return !!window.localStorage.getItem(Constants.ACCESS_TOKEN)
+    avatarPath () {
+      return this.$store.state.userDataStore.userData.avatarURL
+    },
+    email () {
+      return this.$store.state.userDataStore.userData.email
+    },
+    name () {
+      return this.$store.state.userDataStore.userData.lastName + ' ' +
+        this.$store.state.userDataStore.userData.firstName[0] + ' .' +
+        this.$store.state.userDataStore.userData.middleName[0] + '.'
     }
   }
 }

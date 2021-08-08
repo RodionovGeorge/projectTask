@@ -48,7 +48,17 @@
         ref="userEmail"
         label="Электронная почта"
         outlined
-        :rules="[val => !!val || 'Пожалуйста, введите ваш email']"
+        :rules="[val => !!val || 'Пожалуйста, введите ваш email', val => val.length < 50 || 'Пароль слишком длинный!']"
+        class="registration-field"
+        color="black"
+      />
+      <q-input
+        v-model="userPassword"
+        ref="userPassword"
+        label="Пароль"
+        outlined
+        type="password"
+        :rules="[val => !!val || 'Пожалуйста, введите пароль']"
         class="registration-field"
         color="black"
       />
@@ -101,6 +111,7 @@
           label="Отправить код еще раз"
           no-caps
           flat
+          @click="newCodeRequest"
         >
           <template
             v-slot:loading
@@ -128,10 +139,48 @@
       </div>
     </div>
   </transition>
+  <q-dialog
+    v-model="errorDialogShow"
+    persistent
+    transition-show="scale"
+    transition-hide="scale"
+  >
+    <q-card
+      class="bg-red text-white"
+      style="width: 300px"
+    >
+      <q-card-section>
+        <div
+          class="text-h6 text-center"
+        >
+          Ошибка
+        </div>
+      </q-card-section>
+
+      <q-card-section
+        class="q-pt-none text-center"
+      >
+        {{errorMessage}}
+      </q-card-section>
+
+      <q-card-actions
+        align="center"
+        class="bg-white text-black"
+      >
+        <q-btn
+          flat
+          label="OK"
+          v-close-popup
+        />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
 </q-page>
 </template>
 
 <script>
+import { Constants } from 'boot/Constants'
+
 export default {
   name: 'RegistrationPage',
   data () {
@@ -139,11 +188,14 @@ export default {
       step: 1,
       firstStepSubmitting: false,
       secondStepSubmitting: false,
+      errorDialogShow: false,
+      errorMessage: '',
       userLastName: '',
       userFirstName: '',
       userMiddleName: '',
       userEmail: '',
       userGroup: '',
+      userPassword: '',
       userSecretCode: ''
     }
   },
@@ -153,10 +205,73 @@ export default {
       const correctMiddleNameInput = this.$refs.userMiddleName.validate()
       const correctFirstNameInput = this.$refs.userFirstName.validate()
       const correctEmailInput = this.$refs.userEmail.validate()
-      if (correctLastNameInput && correctMiddleNameInput && correctFirstNameInput && correctEmailInput) {
-        // Отправка данных на сервер
-        // this.firstStepSubmitting = true
-        this.step = 2
+      const correctPasswordInput = this.$refs.userPassword.validate()
+      if (correctLastNameInput && correctMiddleNameInput && correctFirstNameInput && correctEmailInput && correctPasswordInput) {
+        this.firstStepSubmitting = true
+        const data = {
+          lastName: this.userLastName,
+          firstName: this.userFirstName,
+          middleName: this.userMiddleName,
+          email: this.userEmail,
+          group: this.userGroup,
+          password: this.userPassword
+        }
+        fetch(Constants.SERVER_URL + '/api/registration', {
+          method: 'POST',
+          mode: 'cors',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        }).then(response => {
+          if (!response.ok) {
+            switch (response.statusCode) {
+              case 409:
+                this.errorMessage = 'Пользователь с таким адресом почты уже существует!'
+                break
+              default:
+                this.errorMessage = 'Внутрення ошибка сервера!'
+                break
+            }
+            this.errorDialogShow = true
+          } else {
+            // После регистрации нужно запросить сессию с /api/login чтобы активировать аккаунт(и для дальнейшей работы)
+            fetch(Constants.SERVER_URL + '/api/login', {
+              method: 'POST',
+              mode: 'cors',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                login: data.email,
+                password: data.password
+              })
+            }).then(response => {
+              if (!response.ok) {
+                this.errorMessage = 'Внутренняя ошибка сервера!'
+                this.errorDialogShow = true
+              } else {
+                return response.json()
+              }
+            }).then(data => {
+              const userData = {
+                roles: data.roles,
+                isAdmin: data.isAdmin,
+                id: data.id,
+                email: data.email,
+                avatarURL: data.avatarURL,
+                accountActivated: data.accountActivated,
+                firstName: data.firstName,
+                middleName: data.middleName,
+                lastName: data.lastName
+              }
+              this.$store.dispatch('userDataStore/setUserInformation', userData)
+              localStorage.setItem(Constants.ACCESS_TOKEN, data.accessToken)
+              this.step = 2
+              this.firstStepSubmitting = false
+            })
+          }
+        })
       }
     },
     onSecondStepClick () {
@@ -165,7 +280,84 @@ export default {
         // Отправка данных на сервер
         // this.firstStepSubmitting = true
         this.secondStepSubmitting = true
+        const data = {
+          id: this.$store.state.userDataStore.userData.id,
+          code: this.userSecretCode
+        }
+        fetch(Constants.SERVER_URL + '/api/account/TMPactivation', {
+          method: 'POST',
+          mode: 'cors',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        }).then(
+          response => response.json()
+        ).then(
+          /**
+           * @param {Object} data - Объект, содержащий ответ от сервера
+           * @param {string} data.message - Краткое текстовое сообщение с ответом
+           * @param {Number} data.intervalInMinutes - Прилагается к ответу только если ошибка связана с нарушением
+           * временных интервалов между запросами на проверку кода или на создание нового кода. Содержит длину интервала
+           * в минутах
+           */
+          data => {
+            switch (data.message) {
+              case 'success':
+                this.$store.dispatch('userDataStore/setAccountActivatedStatus', true)
+                window.dispatchEvent(new CustomEvent('access-token-set'))
+                this.$router.push('/my')
+                break
+              case 'code expired':
+                this.errorMessage = 'Код устарел. Пожалуйста, запросите новый код.'
+                this.errorDialogShow = true
+                break
+              case 'time interval has not passed':
+                this.errorMessage = 'С предыдущей попытки нужно подождать: ' + data.intervalInMinutes + ' м.'
+                this.errorDialogShow = true
+                break
+              case 'wrong code':
+                this.errorMessage = 'Неверный код!'
+                this.errorDialogShow = true
+                break
+              default:
+                this.errorMessage = 'Внутренняя ошибка сервера!'
+                this.errorDialogShow = true
+                break
+            }
+          }
+        )
       }
+    },
+    newCodeRequest () {
+      fetch(Constants.SERVER_URL + '/api/account/activation', {
+        method: 'POST',
+        mode: 'cors',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          id: this.$store.state.userDataStore.userData.id
+        })
+      }).then(
+        response => response.json()
+      ).then(
+        data => {
+          switch (data.message) {
+            case 'success':
+              // Потом
+              break
+            case 'time interval has not passed':
+              this.errorMessage = 'С предыдущей попытки нужно подождать: ' + data.intervalInMinutes + ' м.'
+              this.errorDialogShow = true
+              break
+            default:
+              this.errorMessage = 'Внутренняя ошибка сервера!'
+              this.errorDialogShow = true
+              break
+          }
+        }
+      )
     }
   }
 }
