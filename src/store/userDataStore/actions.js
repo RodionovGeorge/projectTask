@@ -7,5 +7,5 @@ export function setUserInformation (context, userInformation) {
 }
 
 export function setAccountActivatedStatus (context, isActivated) {
-  context.commit('userDataStore/SET_ACCOUNT_ACTIVATED', isActivated)
+  context.commit('SET_ACCOUNT_ACTIVATED', isActivated)
 }

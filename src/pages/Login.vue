@@ -139,7 +139,7 @@ export default {
           body: JSON.stringify(data)
         }).then(response => {
           if (!response.ok) {
-            switch (response.statusCode) {
+            switch (response.status) {
               case 403:
                 this.errorMessage = 'Неверный логин или пароль!'
                 break
@@ -167,24 +167,26 @@ export default {
            * @param {String} data.accessToken - Токен аутентификации пользователя
            */
           data => {
-            const userData = {
-              roles: data.roles,
-              isAdmin: data.isAdmin,
-              id: data.id,
-              email: data.email,
-              avatarURL: data.avatarURL,
-              accountActivated: data.accountActivated,
-              firstName: data.firstName,
-              middleName: data.middleName,
-              lastName: data.lastName
+            if (data !== undefined) {
+              const userData = {
+                roles: data.roles,
+                isAdmin: data.isAdmin,
+                id: data.id,
+                email: data.email,
+                avatarURL: data.avatarURL,
+                accountActivated: data.accountActivated,
+                firstName: data.firstName,
+                middleName: data.middleName,
+                lastName: data.lastName
+              }
+              this.$store.dispatch('userDataStore/setUserInformation', userData)
+              localStorage.setItem(Constants.ACCESS_TOKEN, data.accessToken)
+              window.dispatchEvent(new CustomEvent('access-token-set'))
+              this.enterSubmitting = false
+              this.$router.push('/')
             }
-            this.$store.dispatch('userDataStore/setUserInformation', userData)
-            localStorage.setItem(Constants.ACCESS_TOKEN, data.accessToken)
-            window.dispatchEvent(new CustomEvent('access-token-set'))
-            this.enterSubmitting = false
-            this.$router.push('/my')
-          })
-        this.enterSubmitting = true
+          }
+        )
       }
     }
   }
