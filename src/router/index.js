@@ -30,38 +30,58 @@ export default function (/* { store, ssrContext } */) {
   Router.beforeEach((to, from, next) => {
     /* const accessToken = localStorage.getItem(Constants.ACCESS_TOKEN)
     if (!accessToken) {
-      if (!Constants.PATHS_WITHOUT_AUTHENTICATION.includes(to.path)) {
-        next('/login')
-      } else {
+      if (Constants.PATHS_WITHOUT_AUTHENTICATION.includes(to.path)) {
         next()
+      } else {
+        next('/login')
       }
     } else {
-      fetch(Constants.SERVER_URL + '/api/authentication', {
-        method: 'POST',
-        mode: 'cors',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          accessToken: accessToken
-        })
-      }).then(
-        response => response.json()
-      ).then(
-        data => {
-          switch (data.message) {
-            case 'access granted':
-
-              break
-            case 'new access_token was generated':
-              break
-            case 'need authentication':
-              break
-            default:
-              break
+      if (Constants.PATHS_WITHOUT_AUTHENTICATION.includes(to.path)) {
+        next('/')
+      } else {
+        fetch(Constants.SERVER_URL + '/api/authentication', {
+          method: 'POST',
+          mode: 'cors',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            accessToken: accessToken
+          })
+        }).then(
+          response => response.json()
+        ).then(
+          data => {
+            if (data.message === 'access is allow' || data.message === 'new access_token was generated') {
+              localStorage.setItem(Constants.ACCESS_TOKEN, data.accessToken)
+              next()
+            }
+            if (data.message === 'need authentication') {
+              fetch(Constants.SERVER_URL + '/api/logout', {
+                method: 'POST'
+              }).then(
+                response => {
+                  if (response.ok) {
+                    logout()
+                    next('/login')
+                  }
+                }
+              )
+            } else {
+              fetch(Constants.SERVER_URL + '/api/logout', {
+                method: 'POST'
+              }).then(
+                response => {
+                  if (response.ok) {
+                    logout()
+                    next('/server-error')
+                  }
+                }
+              )
+            }
           }
-        }
-      )
+        )
+      }
     } */
     if (!localStorage.getItem(Constants.ACCESS_TOKEN) && !Constants.PATHS_WITHOUT_AUTHENTICATION.includes(to.path)) {
       next('/login')

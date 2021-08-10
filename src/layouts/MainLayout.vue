@@ -36,7 +36,7 @@
     >
         <q-scroll-area
           style="height: calc(100% - 150px); margin-top: 150px; border-right: 1px solid #ddd"
-          v-if="isAuthenticated"
+          v-if="!!userInformation"
         >
           <q-list
             padding
@@ -93,6 +93,7 @@
             <q-item
               clickable
               v-ripple
+              @click="onLogout"
             >
               <q-item-section
                 avatar
@@ -112,7 +113,7 @@
           class="absolute-top"
           src="https://cdn.quasar.dev/img/material.png"
           style="height: 150px"
-          v-if="isAuthenticated"
+          v-if="!!userInformation"
         >
           <div
             class="absolute-bottom bg-transparent column items-center"
@@ -121,16 +122,18 @@
               size="56px"
               class="q-mb-sm">
               <img
-                :src="avatarPath"
+                :src="userInformation.avatarURL"
               >
             </q-avatar>
             <div
               class="text-weight-bold"
             >
-              {{ name }}
+              {{ userInformation.lastName + ' ' +
+            userInformation.firstName[0] + ' .' +
+            userInformation.middleName[0] + '.' }}
             </div>
             <div>
-              {{ email }}
+              {{ userInformation.email }}
             </div>
           </div>
         </q-img>
@@ -168,6 +171,8 @@
 </template>
 
 <script>
+import { Constants } from 'boot/Constants'
+
 export default {
   data () {
     return {
@@ -176,24 +181,26 @@ export default {
     }
   },
   mounted () {
-    window.addEventListener('access-token-set', evt => {
-      this.isAuthenticated = true
-    })
-    window.addEventListener('access-token-reset', evt => {
-      this.isAuthenticated = false
-    })
+    // Точно понадобится
+  },
+  methods: {
+    onLogout () {
+      fetch(Constants.SERVER_URL + '/api/logout', {
+        method: 'POST'
+      }).then(
+        response => {
+          if (response.ok) {
+            window.localStorage.clear()
+            this.$store.dispatch('userDataStore/dropUserInformation')
+            this.$router.push('/login')
+          }
+        }
+      )
+    }
   },
   computed: {
-    avatarPath () {
-      return this.$store.state.userDataStore.userData.avatarURL
-    },
-    email () {
-      return this.$store.state.userDataStore.userData.email
-    },
-    name () {
-      return this.$store.state.userDataStore.userData.lastName + ' ' +
-        this.$store.state.userDataStore.userData.firstName[0] + ' .' +
-        this.$store.state.userDataStore.userData.middleName[0] + '.'
+    userInformation () {
+      return this.$store.getters['userDataStore/userInformationGetter']
     }
   }
 }

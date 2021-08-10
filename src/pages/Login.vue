@@ -181,7 +181,6 @@ export default {
               }
               this.$store.dispatch('userDataStore/setUserInformation', userData)
               localStorage.setItem(Constants.ACCESS_TOKEN, data.accessToken)
-              window.dispatchEvent(new CustomEvent('access-token-set'))
               this.enterSubmitting = false
               this.$router.push('/')
             }

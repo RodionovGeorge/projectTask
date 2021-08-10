@@ -9,3 +9,7 @@ export function SET_USER_INFORMATION (state, userInformation) {
 export function SET_ACCOUNT_ACTIVATED (state, isActivated) {
   state.userData.accountActivated = isActivated
 }
+
+export function DROP_USER_INFORMATION (state) {
+  state.userData = null
+}

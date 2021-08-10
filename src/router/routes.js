@@ -14,7 +14,8 @@ const routes = [
       { path: '/my/profile', component: () => import('pages/UserProfilePage') },
       { path: '/registration', component: () => import('pages/RegistrationPage') },
       { path: '/account-recovery', component: () => import('pages/ForgotPasswordPage') },
-      { path: '/account-activating', component: () => import('pages/AccountActivatingPage') }
+      { path: '/account-activating', component: () => import('pages/AccountActivatingPage') },
+      { path: '/server-error', component: () => import('pages/Error500') }
     ]
   },
 

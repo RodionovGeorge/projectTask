@@ -135,27 +135,14 @@ export default {
            * в секундах
            */
           data => {
-            switch (data.message) {
-              case 'success':
-                this.$store.dispatch('userDataStore/setAccountActivatedStatus', true)
-                this.$router.push('/')
-                break
-              case 'code expired':
-                this.errorMessage = 'Код устарел. Пожалуйста, запросите новый код.'
-                this.errorDialogShow = true
-                break
-              case 'time interval has not passed':
-                this.errorMessage = 'С предыдущей попытки нужно подождать: ' + data.intervalLength / 60 + ' м.'
-                this.errorDialogShow = true
-                break
-              case 'wrong code':
-                this.errorMessage = 'Неверный код!'
-                this.errorDialogShow = true
-                break
-              default:
-                this.errorMessage = 'Внутренняя ошибка сервера!'
-                this.errorDialogShow = true
-                break
+            if (data.message === 'success') {
+              this.$store.dispatch('userDataStore/setAccountActivatedStatus', true)
+              this.$router.push('/')
+            } else {
+              this.errorMessage = 'intervalLength' in data
+                ? Constants.ERROR_MESSAGES[data.message](data.intervalLength)
+                : Constants.ERROR_MESSAGES[data.message]
+              this.errorDialogShow = true
             }
             this.secondStepSubmitting = false
           }
@@ -184,18 +171,13 @@ export default {
          * в секундах
          */
         data => {
-          switch (data.message) {
-            case 'success':
-              this.newCodeSuccessDialogShow = true
-              break
-            case 'time interval has not passed':
-              this.errorMessage = 'С предыдущей попытки нужно подождать: ' + data.intervalLength / 60 + ' м.'
-              this.errorDialogShow = true
-              break
-            default:
-              this.errorMessage = 'Внутренняя ошибка сервера!'
-              this.errorDialogShow = true
-              break
+          if (data.message === 'success') {
+            this.newCodeSuccessDialogShow = true
+          } else {
+            this.errorMessage = 'intervalLength' in data
+              ? Constants.ERROR_MESSAGES[data.message](data.intervalLength)
+              : Constants.ERROR_MESSAGES[data.message]
+            this.errorDialogShow = true
           }
           this.newCodeRequestSubmitting = false
         }

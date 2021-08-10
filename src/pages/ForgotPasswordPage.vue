@@ -64,8 +64,10 @@
       >
         <q-btn
           label="Отправить код еще раз"
+          :loading="newCodeRequestSubmitted"
           no-caps
           flat
+          @click="newCodeRequest"
         >
           <template
             v-slot:loading
@@ -152,10 +154,84 @@
       </q-btn>
     </div>
   </transition>
+  <q-dialog
+    v-model="errorDialogShow"
+    persistent
+    transition-show="scale"
+    transition-hide="scale"
+  >
+    <q-card
+      class="bg-red text-white"
+      style="width: 300px"
+    >
+      <q-card-section>
+        <div
+          class="text-h6 text-center"
+        >
+          Ошибка
+        </div>
+      </q-card-section>
+
+      <q-card-section
+        class="q-pt-none text-center"
+      >
+        {{errorMessage}}
+      </q-card-section>
+
+      <q-card-actions
+        align="center"
+        class="bg-white text-black"
+      >
+        <q-btn
+          flat
+          label="OK"
+          v-close-popup
+        />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+  <q-dialog
+    v-model="newCodeSuccessDialogShow"
+    persistent
+    transition-show="scale"
+    transition-hide="scale"
+  >
+    <q-card
+      class="bg-green text-white"
+      style="width: 300px"
+    >
+      <q-card-section>
+        <div
+          class="text-h6 text-center"
+        >
+          Успех
+        </div>
+      </q-card-section>
+
+      <q-card-section
+        class="q-pt-none text-center"
+      >
+        Код успешно отправлен!
+      </q-card-section>
+
+      <q-card-actions
+        align="center"
+        class="bg-white text-black"
+      >
+        <q-btn
+          flat
+          label="OK"
+          v-close-popup
+        />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
 </q-page>
 </template>
 
 <script>
+import { Constants } from 'boot/Constants'
+
 export default {
   name: 'ForgotPasswordPage',
   data () {
@@ -165,6 +241,10 @@ export default {
       secondStepSubmitted: false,
       thirdStepSubmitted: false,
       fourthStepSubmitted: false,
+      newCodeRequestSubmitted: false,
+      newCodeSuccessDialogShow: false,
+      errorDialogShow: false,
+      errorMessage: '',
       userEmail: '',
       userCode: '',
       userNewPassword: ''
@@ -174,20 +254,124 @@ export default {
     onFirstStepClick () {
       const correctUserEmailInput = this.$refs.userEmail.validate()
       if (correctUserEmailInput) {
-        this.step++
+        this.firstStepSubmitted = true
+        fetch(Constants.SERVER_URL + '/api/account/recall-password', {
+          method: 'POST',
+          mode: 'cors',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            email: this.userEmail
+          })
+        }).then(
+          response => response.json()
+        ).then(
+          data => {
+            if (data.message === 'success' || data.message === 'time interval has not passed') {
+              this.step++
+            } else {
+              this.errorMessage = 'intervalLength' in data
+                ? Constants.ERROR_MESSAGES[data.message](data.intervalLength)
+                : Constants.ERROR_MESSAGES[data.message]
+              this.errorDialogShow = true
+            }
+            this.firstStepSubmitted = false
+          }
+        )
       }
     },
+    // !!!!
+    // Заменить адрес отправки на нормальный
+    // Заменить метод на PUT
     onSecondStepClick () {
       const correctUserCodeInput = this.$refs.userCode.validate()
       if (correctUserCodeInput) {
-        this.step++
+        this.secondStepSubmitted = true
+        fetch(Constants.SERVER_URL + '/api/account/TMPrecall-password', {
+          method: 'POST',
+          mode: 'cors',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            email: this.userEmail,
+            code: this.userCode
+          })
+        }).then(
+          response => response.json()
+        ).then(
+          data => {
+            if (data.message === 'success') {
+              this.step++
+            } else {
+              this.errorMessage = 'intervalLength' in data
+                ? Constants.ERROR_MESSAGES[data.message](data.intervalLength)
+                : Constants.ERROR_MESSAGES[data.message]
+              this.errorDialogShow = true
+            }
+            this.secondStepSubmitted = false
+          }
+        )
       }
     },
     onThirdStepClick () {
       const correctUserNewPasswordInput = this.$refs.userNewPassword.validate()
       if (correctUserNewPasswordInput) {
-        this.step++ // если успех
+        this.thirdStepSubmitted = true
+        fetch(Constants.SERVER_URL + '/api/account/change-password', {
+          method: 'POST',
+          mode: 'cors',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            email: this.userEmail,
+            password: this.userNewPassword
+          })
+        }).then(
+          response => response.json()
+        ).then(
+          data => {
+            if (data.message === 'success') {
+              this.step++
+            } else {
+              this.errorMessage = 'intervalLength' in data
+                ? Constants.ERROR_MESSAGES[data.message](data.intervalLength)
+                : Constants.ERROR_MESSAGES[data.message]
+              this.errorDialogShow = true
+            }
+            this.thirdStepSubmitted = false
+          }
+        )
       }
+    },
+    newCodeRequest () {
+      this.newCodeRequestSubmitted = true
+      fetch(Constants.SERVER_URL + '/api/account/recall-password', {
+        method: 'POST',
+        mode: 'cors',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: this.userEmail
+        })
+      }).then(
+        response => response.json()
+      ).then(
+        data => {
+          if (data.message === 'success') {
+            this.newCodeSuccessDialogShow = true
+          } else {
+            this.errorMessage = 'intervalLength' in data
+              ? Constants.ERROR_MESSAGES[data.message](data.intervalLength)
+              : Constants.ERROR_MESSAGES[data.message]
+            this.errorDialogShow = true
+          }
+          this.newCodeRequestSubmitted = false
+        }
+      )
     }
   }
 }

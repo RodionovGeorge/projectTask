@@ -9,3 +9,7 @@ export function setUserInformation (context, userInformation) {
 export function setAccountActivatedStatus (context, isActivated) {
   context.commit('SET_ACCOUNT_ACTIVATED', isActivated)
 }
+
+export function dropUserInformation (context) {
+  context.commit('DROP_USER_INFORMATION')
+}
