@@ -250,7 +250,6 @@ export default {
       const correctPasswordInput = this.$refs.userPassword.validate()
       if (correctLastNameInput && correctMiddleNameInput && correctFirstNameInput && correctEmailInput && correctPasswordInput) {
         this.firstStepSubmitting = true
-        // Вся информация пользователя отправляется на сервер для регистрации
         const data = {
           lastName: this.userLastName,
           firstName: this.userFirstName,
@@ -261,87 +260,35 @@ export default {
         }
         fetch(Constants.SERVER_URL + '/api/registration', {
           method: 'POST',
-          mode: 'cors',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: Constants.HEADERS,
           body: JSON.stringify(data)
-        }).then(response => {
-          if (!response.ok) {
-            switch (response.status) {
-              case 409:
-                this.errorMessage = 'Пользователь с таким адресом почты уже существует!'
-                break
-              case 403:
-                this.errorMessage = 'Некорректный адрес электронной почты!'
-                break
-              default:
-                this.errorMessage = 'Внутрення ошибка сервера!'
-                break
+        }).then(
+          response => response.json()
+        ).then(
+          data => {
+            if (data.message === 'success') {
+              // this.$store.dispatch('userDataStore/setUserInformation', data.userData)
+              this.step++
+            } else {
+              this.errorMessage = Constants.ERROR_MESSAGES[data.message]
+              this.errorDialogShow = true
             }
-            this.errorDialogShow = true
             this.firstStepSubmitting = false
-          } else {
-            // После регистрации нужно запросить сессию с /api/login чтобы активировать аккаунт(и для дальнейшей работы)
-            fetch(Constants.SERVER_URL + '/api/login', {
-              method: 'POST',
-              mode: 'cors',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                login: data.email,
-                password: data.password
-              })
-            }).then(response => {
-              if (!response.ok) {
-                this.errorMessage = 'Внутренняя ошибка сервера!'
-                this.errorDialogShow = true
-                this.firstStepSubmitting = false
-              } else {
-                return response.json()
-              }
-            }).then(data => {
-              if (data !== undefined) {
-                const userData = {
-                  roles: data.roles,
-                  isAdmin: data.isAdmin,
-                  id: data.id,
-                  email: data.email,
-                  avatarURL: data.avatarURL,
-                  accountActivated: data.accountActivated,
-                  firstName: data.firstName,
-                  middleName: data.middleName,
-                  lastName: data.lastName
-                }
-                this.$store.dispatch('userDataStore/setUserInformation', userData)
-                localStorage.setItem(Constants.ACCESS_TOKEN, data.accessToken)
-                this.step = 2
-                this.firstStepSubmitting = false
-              }
-            })
           }
-        })
+        )
       }
     },
     onSecondStepClick () {
       const correctSecretCodeInput = this.$refs.userSecretCode.validate()
       if (correctSecretCodeInput) {
-        // Отправка данных на сервер
         this.secondStepSubmitting = true
         const data = {
-          id: this.$store.state.userDataStore.userData.id,
+          email: this.userEmail,
           code: this.userSecretCode
         }
-        // !!!!!!
-        // В итоге нужно будет заменить метод и сам адрес на method: PUT, адрес: /api/account/activation
-        // Код ниже только в угоду более легкого тестирования
-        fetch(Constants.SERVER_URL + '/api/account/TMPactivation', {
-          method: 'POST',
-          mode: 'cors',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+        fetch(Constants.SERVER_URL + '/api/account-activation', {
+          method: 'PUT',
+          headers: Constants.HEADERS,
           body: JSON.stringify(data)
         }).then(
           response => response.json()
@@ -355,8 +302,8 @@ export default {
            */
           data => {
             if (data.message === 'success') {
-              this.$store.dispatch('userDataStore/setAccountActivatedStatus', true)
-              this.$router.push('/')
+              // this.$store.dispatch('userDataStore/setAccountActivatedStatus', true)
+              this.$router.push('/login')
             } else {
               this.errorMessage = 'intervalLength' in data
                 ? Constants.ERROR_MESSAGES[data.message](data.intervalLength)
@@ -370,14 +317,11 @@ export default {
     },
     newCodeRequest () {
       this.newCodeRequestSubmitting = true
-      fetch(Constants.SERVER_URL + '/api/account/activation', {
+      fetch(Constants.SERVER_URL + '/api/account-activation', {
         method: 'POST',
-        mode: 'cors',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: Constants.HEADERS,
         body: JSON.stringify({
-          id: this.$store.state.userDataStore.userData.id
+          email: this.userEmail
         })
       }).then(
         response => response.json()

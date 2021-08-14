@@ -255,12 +255,9 @@ export default {
       const correctUserEmailInput = this.$refs.userEmail.validate()
       if (correctUserEmailInput) {
         this.firstStepSubmitted = true
-        fetch(Constants.SERVER_URL + '/api/account/recall-password', {
+        fetch(Constants.SERVER_URL + '/api/recall-password', {
           method: 'POST',
-          mode: 'cors',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: Constants.HEADERS,
           body: JSON.stringify({
             email: this.userEmail
           })
@@ -281,19 +278,13 @@ export default {
         )
       }
     },
-    // !!!!
-    // Заменить адрес отправки на нормальный
-    // Заменить метод на PUT
     onSecondStepClick () {
       const correctUserCodeInput = this.$refs.userCode.validate()
       if (correctUserCodeInput) {
         this.secondStepSubmitted = true
-        fetch(Constants.SERVER_URL + '/api/account/TMPrecall-password', {
-          method: 'POST',
-          mode: 'cors',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+        fetch(Constants.SERVER_URL + '/api/recall-password', {
+          method: 'PUT',
+          headers: Constants.HEADERS,
           body: JSON.stringify({
             email: this.userEmail,
             code: this.userCode
@@ -319,12 +310,9 @@ export default {
       const correctUserNewPasswordInput = this.$refs.userNewPassword.validate()
       if (correctUserNewPasswordInput) {
         this.thirdStepSubmitted = true
-        fetch(Constants.SERVER_URL + '/api/account/change-password', {
-          method: 'POST',
-          mode: 'cors',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+        fetch(Constants.SERVER_URL + '/api/change-password', {
+          method: 'PUT',
+          headers: Constants.HEADERS,
           body: JSON.stringify({
             email: this.userEmail,
             password: this.userNewPassword
@@ -348,12 +336,9 @@ export default {
     },
     newCodeRequest () {
       this.newCodeRequestSubmitted = true
-      fetch(Constants.SERVER_URL + '/api/account/recall-password', {
+      fetch(Constants.SERVER_URL + '/api/recall-password', {
         method: 'POST',
-        mode: 'cors',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: Constants.HEADERS,
         body: JSON.stringify({
           email: this.userEmail
         })

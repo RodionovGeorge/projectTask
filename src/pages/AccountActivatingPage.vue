@@ -88,6 +88,42 @@
       </q-card-actions>
     </q-card>
   </q-dialog>
+  <q-dialog
+    v-model="newCodeSuccessDialogShow"
+    persistent
+    transition-show="scale"
+    transition-hide="scale"
+  >
+    <q-card
+      class="bg-green text-white"
+      style="width: 300px"
+    >
+      <q-card-section>
+        <div
+          class="text-h6 text-center"
+        >
+          Успех
+        </div>
+      </q-card-section>
+
+      <q-card-section
+        class="q-pt-none text-center"
+      >
+        Код успешно отправлен!
+      </q-card-section>
+
+      <q-card-actions
+        align="center"
+        class="bg-white text-black"
+      >
+        <q-btn
+          flat
+          label="OK"
+          v-close-popup
+        />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
 </q-page>
 </template>
 
@@ -100,6 +136,7 @@ export default {
     return {
       codeSubmitted: false,
       errorDialogShow: false,
+      newCodeSuccessDialogShow: false,
       userSecretCode: '',
       errorMessage: ''
     }
@@ -111,18 +148,12 @@ export default {
         // Отправка данных на сервер
         this.secondStepSubmitting = true
         const data = {
-          id: this.$store.state.userDataStore.userData.id,
+          email: this.$store.state.userDataStore.userData.email,
           code: this.userSecretCode
         }
-        // !!!!!!
-        // В итоге нужно будет заменить метод и сам адрес на method: PUT, адрес: /api/account/activation
-        // Код ниже только в угоду более легкого тестирования
-        fetch(Constants.SERVER_URL + '/api/account/TMPactivation', {
-          method: 'POST',
-          mode: 'cors',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+        fetch(Constants.SERVER_URL + '/api/account-activation', {
+          method: 'PUT',
+          headers: Constants.HEADERS,
           body: JSON.stringify(data)
         }).then(
           response => response.json()
@@ -151,14 +182,11 @@ export default {
     },
     newCodeRequest () {
       this.newCodeRequestSubmitting = true
-      fetch(Constants.SERVER_URL + '/api/account/activation', {
+      fetch(Constants.SERVER_URL + '/api/account-activation', {
         method: 'POST',
-        mode: 'cors',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: Constants.HEADERS,
         body: JSON.stringify({
-          id: this.$store.state.userDataStore.userData.id
+          email: this.$store.state.userDataStore.userData.email
         })
       }).then(
         response => response.json()

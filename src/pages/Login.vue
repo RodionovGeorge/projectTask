@@ -132,58 +132,36 @@ export default {
         }
         fetch(Constants.SERVER_URL + '/api/login', {
           method: 'POST',
-          mode: 'cors',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: Constants.HEADERS,
           body: JSON.stringify(data)
-        }).then(response => {
-          if (!response.ok) {
-            switch (response.status) {
-              case 403:
-                this.errorMessage = 'Неверный логин или пароль!'
-                break
-              default:
-                this.errorMessage = 'Внутренняя ошибка сервера!'
-                break
-            }
-            this.errorDialogShow = true
-            this.enterSubmitting = false
-          } else {
-            return response.json()
-          }
         }).then(
+          response => response.json()
+        ).then(
           /**
-           * @param {Object} data - Информация о текущем пользователе с сервера
-           * @param {Array} data.roles - Массив ролей пользователя
-           * @param {Boolean} data.isAdmin - Пользователь является администратором?
-           * @param {Number} data.id - ID пользователя в базе данных
-           * @param {String} data.email - Электронная почта пользователя (логин)
-           * @param {String} data.avatarURL - URL аватара
-           * @param {Boolean} data.accountActivated - Пользователь активировал свой аккаунт? (Подтверждение почты)
-           * @param {String} data.firstName - Имя
-           * @param {String} data.middleName - Отчество
-           * @param {String} data.lastName - Фамилия
-           * @param {String} data.accessToken - Токен аутентификации пользователя
+           * @param {Object} data - Объект, содержащий ответ сервера
+           * @param {String} data.message - Краткое описание результата запроса
+           * @param {String} data.csrfToken - CSRF токен
+           * @param {Object} data.userData - Объект с информацией о пользователе
+           * @param {Array} data.userData.roles - Массив ролей пользователя
+           * @param {Boolean} data.userData.isAdmin - Пользователь является администратором?
+           * @param {Number} data.userData.id - ID пользователя в базе данных
+           * @param {String} data.userData.email - Электронная почта пользователя (логин)
+           * @param {String} data.userData.avatarURL - URL аватара
+           * @param {Boolean} data.userData.accountActivated - Пользователь активировал свой аккаунт? (Подтверждение почты)
+           * @param {String} data.userData.firstName - Имя
+           * @param {String} data.userData.middleName - Отчество
+           * @param {String} data.userData.lastName - Фамилия
            */
           data => {
-            if (data !== undefined) {
-              const userData = {
-                roles: data.roles,
-                isAdmin: data.isAdmin,
-                id: data.id,
-                email: data.email,
-                avatarURL: data.avatarURL,
-                accountActivated: data.accountActivated,
-                firstName: data.firstName,
-                middleName: data.middleName,
-                lastName: data.lastName
-              }
-              this.$store.dispatch('userDataStore/setUserInformation', userData)
-              localStorage.setItem(Constants.ACCESS_TOKEN, data.accessToken)
-              this.enterSubmitting = false
-              this.$router.push('/')
+            if (data.message === 'success') {
+              localStorage.setItem('csrfToken', data.csrfToken)
+              this.$store.dispatch('userDataStore/setUserInformation', data.userData)
+              this.$router.push('/').catch(err => console.log(err))
+            } else {
+              this.errorMessage = Constants.ERROR_MESSAGES[data.message]
+              this.errorDialogShow = true
             }
+            this.enterSubmitting = false
           }
         )
       }

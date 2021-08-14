@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
+import store from '../store/index'
 
 import routes from './routes'
 import { Constants } from 'boot/Constants'
@@ -27,67 +28,48 @@ export default function (/* { store, ssrContext } */) {
     base: process.env.VUE_ROUTER_BASE
   })
 
-  Router.beforeEach((to, from, next) => {
-    /* const accessToken = localStorage.getItem(Constants.ACCESS_TOKEN)
-    if (!accessToken) {
+  Router.beforeEach(async (to, from, next) => {
+    // Если все в порядке - то все в порядке
+    // Если на сервере произошла ошибка (упала база или в токене неверный пароль)
+    // то сервер сбросит cookie
+    // а маршрутизатор сбросит CSRF токен
+    const data = await fetch(Constants.SERVER_URL + '/api/authentication-check', Constants.GET_INIT).then(
+      response => response.json()
+    )
+    console.log('START')
+    if (data.message === 'success') {
       if (Constants.PATHS_WITHOUT_AUTHENTICATION.includes(to.path)) {
-        next()
-      } else {
-        next('/login')
-      }
-    } else {
-      if (Constants.PATHS_WITHOUT_AUTHENTICATION.includes(to.path)) {
+        console.log(1)
         next('/')
       } else {
-        fetch(Constants.SERVER_URL + '/api/authentication', {
-          method: 'POST',
-          mode: 'cors',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            accessToken: accessToken
-          })
-        }).then(
-          response => response.json()
-        ).then(
-          data => {
-            if (data.message === 'access is allow' || data.message === 'new access_token was generated') {
-              localStorage.setItem(Constants.ACCESS_TOKEN, data.accessToken)
-              next()
-            }
-            if (data.message === 'need authentication') {
-              fetch(Constants.SERVER_URL + '/api/logout', {
-                method: 'POST'
-              }).then(
-                response => {
-                  if (response.ok) {
-                    logout()
-                    next('/login')
-                  }
-                }
-              )
-            } else {
-              fetch(Constants.SERVER_URL + '/api/logout', {
-                method: 'POST'
-              }).then(
-                response => {
-                  if (response.ok) {
-                    logout()
-                    next('/server-error')
-                  }
-                }
-              )
-            }
+        if (!data.accountActivated) {
+          if (to.path === '/account-activating') {
+            console.log(2)
+            next()
+          } else {
+            console.log(3)
+            next('/account-activating')
           }
-        )
+        } else {
+          if (to.path === '/account-activating') {
+            console.log(4)
+            next('/')
+          } else {
+            console.log(5)
+            next()
+          }
+        }
       }
-    } */
-    if (!localStorage.getItem(Constants.ACCESS_TOKEN) && !Constants.PATHS_WITHOUT_AUTHENTICATION.includes(to.path)) {
-      next('/login')
     } else {
-      next()
+      if (!Constants.PATHS_WITHOUT_AUTHENTICATION.includes(to.path)) {
+        localStorage.removeItem('csrfToken')
+        store().dispatch('userDataStore/dropUserInformation')
+        next('/login')
+      } else {
+        next()
+      }
     }
+    console.log('FINISH')
   })
 
   return Router
