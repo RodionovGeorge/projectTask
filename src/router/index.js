@@ -33,43 +33,41 @@ export default function (/* { store, ssrContext } */) {
     // Если на сервере произошла ошибка (упала база или в токене неверный пароль)
     // то сервер сбросит cookie
     // а маршрутизатор сбросит CSRF токен
-    const data = await fetch(Constants.SERVER_URL + '/api/authentication-check', Constants.GET_INIT).then(
-      response => response.json()
-    )
-    console.log('START')
-    if (data.message === 'success') {
-      if (Constants.PATHS_WITHOUT_AUTHENTICATION.includes(to.path)) {
-        console.log(1)
-        next('/')
-      } else {
-        if (!data.accountActivated) {
-          if (to.path === '/account-activating') {
-            console.log(2)
-            next()
-          } else {
-            console.log(3)
-            next('/account-activating')
-          }
+    if (!Constants.DEV_MODE) {
+      const response = await fetch(Constants.SERVER_URL + '/api/authentication-check', Constants.GET_INIT)
+      const data = await response.json()
+      if (data.message === 'success') {
+        if (Constants.PATHS_WITHOUT_AUTHENTICATION.includes(to.path)) {
+          next('/')
         } else {
-          if (to.path === '/account-activating') {
-            console.log(4)
-            next('/')
+          if (!data.accountActivated) {
+            to.path === '/account-activating' ? next() : next('/account-activating')
+            /* if (to.path === '/account-activating') {
+              next()
+            } else {
+              next('/account-activating')
+            } */
           } else {
-            console.log(5)
-            next()
+            to.path === '/account-activating' ? next('/') : next()
+            /* if (to.path === '/account-activating') {
+              next('/')
+            } else {
+              next()
+            } */
           }
+        }
+      } else {
+        if (!Constants.PATHS_WITHOUT_AUTHENTICATION.includes(to.path)) {
+          localStorage.removeItem('csrfToken')
+          store().dispatch('userDataStore/dropUserInformation')
+          next('/login')
+        } else {
+          next()
         }
       }
     } else {
-      if (!Constants.PATHS_WITHOUT_AUTHENTICATION.includes(to.path)) {
-        localStorage.removeItem('csrfToken')
-        store().dispatch('userDataStore/dropUserInformation')
-        next('/login')
-      } else {
-        next()
-      }
+      next()
     }
-    console.log('FINISH')
   })
 
   return Router

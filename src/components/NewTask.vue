@@ -1,9 +1,9 @@
 <template>
-<div
-  class="column"
+<q-page
+  class="column items-center justify-center"
 >
   <div
-    class="column q-gutter-y-sm"
+    class="q-gutter-y-sm"
   >
     <div>
       <span>
@@ -31,7 +31,6 @@
       Файл с условием
       </span>
       <q-uploader
-        url="https://localhost:80"
         label="Выберите файл (pdf, TeX, LaTeX)"
         :filter="checkFileType"
         @rejected="onRejected"
@@ -49,7 +48,7 @@
       <div
         v-if="dateRange.from !== '' && dateRange.to !== ''"
       >
-        {{dateRange.from}} - {{dateRange.to}}
+        {{ dateRange.from }} - {{dateRange.to}}
       </div>
       <div
         v-else
@@ -66,7 +65,7 @@
       Комментарий
       </span>
       <q-input
-        v-model="authorCommentary"
+        v-model="commentary"
         autogrow
         outlined
       />
@@ -105,41 +104,24 @@
       />
     </div>
   </q-dialog>
-</div>
+</q-page>
 </template>
 
 <script>
+import { Constants } from 'boot/Constants'
+
 export default {
   name: 'NewTask',
   data () {
     return {
-      taskName: this.taskNameProp,
-      selectedTaskDiscipline: this.selectedTaskDisciplineProp,
+      taskName: '',
+      selectedTaskDiscipline: '',
+      taskDisciplines: Constants.TASK_DISCIPLINES,
       dateRange: {
-        from: this.dateRangeProp.from,
-        to: this.dateRangeProp.to
+        to: '',
+        from: ''
       },
-      authorCommentary: this.authorCommentaryProp,
-      rejectedFileDialog: false,
-      dateSelectDialogShow: false
-    }
-  },
-  props: {
-    taskNameProp: {
-      type: String,
-      default: ''
-    },
-    selectedTaskDisciplineProp: {
-      type: String,
-      default: ''
-    },
-    dateRangeProp: {
-      type: Object,
-      default: () => { return { from: '', to: '' } }
-    },
-    authorCommentaryProp: {
-      type: String,
-      default: ''
+      commentary: ''
     }
   },
   methods: {
@@ -151,13 +133,6 @@ export default {
     },
     onUploaded () {
       // Что-то делаем (а может и нет)
-    }
-  },
-  computed: {
-    taskDisciplines: {
-      get () {
-        return this.$store.state.userDataStore.taskDisciplines
-      }
     }
   }
 }

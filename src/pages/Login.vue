@@ -156,7 +156,11 @@ export default {
             if (data.message === 'success') {
               localStorage.setItem('csrfToken', data.csrfToken)
               this.$store.dispatch('userDataStore/setUserInformation', data.userData)
-              this.$router.push('/').catch(err => console.log(err))
+              if (data.userData.accountActivated) {
+                this.$router.push('/')
+              } else {
+                this.$router.push('/account-activating')
+              }
             } else {
               this.errorMessage = Constants.ERROR_MESSAGES[data.message]
               this.errorDialogShow = true
