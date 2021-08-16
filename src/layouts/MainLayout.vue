@@ -44,12 +44,30 @@
             <q-item
               clickable
               v-ripple
-              >
+            >
               <q-item-section
                 avatar
               >
                 <q-icon
                   name="bi-house"
+                />
+              </q-item-section>
+              <q-item-section>
+                Главная
+              </q-item-section>
+            </q-item>
+
+            <q-item
+              to="/new-task"
+              clickable
+              v-ripple
+              v-if="isTeacher"
+            >
+              <q-item-section
+                avatar
+              >
+                <q-icon
+                  name="bi-file-earmark-arrow-up"
                 />
               </q-item-section>
               <q-item-section>
@@ -213,6 +231,9 @@ export default {
   computed: {
     userInformation () {
       return this.$store.getters['userDataStore/userInformationGetter']
+    },
+    isTeacher () {
+      return this.userInformation.roles.includes('Teacher')
     }
   }
 }

@@ -143,7 +143,6 @@ export default {
            * @param {String} data.csrfToken - CSRF токен
            * @param {Object} data.userData - Объект с информацией о пользователе
            * @param {Array} data.userData.roles - Массив ролей пользователя
-           * @param {Boolean} data.userData.isAdmin - Пользователь является администратором?
            * @param {Number} data.userData.id - ID пользователя в базе данных
            * @param {String} data.userData.email - Электронная почта пользователя (логин)
            * @param {String} data.userData.avatarURL - URL аватара

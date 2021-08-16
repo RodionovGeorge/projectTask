@@ -237,21 +237,6 @@
       </q-card-actions>
     </q-card>
   </q-dialog>
-  <q-dialog
-    v-model="editTaskDialogShow"
-    persistent
-  >
-    <div
-      class="column content-background task-parameter-editor-dialog"
-    >
-      <div
-        class="text-h6"
-      >
-        Редактирование задачи
-      </div>
-      <NewTask/>
-    </div>
-  </q-dialog>
 </q-page>
 </template>
 
@@ -260,10 +245,9 @@ import TaskInfo from 'components/TaskInfo'
 import AttemptForStudent from 'components/AttemptForStudent'
 import TeacherFeedback from 'components/TeacherFeedback'
 import Commentary from 'components/Commentary'
-import NewTask from 'components/NewTask'
 export default {
   name: 'TaskT',
-  components: { TaskInfo, AttemptForStudent, TeacherFeedback, Commentary, NewTask },
+  components: { TaskInfo, AttemptForStudent, TeacherFeedback, Commentary },
   data () {
     return {
       studentInformation: [
@@ -286,7 +270,6 @@ export default {
       taskInformation: {
         taskActive: true
       },
-      editTaskDialogShow: false,
       sunsetTaskDialogShow: false,
       currentCommentary: '',
       searchQuery: '',

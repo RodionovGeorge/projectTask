@@ -19,31 +19,33 @@
           <q-input
             v-model="taskName"
             outlined
+            ref="taskName"
             label="Название задачи"
             :rules="[value=>value.length > 0 || 'Пожалуйста, введите название задачи']"
           />
           <q-file
             v-model="file"
+            ref="file"
             outlined
             max-files="1"
             error-message="Пожалуйста, добавьте файл с условием"
             accept=".pdf, .tex"
+            :rules="[() => this.file !== null || 'Пожалуйста, выберите файл с условием']"
             label="Файл с условием"
-            :rules="[value=>value.length > 0 || 'Пожалуйста, добавьте файл с условием']"
           />
           <q-select
             v-model="selectedTaskDiscipline"
             outlined
             label="Дисциплина"
+            ref="discipline"
             :options="taskDisciplines"
-            :rules="['fileCheck']"
+            :rules="[value=>value.length > 0 || 'Пожалуйста, выберите дисциплину']"
           />
           <q-input
             v-model="authorCommentary"
             type="textarea"
             outlined
             label="Комментарий"
-            color="black"
             class="new-task-commentary"
           />
           <div
@@ -54,6 +56,8 @@
         <q-date
           v-model="dateRange"
           range
+          square
+          flat
           title="Срок приема решений"
           :options="dateRestriction"
           class="q-ml-sm"
@@ -64,6 +68,7 @@
         outline
         no-caps
         style="width: 200px"
+        @click="onEnter"
       >
         <template
           v-slot:loading
@@ -74,17 +79,55 @@
         </template>
       </q-btn>
     </div>
+    <q-dialog
+      v-model="errorDialogShow"
+      persistent
+      transition-show="scale"
+      transition-hide="scale"
+    >
+      <q-card
+        class="bg-red text-white"
+        style="width: 300px"
+      >
+        <q-card-section>
+          <div
+            class="text-h6 text-center"
+          >
+            Ошибка
+          </div>
+        </q-card-section>
+
+        <q-card-section
+          class="q-pt-none text-center"
+        >
+          {{errorMessage}}
+        </q-card-section>
+
+        <q-card-actions
+          align="center"
+          class="bg-white text-black"
+        >
+          <q-btn
+            flat
+            label="OK"
+            v-close-popup
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
 <script>
-import { Constants } from 'boot/Constants'
+import { Constants, toBase64 } from 'boot/Constants'
 import { date } from 'quasar'
 
 export default {
   name: 'NewTaskPage',
   data () {
     return {
+      errorDialogShow: false,
+      errorMessage: '',
       taskName: '',
       selectedTaskDiscipline: '',
       taskDisciplines: Constants.TASK_DISCIPLINES,
@@ -100,13 +143,59 @@ export default {
     dateRestriction (dateForCheck) {
       const dateNow = new Date()
       const maxDate = new Date(8640000000000000)
-      return date.isBetweenDates(dateForCheck, dateNow, maxDate)
+      return date.isBetweenDates(dateForCheck, dateNow, maxDate, {
+        inclusiveFrom: true,
+        inclusiveTo: false,
+        onlyDate: true
+      })
     },
-    onRejected () {
-      this.rejectedFileDialog = true
-    },
-    onUploaded () {
-      // Что-то делаем (а может и нет)
+    onEnter () {
+      const correctTitleEnter = this.$refs.taskName.validate()
+      const correctDisciplinesChoose = this.$refs.discipline.validate()
+      const correctFileChoose = this.$refs.file.validate()
+      if (this.dateRange.to === '' || this.dateRange.from === '') {
+        this.errorMessage = 'Пожалуйста, выберите интервал приема решений.'
+        this.errorDialogShow = true
+        return
+      }
+      if (correctDisciplinesChoose && correctTitleEnter && correctFileChoose) {
+        toBase64(
+          this.file
+        ).then(file => {
+          const data = {
+            csrfToken: window.localStorage.getItem('csrfToken'),
+            file: file.substring(file.indexOf(',') + 1),
+            fileMIMEType: this.file.type,
+            author: this.$store.getters['userDataStore/userInformationGetter'].id,
+            title: this.taskName,
+            discipline: this.selectedTaskDiscipline,
+            authorCommentary: this.authorCommentary,
+            startDate: date.extractDate(this.dateRange.from, 'YYYY/MM/DD'),
+            endDate: date.extractDate(this.dateRange.to, 'YYYY/MM/DD')
+          }
+          fetch(Constants.SERVER_URL + '/api/problem', {
+            method: 'POST',
+            headers: Constants.HEADERS,
+            body: JSON.stringify(data)
+          }).then(
+            response => response.json()
+          ).then(
+            data => {
+              if (data.message === 'success') {
+                localStorage.setItem('csrfToken', data.csrfToken)
+                this.$router.go(-1)
+              } else {
+                this.errorMessage = Constants.ERROR_MESSAGES[data.message]
+                this.errorDialogShow = true
+              }
+            }
+          )
+        }).catch(err => {
+          console.log(err)
+          this.errorMessage = 'Не удалось подготовить файл к передаче на сервер.'
+          this.errorDialogShow = true
+        })
+      }
     }
   }
 }

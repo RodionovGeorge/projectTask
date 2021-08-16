@@ -27,7 +27,8 @@ const Constants = {
     'incorrect email': 'Неправильный адрес почты.',
     'internal error': 'Внутренняя ошибка сервера.',
     'Internal Server Error': 'Внутренняя ошибка сервера.',
-    'user already exists': 'Аккаунт с такой почтой уже существует'
+    'user already exists': 'Аккаунт с такой почтой уже существует.',
+    'tex conversion failed': 'Не удалось преобразовать ваш tex-файл в PDF.'
   },
   PATHS_WITHOUT_AUTHENTICATION: [
     '/login',
@@ -47,10 +48,19 @@ const Constants = {
     'Content-Type': 'application/json; charset=UTF-8',
     Accept: 'application/json; */*; q=0.01'
   },
-  DEV_MODE: true
+  DEV_MODE: false
+}
+
+function toBase64 (file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.readAsDataURL(file)
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = error => reject(error)
+  })
 }
 
 export default async ({ Vue }) => {
   Vue.prototype.$Constants = Constants
 }
-export { Constants }
+export { Constants, toBase64 }
