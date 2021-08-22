@@ -57,18 +57,15 @@
     </q-dialog>
   </div>
   <svg
-    id="canvas"
+    id="svg"
     @mouseup="onMouseUp"
     @mousedown="onMouseDown"
     @mousemove="onMouseMove"
-    :width="width"
-    :height="height"
-    class="editor-page"
+    class="editor-page a4-size-with-border"
   >
     <image
       :href="imagePaths[currentPage]"
-      :height="height"
-      :width="width"
+      class="a4-size"
     />
     <polyline
       v-for="(pointsForPolyline, index) in polylineArrayOnPages[currentPage]"
@@ -103,12 +100,15 @@ export default {
     imagePaths: {
       type: Array,
       default: () => ['imagesExamples/OS1-01.png', 'imagesExamples/OS1-02.png', 'imagesExamples/OS1-03.png']
+    },
+    returnImagesFlag: {
+      type: Boolean,
+      required: true,
+      default: false
     }
   },
   data () {
     return {
-      width: 850,
-      height: 1221,
       mousePressed: false,
       showColorPicker: false,
       currentColor: 'rgb(255,0,0)',
@@ -117,7 +117,52 @@ export default {
       currentPage: 0,
       disablePrevPageBtn: false,
       disableNextPageBtn: false,
-      showProblem: false
+      showProblem: false,
+      imageTransformationCounter: 0
+    }
+  },
+  watch: {
+    returnImagesFlag: {
+      handler: function (val, oldVal) {
+        if (val) {
+          const resultB64Array = []
+          const backgroundImages = []
+          const SVGImages = []
+          const canvases = []
+          const contexts = []
+          this.currentPage = 0
+          for (let i = 0; i < this.imagePaths.length; i++) {
+            const svgElement = document.getElementById('svg')
+            const s = new XMLSerializer().serializeToString(svgElement)
+            const svgStyle = window.getComputedStyle(svgElement)
+            const encodeSVG = 'data:image/svg+xml;base64, ' + window.btoa(s)
+            canvases.push(document.createElement('canvas'))
+            const height = parseInt(svgStyle.getPropertyValue('height')) - 2 // Исключая размер границы элемента
+            const width = parseInt(svgStyle.getPropertyValue('width')) - 2 // Исключая размер границы элемента
+            console.log(width, height)
+            canvases[i].height = height
+            canvases[i].width = width
+            console.log(canvases[i].height)
+            contexts[i] = canvases[i].getContext('2d')
+            backgroundImages.push(new Image(width, height))
+            backgroundImages[i].onload = () => {
+              contexts[i].drawImage(backgroundImages[i], 0, 0)
+              SVGImages.push(new Image(width, height))
+              SVGImages[i].onload = () => {
+                contexts[i].drawImage(SVGImages[i], 0, 0)
+                console.log(canvases[i].height)
+                resultB64Array.push(canvases[i].toDataURL('image/png'))
+                this.imageTransformationCounter++
+                if (this.imageTransformationCounter === this.imagePaths.length) {
+                  this.$emit('returndata', resultB64Array)
+                }
+              }
+              SVGImages[i].src = encodeSVG
+            }
+            backgroundImages[i].src = this.imagePaths[i]
+          }
+        }
+      }
     }
   },
   methods: {
@@ -137,7 +182,7 @@ export default {
     },
     onMouseDown (event) {
       if (!this.mousePressed) {
-        const offset = document.getElementById('canvas').getBoundingClientRect()
+        const offset = document.getElementById('svg').getBoundingClientRect()
         this.mousePressed = true
         this.polylineArrayOnPages[this.currentPage].push({
           points: (event.x - offset.x).toString() + ', ' + (event.y - offset.y).toString(),
@@ -148,7 +193,7 @@ export default {
     },
     onMouseUp (event) {
       if (this.mousePressed) {
-        const offset = document.getElementById('canvas').getBoundingClientRect()
+        const offset = document.getElementById('svg').getBoundingClientRect()
         this.mousePressed = false
         Vue.set(this.polylineArrayOnPages[this.currentPage][this.polylineArrayOnPages[this.currentPage].length - 1], 'points',
           this.polylineArrayOnPages[this.currentPage][this.polylineArrayOnPages[this.currentPage].length - 1].points + ' ' + (event.x - offset.x).toString() + ', ' + (event.y - offset.y).toString())
@@ -156,7 +201,7 @@ export default {
     },
     onMouseMove (event) {
       if (this.mousePressed) {
-        const offset = document.getElementById('canvas').getBoundingClientRect()
+        const offset = document.getElementById('svg').getBoundingClientRect()
         Vue.set(this.polylineArrayOnPages[this.currentPage][this.polylineArrayOnPages[this.currentPage].length - 1], 'points',
           this.polylineArrayOnPages[this.currentPage][this.polylineArrayOnPages[this.currentPage].length - 1].points + ' ' + (event.x - offset.x).toString() + ', ' + (event.y - offset.y).toString())
       }

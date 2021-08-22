@@ -6,6 +6,8 @@
 // На отклонение действий на самой странице показывать всплывающие окна
 // При этом /server-error имеет приоритет при маршрутизации (проходит без всяких приверок)
 
+// Еще: Магические константы на размер одного pdf для раскраски учителями: 793 на 1221
+
 const Constants = {
   SERVER_URL: 'http://localhost',
   TASK_DISCIPLINES: [
@@ -48,7 +50,12 @@ const Constants = {
     'Content-Type': 'application/json; charset=UTF-8',
     Accept: 'application/json; */*; q=0.01'
   },
-  DEV_MODE: false
+  DEV_MODE: true,
+  DIFFICULTY_LEVELS: [
+    'Простая',
+    'Средняя',
+    'Сложная'
+  ]
 }
 
 function toBase64 (file) {

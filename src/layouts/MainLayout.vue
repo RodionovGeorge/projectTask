@@ -71,7 +71,7 @@
                 />
               </q-item-section>
               <q-item-section>
-                Главная
+                Предложить задачу
               </q-item-section>
             </q-item>
 

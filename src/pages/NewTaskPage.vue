@@ -11,7 +11,7 @@
         Предложить задачу
       </div>
       <div
-        class="row"
+        class="row no-wrap"
       >
         <div
           class="column new-task-field q-gutter-y-xs"
@@ -56,7 +56,6 @@
         <q-date
           v-model="dateRange"
           range
-          square
           flat
           title="Срок приема решений"
           :options="dateRestriction"
@@ -67,8 +66,10 @@
         label="Готово"
         outline
         no-caps
+        color="primary"
         style="width: 200px"
         @click="onEnter"
+        :loading="submitting"
       >
         <template
           v-slot:loading
@@ -128,6 +129,7 @@ export default {
     return {
       errorDialogShow: false,
       errorMessage: '',
+      submitting: false,
       taskName: '',
       selectedTaskDiscipline: '',
       taskDisciplines: Constants.TASK_DISCIPLINES,
@@ -159,6 +161,7 @@ export default {
         return
       }
       if (correctDisciplinesChoose && correctTitleEnter && correctFileChoose) {
+        this.submitting = true
         toBase64(
           this.file
         ).then(file => {
@@ -170,6 +173,7 @@ export default {
             title: this.taskName,
             discipline: this.selectedTaskDiscipline,
             authorCommentary: this.authorCommentary,
+            // Проверить даты на совпадение форматов UTC и местного
             startDate: date.extractDate(this.dateRange.from, 'YYYY/MM/DD'),
             endDate: date.extractDate(this.dateRange.to, 'YYYY/MM/DD')
           }
@@ -188,12 +192,14 @@ export default {
                 this.errorMessage = Constants.ERROR_MESSAGES[data.message]
                 this.errorDialogShow = true
               }
+              this.submitting = false
             }
           )
         }).catch(err => {
           console.log(err)
           this.errorMessage = 'Не удалось подготовить файл к передаче на сервер.'
           this.errorDialogShow = true
+          this.submitting = false
         })
       }
     }

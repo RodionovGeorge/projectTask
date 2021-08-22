@@ -7,7 +7,7 @@
       class="row"
     >
       <div
-        class="text-h6"
+        class="text-h6 text-center"
       >
         Описание задачи
       </div>
@@ -146,7 +146,6 @@
     </div>
     <q-dialog
       v-model="showProblem"
-      class="task-condition-dialog"
     >
       <q-pdfviewer
         v-model="showProblem"

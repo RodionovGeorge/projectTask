@@ -38,22 +38,18 @@
     </div>
     <TaskEditor
       class="content-background content-shadow"
+      :return-images-flag="returnImagesFlag"
+      @returndata="onReturn"
     />
-    <div class="content-background content-shadow column items-center">
+    <div
+      class="content-background content-shadow column items-center q-px-sm q-pb-sm q-gutter-y-sm"
+    >
       <div
         class="text-h6"
         style="display:flex; align-items:center;"
       >
         Степень решения задачи
       </div>
-      <!-- <q-select
-        v-model="decisionStage"
-        :options="decisionStageOption"
-        outlined
-        square
-        color="black"
-        style="width:200px"
-      /> -->
       <div class="row justify-center">
         <q-radio
           v-model="decisionStage"
@@ -76,20 +72,15 @@
           val="3"
         />
       </div>
-      <div
-        class="text-h6"
-      >
-        Комментарий к решению
-      </div>
       <q-input
         v-model="teacherCommentary"
         type="textarea"
         outlined
+        label="Комментарий к решению"
         square
         borderless
         autogrow
-        style="width: 850px; padding-bottom: 5px"
-        color="black"
+        style="width: 850px;"
       />
     </div>
     <div
@@ -106,9 +97,10 @@
         text-colot="black"
         style="width:100px"
         class="content-background"
+        @click="returnImagesFlag = true"
       />
     </div>
-    </div>
+  </div>
 </q-page>
 </template>
 
@@ -120,26 +112,19 @@ export default {
   data () {
     return {
       teacherCommentary: '',
-      decisionStage: 0
+      decisionStage: 0,
+      authorAvatarPath: 'https://cdn.quasar.dev/img/boy-avatar.png',
+      authorFullName: 'Некто',
+      authorGroup: 'Нектович',
+      problemPath: 'pdfExample/OS1.pdf',
+      returnImagesFlag: false
+
       // decisionStageOption: ['Пока не решена', 'Есть идея', 'Почти решена', 'Полностью решена']
     }
   },
-  props: {
-    authorAvatarPath: {
-      type: String,
-      default: 'https://cdn.quasar.dev/img/boy-avatar.png'
-    },
-    authorFullName: {
-      type: String,
-      default: 'Некто'
-    },
-    authorGroup: {
-      type: String,
-      default: '0000'
-    },
-    problemPath: {
-      type: String,
-      default: 'pdfExample/OS1.pdf'
+  methods: {
+    onReturn (resultImages) {
+      console.log(resultImages[1])
     }
   }
 }
