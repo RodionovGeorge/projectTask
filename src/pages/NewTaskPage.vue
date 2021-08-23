@@ -169,15 +169,14 @@ export default {
             csrfToken: window.localStorage.getItem('csrfToken'),
             file: file.substring(file.indexOf(',') + 1),
             fileMIMEType: this.file.type,
-            author: this.$store.getters['userDataStore/userInformationGetter'].id,
+            userID: this.$store.getters['userDataStore/userInformationGetter'].id,
             title: this.taskName,
             discipline: this.selectedTaskDiscipline,
             authorCommentary: this.authorCommentary,
-            // Проверить даты на совпадение форматов UTC и местного
             startDate: date.extractDate(this.dateRange.from, 'YYYY/MM/DD'),
             endDate: date.extractDate(this.dateRange.to, 'YYYY/MM/DD')
           }
-          fetch(Constants.SERVER_URL + '/api/problem', {
+          fetch(Constants.SERVER_URL + '/api/problem-editing', {
             method: 'POST',
             headers: Constants.HEADERS,
             body: JSON.stringify(data)

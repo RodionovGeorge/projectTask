@@ -34,36 +34,34 @@ export default function (/* { store, ssrContext } */) {
     // то сервер сбросит cookie
     // а маршрутизатор сбросит CSRF токен
     if (!Constants.DEV_MODE) {
-      const response = await fetch(Constants.SERVER_URL + '/api/authentication-check', Constants.GET_INIT)
-      const data = await response.json()
-      if (data.message === 'success') {
-        if (Constants.PATHS_WITHOUT_AUTHENTICATION.includes(to.path)) {
-          next('/')
-        } else {
-          if (!data.accountActivated) {
-            to.path === '/account-activating' ? next() : next('/account-activating')
-            /* if (to.path === '/account-activating') {
-              next()
-            } else {
-              next('/account-activating')
-            } */
-          } else {
-            to.path === '/account-activating' ? next('/') : next()
-            /* if (to.path === '/account-activating') {
+      if (!Constants.ERROR_PATHS.includes(to.path)) {
+        try {
+          const response = await fetch(Constants.SERVER_URL + '/api/authentication-check', Constants.GET_INIT)
+          const data = await response.json()
+          if (data.message === 'success') {
+            if (Constants.PATHS_WITHOUT_AUTHENTICATION.includes(to.path)) {
               next('/')
             } else {
+              if (!data.accountActivated) {
+                to.path === '/account-activating' ? next() : next('/account-activating')
+              } else {
+                to.path === '/account-activating' ? next('/') : next()
+              }
+            }
+          } else {
+            if (!Constants.PATHS_WITHOUT_AUTHENTICATION.includes(to.path)) {
+              localStorage.removeItem('csrfToken')
+              store().dispatch('userDataStore/dropUserInformation')
+              next('/login')
+            } else {
               next()
-            } */
+            }
           }
+        } catch (err) {
+          next('/connection-error')
         }
       } else {
-        if (!Constants.PATHS_WITHOUT_AUTHENTICATION.includes(to.path)) {
-          localStorage.removeItem('csrfToken')
-          store().dispatch('userDataStore/dropUserInformation')
-          next('/login')
-        } else {
-          next()
-        }
+        next()
       }
     } else {
       next()

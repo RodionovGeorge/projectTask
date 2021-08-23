@@ -37,6 +37,11 @@ const Constants = {
     '/registration',
     '/account-recovery'
   ],
+  ERROR_PATHS: [
+    '/server-error',
+    '/connection-error'
+  ],
+  ROWS_PER_PAGE: 3,
   GET_INIT: {
     method: 'GET',
     credentials: 'same-origin',
@@ -50,7 +55,7 @@ const Constants = {
     'Content-Type': 'application/json; charset=UTF-8',
     Accept: 'application/json; */*; q=0.01'
   },
-  DEV_MODE: true,
+  DEV_MODE: false,
   DIFFICULTY_LEVELS: [
     'Простая',
     'Средняя',
@@ -67,7 +72,16 @@ function toBase64 (file) {
   })
 }
 
+function toLocalDate (UTCDate) {
+  const date = new Date(UTCDate)
+  let day = date.getDate()
+  let month = date.getMonth() + 1
+  day = (day < 10 ? '0' : '') + day.toString()
+  month = (month < 10 ? '0' : '') + month.toString()
+  return day + '.' + month + '.' + date.getFullYear().toString()
+}
+
 export default async ({ Vue }) => {
   Vue.prototype.$Constants = Constants
 }
-export { Constants, toBase64 }
+export { Constants, toBase64, toLocalDate }
