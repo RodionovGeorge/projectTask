@@ -188,14 +188,24 @@ export default {
                 localStorage.setItem('csrfToken', data.csrfToken)
                 this.$router.go(-1)
               } else {
-                this.errorMessage = Constants.ERROR_MESSAGES[data.message]
-                this.errorDialogShow = true
+                if (data.message === 'need authentication') {
+                  window.localStorage.removeItem('csrfToken')
+                  this.$store.dispatch('userDataStore/dropUserInformation')
+                  this.$router.push('/login')
+                } else {
+                  this.errorMessage = Constants.ERROR_MESSAGES[data.message]
+                  this.errorDialogShow = true
+                }
               }
               this.submitting = false
             }
+          ).catch(
+            () => {
+              this.errorMessage = 'Нет соединения.'
+              this.errorDialogShow = true
+            }
           )
-        }).catch(err => {
-          console.log(err)
+        }).catch(() => {
           this.errorMessage = 'Не удалось подготовить файл к передаче на сервер.'
           this.errorDialogShow = true
           this.submitting = false

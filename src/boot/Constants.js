@@ -8,6 +8,8 @@
 
 // Еще: Магические константы на размер одного pdf для раскраски учителями: 793 на 1221
 
+// Еще: На каждый опасный для данных запрос не забыть обновить CSRF токен (когда уже авторизован)
+
 const Constants = {
   SERVER_URL: 'http://localhost',
   TASK_DISCIPLINES: [
@@ -30,7 +32,14 @@ const Constants = {
     'internal error': 'Внутренняя ошибка сервера.',
     'Internal Server Error': 'Внутренняя ошибка сервера.',
     'user already exists': 'Аккаунт с такой почтой уже существует.',
-    'tex conversion failed': 'Не удалось преобразовать ваш tex-файл в PDF.'
+    'tex conversion failed': 'Не удалось преобразовать ваш tex-файл в PDF.',
+    'user is not a teacher': 'У вас нет роли преподавателя.',
+    'problem deleted': 'Задача была удалена.',
+    'incorrect request': 'Некорректный запрос.',
+    'not author': 'Вы не являетесь автором этой задачи.',
+    'problem not found': 'Задача не найдена.',
+    'not admin': 'Вы не являетесь администратором.',
+    'problem already admitted': 'Проблема уже была оценена'
   },
   PATHS_WITHOUT_AUTHENTICATION: [
     '/login',

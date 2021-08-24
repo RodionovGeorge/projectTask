@@ -2,15 +2,9 @@
   <q-page
     class="column items-center"
   >
-    <div
-      v-if="loading"
-      style="margin-bottom: auto; margin-top: auto"
-    >
-      <q-spinner-radio
-        size="100px"
-        color="primary"
-      />
-    </div>
+    <LoadingSpinner
+      :loading="loading"
+    />
     <div
       class="column content-background content-shadow q-pa-xs q-my-sm"
       v-if="data"
@@ -23,6 +17,7 @@
           v-model="filter"
           placeholder="Поиск по столбцу"
           square
+          debounce="1000"
           outlined
           :readonly="this.currentColumnForSearch === ''"
           style="width:80%"
@@ -56,6 +51,7 @@
         flat
         bordered
         @request="fetchData"
+        @row-click="onRowClick"
         no-results-label="Здесь пока ничего нет"
         :loading="tableLoading"
         :data="data"
@@ -109,9 +105,11 @@
 
 <script>
 import { Constants, toLocalDate } from 'boot/Constants'
+import LoadingSpinner from 'components/LoadingSpinner'
 
 export default {
   name: 'OpeningTaskTablePage',
+  components: { LoadingSpinner },
   data () {
     return {
       filter: '',
@@ -193,22 +191,24 @@ export default {
         }
       ],
       data: [],
-      rowsPerPage: Constants.ROWS_PER_PAGE,
       pagination: {
         sortBy: '',
         descending: false,
         page: 1,
         rowsPerPage: Constants.ROWS_PER_PAGE,
         rowsNumber: null
-      },
-      problemNumber: null
+      }
     }
   },
   methods: {
+    onRowClick (evt, row) {
+      this.$router.push('/task-opening/' + row.problemID)
+    },
     timeToLocal () {
       for (let i = 0; i < this.data.length; i++) {
         this.data[i].problemStartLine = toLocalDate(this.data[i].problemStartLine)
         this.data[i].problemDeadline = toLocalDate(this.data[i].problemDeadline)
+        this.data[i].authorGroup = this.data[i].authorGroup === '-1' ? '-' : this.data[i].authorGroup
       }
     },
     fetchData (props) {
@@ -218,9 +218,12 @@ export default {
           : this.pagination
       this.tableLoading = true
       const getParameters = new URLSearchParams()
+      if (this.currentColumnForSearch.value === 'authorGroup' && this.filter === '-') {
+        this.filter = '-1'
+      }
       getParameters.append('currentPage', page)
       getParameters.append('pageSize', rowsPerPage)
-      getParameters.append('filterField', this.currentColumnForSearch.value)
+      getParameters.append('filterField', this.currentColumnForSearch.value || 'problemTitle')
       getParameters.append('filterValue', this.filter)
       getParameters.append('sortField', sortBy)
       getParameters.append('sortDirection', descending ? 'desc' : 'asc')
@@ -275,11 +278,12 @@ export default {
           this.data = data.problems
           this.timeToLocal()
           this.loading = false
+        } else {
+          this.$router.push('/server-error')
         }
       }
     ).catch(
-      (e) => {
-        console.log(e)
+      () => {
         this.$router.push('/connection-error')
       }
     )

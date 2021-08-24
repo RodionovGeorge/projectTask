@@ -2,24 +2,27 @@
 <q-page
   class="column items-center"
 >
+  <LoadingSpinner
+    :loading="pageLoading"
+  />
   <q-banner
-    v-if="!problemExists"
     inline-actions
-    class="content-background content-shadow q-px-xs q-mt-sm"
+    class="content-shadow q-my-xs"
+    v-if="problemAlreadyAdmitted"
   >
-    На данный момент задач на проверку нет
-    <template
-      v-slot:action
-    >
+    Эта задача уже была проверена администратором
+    <template v-slot:action>
       <q-btn
+        no-caps
+        color="white"
+        text-color="black"
         label="На главную"
-        flat
-        to="/"
+        @click="onMainPage"
       />
     </template>
   </q-banner>
   <div
-    v-else
+    v-if="!!problemTitle && !pageLoading"
     class="row no-wrap q-pa-xs"
     style="height: calc(100vh - 100px); max-height: 800px"
   >
@@ -75,7 +78,6 @@
               Интервал приема решений
             </td>
             <td>
-              <!-- Проверить даты на совпадение форматов UTC и местного!! -->
               {{ startDate }} - {{ endDate }}
             </td>
           </tr>
@@ -98,6 +100,7 @@
                 <q-btn
                   flat
                   icon="bi-box-arrow-in-down"
+                  @click="fileDownload"
                 />
                 <q-btn
                   flat
@@ -124,17 +127,17 @@
         >
           <q-radio
             v-model="adminDecision"
-            val="accepted"
+            val="Принята"
             label="Принять"
           />
           <q-radio
             v-model="adminDecision"
-            val="rejected"
+            val="Отклонена"
             label="Отклонить"
           />
         </div>
         <q-select
-          v-if="adminDecision !== null && adminDecision === 'accepted'"
+          v-if="adminDecision !== null && adminDecision === 'Принята'"
           ref="difficultySelect"
           v-model="chosenDifficulty"
           :options="difficultyLevels"
@@ -143,7 +146,7 @@
           outlined
         />
         <q-input
-          v-if="adminDecision !== null && adminDecision === 'rejected'"
+          v-if="adminDecision !== null && adminDecision === 'Отклонена'"
           v-model="rejectedCommentary"
           outlined
           type="textarea"
@@ -152,6 +155,7 @@
         <q-btn
           v-if="adminDecision !== null"
           outlined
+          :loading="submitting"
           label="Подтвердить"
           color="primary"
           no-caps
@@ -170,7 +174,7 @@
     <q-pdfviewer
       v-model="problem"
       :src="problemFileURL"
-      style="width: 800px; height: 100%"
+      style="width: calc(100% - 600px); height: 100%; min-width: 600px"
     />
   </div>
   <q-dialog
@@ -199,7 +203,7 @@
           class="q-ml-sm text-center"
           style="width: calc(100% - 70px)"
         >
-          Вы уверены? Это действие отменить нельзя. <br> После подтверждения загрузится следующая задача на проверку.
+          Вы уверены? Это действие отменить нельзя. <br> После подтверждения вы вернетесь к таблице задач на проверку
         </p>
       </q-card-section>
 
@@ -215,45 +219,151 @@
         <q-btn
           flat
           label="Да"
+          @click="transmitData"
           color="primary"
           v-close-popup
         />
       </q-card-actions>
     </q-card>
   </q-dialog>
+  <ErrorDialog
+    :p-error-message="errorMessage"
+    :p-error-dialog-show="errorDialogShow"
+  />
 </q-page>
 </template>
 
 <script>
-import { Constants } from 'boot/Constants'
+import { Constants, toLocalDate } from 'boot/Constants'
+import LoadingSpinner from 'components/LoadingSpinner'
+import ErrorDialog from 'components/ErrorDialog'
 export default {
   name: 'OpeningTaskPage',
+  components: { LoadingSpinner, ErrorDialog },
   data () {
     return {
       problemExists: true,
+      pageLoading: false,
+      problemAlreadyAdmitted: false,
       showProblem: false,
       confirmDialogShow: false,
+      submitting: false,
       problem: true,
+      errorDialogShow: false,
+      errorMessage: '',
       adminDecision: null,
       difficultyLevels: Constants.DIFFICULTY_LEVELS,
-      chosenDifficulty: '',
-      rejectedCommentary: '',
-      authorFullName: 'Родионов Георгий Витальевич',
-      authorGroup: '8305',
-      problemFileURL: 'pdfExample/OS1.pdf',
-      startDate: '',
-      endDate: '',
-      authorCommentary: ' 1111 1111 1111111111 11111111 111111111 1111 11 11111111 111 111111 1111 111 11111',
-      problemDiscipline: '',
-      problemTitle: ''
+      chosenDifficulty: null,
+      rejectedCommentary: null,
+      authorFullName: null,
+      authorGroup: null,
+      problemFileURL: null,
+      startDate: null,
+      endDate: null,
+      authorCommentary: null,
+      problemDiscipline: null,
+      problemTitle: null
     }
   },
   methods: {
+    onMainPage () {
+      this.$router.push('/')
+    },
+    fileDownload () {
+      const a = document.createElement('a')
+      a.href = this.problemFileURL
+      a.download = '' + this.$route.params.task_id + '.pdf'
+      a.click()
+    },
     onConfirm () {
-      if (this.$refs.difficultySelect.validate()) {
+      if (this.adminDecision === 'Принята' && this.$refs.difficultySelect.validate()) {
         this.confirmDialogShow = true
       }
+      if (this.adminDecision === 'Отклонена') {
+        this.transmitData()
+      }
+    },
+    fetchData () {
+      this.pageLoading = true
+      fetch(Constants.SERVER_URL + '/api/admitting-problem/' + this.$route.params.task_id, Constants.GET_INIT).then(
+        response => response.json()
+      ).then(
+        data => {
+          if (data.message === 'success') {
+            this.authorFullName = data.data.authorFullname
+            this.authorGroup = data.data.authorGroup
+            this.problemFileURL = Constants.SERVER_URL + '/' + data.data.problemURL
+            this.authorCommentary = data.data.authorCommentary
+            this.problemTitle = data.data.problemTitle
+            this.problemDiscipline = data.data.problemDiscipline
+            this.startDate = toLocalDate(data.data.problemStartLine)
+            this.endDate = toLocalDate(data.data.problemDeadline)
+          } else {
+            switch (data.message) {
+              case 'problem not found':
+                this.$router.push('/123')
+                break
+              case 'problem already admitted':
+                this.problemAlreadyAdmitted = true
+                break
+              case 'database error':
+                this.$router.push('/server-error')
+                break
+            }
+          }
+          this.pageLoading = false
+        }
+      ).catch(
+        () => {
+          this.$router.push('/connection-error')
+        }
+      )
+    },
+    transmitData () {
+      this.submitting = true
+      fetch(Constants.SERVER_URL + '/api/admitting-problem/' + this.$route.params.task_id, {
+        method: 'PATCH',
+        credentials: 'same-origin',
+        headers: Constants.HEADERS,
+        body: JSON.stringify({
+          csrfToken: window.localStorage.getItem('csrfToken'),
+          userID: this.$store.getters['userDataStore/userInformationGetter'].id,
+          problemStatus: this.adminDecision,
+          problemComplexity: this.chosenDifficulty,
+          rejectionReason: this.rejectedCommentary
+        })
+      }).then(
+        response => response.json()
+      ).then(
+        data => {
+          if (data.message === 'success') {
+            window.localStorage.setItem('csrfToken', data.csrfToken)
+            this.$router.go(-1)
+          } else {
+            if (data.message === 'need authentication') {
+              window.localStorage.removeItem('csrfToken')
+              this.$store.dispatch('userDataStore/dropUserInformation')
+              this.$router.push('/login')
+            } else {
+              this.errorMessage = Constants.ERROR_MESSAGES[data.message]
+              this.errorDialogShow = true
+            }
+          }
+          this.submitting = false
+        }
+      ).catch(
+        () => {
+          this.errorMessage = 'Нет соединения.'
+          this.errorDialogShow = true
+        }
+      )
     }
+  },
+  created () {
+    this.fetchData()
+  },
+  watch: {
+    $route: 'fetchData'
   }
 }
 </script>
