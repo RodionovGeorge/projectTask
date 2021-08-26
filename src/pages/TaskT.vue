@@ -1,202 +1,226 @@
 <template>
 <q-page
-  class="column items-center q-py-sm q-gutter-y-sm"
+  class="column items-center"
 >
-  <TaskInfo
-    v-bind="taskInformation"
-    class="content-background content-shadow"
-    @sunset="sunsetTaskDialogShow = true"
-    @edit="editTaskDialogShow = true"
+  <LoadingSpinner
+    :loading="pageLoading"
   />
-  <div
-    class="row no-wrap q-gutter-x-sm"
+  <q-banner
+    inline-actions
+    class="content-shadow q-my-xs"
+    v-if="mainBannerShow"
   >
+    {{bannerMessage}}
+    <template v-slot:action>
+      <q-btn
+        no-caps
+        color="white"
+        text-color="black"
+        label="На главную"
+        @click="onMainPage"
+      />
+    </template>
+  </q-banner>
+  <div
+    v-else
+    class="column items-center q-py-sm q-gutter-y-sm"
+  >
+    <TaskInfo
+      v-bind="problemInformation"
+      class="content-background content-shadow"
+      @sunset="sunsetTaskDialogShow = true"
+      @edit="editTaskDialogShow = true"
+    />
     <div
-      class="column no-wrap content-background content-shadow student-list"
+      class="column student-table content-shadow content-background"
+      style="padding: 10px 10px 10px 10px"
     >
       <div
-        class="text-h6 q-mb-sm"
-        style="padding: 0 10px 0 10px"
+        class="row q-mb-xs"
       >
-        Ученики
+        <q-input
+          v-model="filterValue"
+          outlined
+          square
+          style="width: 90%; margin-right: 5px"
+          debounce="1000"
+          label="Поиск"
+        >
+          <template
+            v-slot:append
+          >
+            <q-icon
+              name="search"
+            />
+          </template>
+        </q-input>
+        <q-btn
+          icon="bi-info-circle"
+          flat
+          @click="infoDialogShow = true"
+          style="width:calc(10% - 5px)"
+        />
       </div>
-      <q-input
-        class="student-list-search-field no-border"
-        v-model="searchQuery"
-        color="black"
-        placeholder="Search"
+      <q-table
         square
-        outlined
-        debounce="200"
-      >
-        <template
-          v-slot:append
-        >
-          <q-icon
-            name="search"
-          />
-        </template>
-      </q-input>
-      <q-virtual-scroll
-        :items="studentInformationForList"
-        class="student-list-scroll-area"
-      >
-        <template
-          v-slot="{ item }"
-        >
-          <q-item
-            clickable
-            :active="item.studentID === activeStudentID"
-            @click="activeStudentID = item.studentID"
-            active-class="student-list-active-button"
-          >
-            <q-item-section>
-              {{item.studentFullName}}
-            </q-item-section>
-            <q-item-section
-              avatar
-            >
-              <q-icon
-                v-if="item.isNewContent"
-                name="bi-lightbulb"
-              />
-              <q-icon
-                v-else
-                name="bi-lightbulb-off"
-              />
-            </q-item-section>
-          </q-item>
-        </template>
-      </q-virtual-scroll>
+        flat
+        bordered
+        :columns="columns"
+        :visible-columns="visibleColumns"
+        :pagination.sync="pagination"
+        :rows-per-page-options="pagination.rowsPerPage"
+        row-key="sessionID"
+        :data="sessionData"
+        no-data-label="Задачи не найдены."
+      />
     </div>
     <div
-      class="column q-gutter-y-sm"
-      v-if="activeStudentID !== -1"
+      class="column no-wrap q-gutter-x-sm"
+      v-if="true"
     >
       <div
-        class="row no-wrap full-attempt"
-      >
-        <AttemptForStudent
-          v-bind="studentCurrentAttempt"
-          class="content-background content-shadow full-attempt-student"
-          style="width:40%; margin-right: 5px"
-        />
-        <TeacherFeedback
-          v-bind="currentTeacherFeedback"
-          class="content-background content-shadow full-attempt-teacher"
-        />
-      </div>
-      <div
-        class="attempt-discussion content-shadow content-background"
+        class="column q-gutter-y-sm"
+        v-if="currentStudentID !== null"
       >
         <div
-          class="text-h6"
+          class="row no-wrap full-attempt"
         >
-          Обсуждение попытки
-        </div>
-        <div
-          class="q-gutter-y-sm"
-        >
-          <q-virtual-scroll
-            style="max-height: 400px"
-            :items="currentAttemptCommentaries"
-          >
-            <template
-              v-slot="{ item }"
-            >
-              <Commentary
-                @deleted="onDeletedCurrentCommentary"
-                v-bind="item"
-              />
-            </template>
-          </q-virtual-scroll>
-          <div
-            class="row"
-            style="width: 840px; display: flex; justify-content: space-between; padding-right: 10px"
-          >
-            <q-input
-              v-model="currentCommentary"
-              autogrow
-              outlined
-              placeholder="Напишите комментарий"
-              color="black"
-              style="width:700px"
-            />
-            <q-btn
-              label="Отправить"
-              style="height: 50px; width:100px"
-            />
-          </div>
-        </div>
-      </div>
-      <div
-        class="content-background content-shadow q-pa-sm previous-attempts"
-      >
-        <div
-          class="text-h6"
-        >
-          Предыдущие попытки
-        </div>
-        <div class="q-gutter-y-xs">
-          <q-pagination
-            class="flex flex-center"
-            v-model="currentPreviousAttempt"
-            :max="previousAttemptCount"
-            boundary-numbers
+          <AttemptForStudent
+            v-bind="currentAttempt.studentAttempt"
+            class="content-background content-shadow full-attempt-student"
           />
+          <TeacherFeedback
+            v-bind="currentAttempt.teacherFeedback"
+            class="content-background content-shadow full-attempt-teacher"
+          />
+        </div>
+        <div
+          class="attempt-discussion content-shadow content-background"
+        >
           <div
-            class="row no-wrap full-attempt"
+            class="text-h6"
           >
-            <AttemptForStudent
-              v-bind="studentPreviousAttempt"
-              class="content-shadow-for-white full-attempt-student"
-            />
-            <TeacherFeedback
-              v-bind="previousTeacherFeedback"
-              class="content-shadow-for-white full-attempt-teacher"
-            />
+            Обсуждение попытки
           </div>
           <div
-            class="attempt-discussion content-shadow-for-white"
+            class="q-gutter-y-sm"
           >
-            <div
-              class="text-h6"
+            <q-virtual-scroll
+              style="max-height: 400px"
+              :items="currentAttempt.commentaries"
             >
-              Обсуждение попытки
-            </div>
-            <div
-              class="q-gutter-y-sm"
-            >
-              <q-virtual-scroll
-                style="max-height: 200px"
-                :items="previousAttemptCommentaries"
+              <template
+                v-slot="{ item }"
               >
-                <template
-                  v-slot="{ item }"
+                <Commentary
+                  v-bind="item"
+                />
+              </template>
+            </q-virtual-scroll>
+            <div
+              class="row"
+              style="width: 840px; display: flex; justify-content: space-between; padding-right: 10px"
+            >
+              <q-input
+                v-model="currentCommentary"
+                autogrow
+                outlined
+                placeholder="Напишите комментарий"
+                color="black"
+                style="width:700px"
+              />
+              <q-btn
+                label="Отправить"
+                style="height: 50px; width:100px"
+              />
+            </div>
+          </div>
+        </div>
+        <div
+          class="content-background content-shadow previous-attempts"
+        >
+          <div
+            class="text-h6"
+          >
+            Предыдущие попытки
+          </div>
+          <div class="q-gutter-y-xs">
+            <q-pagination
+              class="flex flex-center"
+              v-model="currentPreviousAttemptNumber"
+              :max="attemptMaxNumber"
+              boundary-numbers
+            />
+            <div
+              class="row no-wrap full-attempt"
+            >
+              <AttemptForStudent
+                v-bind="previousAttempt.studentAttempt"
+                class="content-shadow-for-white full-attempt-student"
+              />
+              <TeacherFeedback
+                v-bind="previousAttempt.teacherFeedback"
+                class="content-shadow-for-white full-attempt-teacher"
+              />
+            </div>
+            <div
+              class="attempt-discussion content-shadow-for-white"
+            >
+              <div
+                class="text-h6"
+              >
+                Обсуждение попытки
+              </div>
+              <div
+                class="q-gutter-y-sm"
+              >
+                <q-virtual-scroll
+                  style="max-height: 200px"
+                  :items="previousAttempt.commentaries"
                 >
-                  <Commentary
-                    @deleted="onDeletedPreviousCommentary"
-                    v-bind="item"
+                  <template
+                    v-slot="{ item }"
                   >
-                  </Commentary>
-                </template>
-              </q-virtual-scroll>
+                    <Commentary
+                      v-bind="item"
+                    />
+                  </template>
+                </q-virtual-scroll>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-    <div
-      v-else
-      class="text-h6 content-shadow content-background student-not-selected-message"
-    >
-      Пожалуйста, выберите ученика в списке слева
+      <div
+        v-else
+        class="text-h6 content-shadow content-background student-not-selected-message"
+      >
+        Пожалуйста, выберите ученика в списке слева
+      </div>
     </div>
   </div>
-  <!-- <q-dialog
-    v-model="editTaskShow"
+  <q-dialog
+    v-model="infoDialogShow"
   >
-  </q-dialog> -->
+    <q-card>
+      <q-card-section>
+        <div
+          class="text-h6"
+        >
+          Справка
+        </div>
+      </q-card-section>
+
+      <q-card-section class="q-pt-none">
+        Для фильтрации по имени нужно просто ввести необходимый запрос.<br>
+        Для фильтрации по группе запрос нужно начать с '/g' (без кавычек).
+      </q-card-section>
+
+      <q-card-actions align="right">
+        <q-btn flat label="OK" color="primary" v-close-popup />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
   <q-dialog
     v-model="sunsetTaskDialogShow"
     persistent
@@ -231,7 +255,6 @@
           flat
           label="Да"
           color="primary"
-          @click="onSunsetTask"
           v-close-popup
         />
       </q-card-actions>
@@ -245,95 +268,225 @@ import TaskInfo from 'components/TaskInfo'
 import AttemptForStudent from 'components/AttemptForStudent'
 import TeacherFeedback from 'components/TeacherFeedback'
 import Commentary from 'components/Commentary'
+import LoadingSpinner from 'components/LoadingSpinner'
+import { Constants } from 'boot/Constants'
 export default {
   name: 'TaskT',
-  components: { TaskInfo, AttemptForStudent, TeacherFeedback, Commentary },
+  components: { LoadingSpinner, TaskInfo, AttemptForStudent, TeacherFeedback, Commentary },
   data () {
     return {
-      studentInformation: [
-        { studentID: 1, studentFullName: 'Ивановqdqdqwdqdq Иванqwdqwd Ивановичadsq', isNewContent: true },
-        { studentID: 2, studentFullName: 'Иванов Иван Иванович', isNewContent: false },
-        { studentID: 3, studentFullName: 'Иванов Иван Иванович', isNewContent: true },
-        { studentID: 4, studentFullName: 'Иванов Иван Иванович', isNewContent: true },
-        { studentID: 5, studentFullName: 'Иванов Иван Иванович', isNewContent: true },
-        { studentID: 6, studentFullName: 'Иванов Иван Иванович', isNewContent: true },
-        { studentID: 7, studentFullName: 'Иванов Иван Иванович', isNewContent: true },
-        { studentID: 8, studentFullName: 'Иванов Иван Иванович', isNewContent: true },
-        { studentID: 9, studentFullName: 'Иванов Иван Иванович', isNewContent: true },
-        { studentID: 10, studentFullName: 'Иванов Иван Иванович', isNewContent: true },
-        { studentID: 11, studentFullName: 'Иванов Иван Иванович', isNewContent: true },
-        { studentID: 12, studentFullName: 'Иванов Иван Иванович', isNewContent: true },
-        { studentID: 13, studentFullName: 'Иванов Иван Иванович', isNewContent: true },
-        { studentID: 314, studentFullName: 'Иванов Иван Иванович', isNewContent: true },
-        { studentID: 315, studentFullName: 'Иванов Иван Иванович', isNewContent: true }
-      ],
-      taskInformation: {
-        taskActive: true
-      },
+      pageLoading: false,
+      listLoading: false,
+      mainBannerShow: null,
       sunsetTaskDialogShow: false,
+      bannerMessage: null,
+      problemStatus: null,
+      infoDialogShow: false,
+      rejectedCommentary: '',
+      userIsTeacher: false,
+      pagination: {
+        sortBy: '',
+        descending: false,
+        page: 1,
+        rowsPerPage: 5,
+        rowsNumber: 1
+      },
+      filterValue: '',
       currentCommentary: '',
-      searchQuery: '',
-      activeStudentID: -1,
-      previousAttemptCount: NaN,
-      currentPreviousAttempt: NaN,
-      studentPreviousAttempt: { attemptNumber: 5, checkStatus: 'Проверена' },
-      previousTeacherFeedback: { decisionStage: 'Есть идея', pathToProvenSolution: 'pdfExample/OS1.pdf', teacherCommentary: '111 1111 11111111 11111111 111111 111 111111 111 111 11111 1111111111 1111111111 111111111111 11111111111 111111111111 1111111' },
-      previousAttemptCommentaries: [
-        { commentaryID: 0, commentaryText: '111 1111 11111111 11111111 1111111 1111111111 1111111111 111111111111 11111111111 111111111111 1111111 11 111111 111 11 11111111111 111', avatarPath: 'https://cdn.quasar.dev/img/avatar2.jpg', authorFullName: 'Некто Нектович', commentaryDate: 'Четверг, 12.04.21, 21:12' },
-        { commentaryID: 1, commentaryText: '2', avatarPath: 'https://cdn.quasar.dev/img/avatar2.jpg', authorFullName: 'Некто Нектович', commentaryDate: 'Четверг, 12.04.21, 21:12' },
-        { commentaryID: 2, commentaryText: '3', avatarPath: 'https://cdn.quasar.dev/img/avatar2.jpg', authorFullName: 'Некто Нектович', commentaryDate: 'Четверг, 12.04.21, 21:12' },
-        { commentaryID: 2, commentaryText: '3', avatarPath: 'https://cdn.quasar.dev/img/avatar2.jpg', authorFullName: 'Некто Нектович', commentaryDate: 'Четверг, 12.04.21, 21:12' },
-        { commentaryID: 2, commentaryText: '3', avatarPath: 'https://cdn.quasar.dev/img/avatar2.jpg', authorFullName: 'Некто Нектович', commentaryDate: 'Четверг, 12.04.21, 21:12' },
-        { commentaryID: 2, commentaryText: '3', avatarPath: 'https://cdn.quasar.dev/img/avatar2.jpg', authorFullName: 'Некто Нектович', commentaryDate: 'Четверг, 12.04.21, 21:12' }
+      sessionData: null,
+      problemInformation: null,
+      visibleColumns: ['studentFullName', 'studentGroup', 'haveNewContent'],
+      columns: [
+        {
+          name: 'sessionID',
+          field: 'sessionID'
+        },
+        {
+          name: 'studentFullName',
+          label: 'Ученик',
+          align: 'center',
+          field: 'studentFullName'
+        },
+        {
+          name: 'studentGroup',
+          label: 'Группа',
+          align: 'center',
+          field: 'studentGroup'
+        },
+        {
+          name: 'haveNewContent',
+          label: 'Обновления',
+          align: 'center',
+          field: 'haveNewContent'
+        }
       ],
-      studentCurrentAttempt: { attemptNumber: 1 },
-      currentTeacherFeedback: {},
-      currentAttemptCommentaries: [
-        { commentaryID: 5, commentaryText: '111 1111 11111111 11111111 1111111 1111111111 1111111111 111111111111 11111111111 111111111111 1111111', avatarPath: 'https://cdn.quasar.dev/img/avatar2.jpg', authorFullName: 'Некто Нектович', commentaryDate: 'Четверг, 12.04.21, 21:12' },
-        { commentaryID: 6, commentaryText: '2', avatarPath: 'https://cdn.quasar.dev/img/avatar2.jpg', authorFullName: 'Некто Нектович', commentaryDate: 'Четверг, 12.04.21, 21:12' },
-        { commentaryID: 7, commentaryText: '3', avatarPath: 'https://cdn.quasar.dev/img/avatar2.jpg', authorFullName: 'Некто Нектович', commentaryDate: 'Четверг, 12.04.21, 21:12' }]
+      currentStudentID: null,
+      currentAttempt: {
+        attemptID: null,
+        studentAttempt: {
+          attemptNumber: null,
+          checkStatus: null,
+          dateOfLastChange: null,
+          problemFileURL: null
+        },
+        teacherFeedback: {
+          decisionStage: null,
+          checkDate: null,
+          problemFileURL: null,
+          teacherCommentary: null
+        },
+        commentaries: null
+      },
+      attemptMaxNumber: null,
+      currentPreviousAttemptNumber: null,
+      previousAttempt: {
+        studentAttempt: {
+          attemptNumber: null,
+          checkStatus: null,
+          dateOfLastChange: null,
+          problemFileURL: null
+        },
+        teacherFeedback: {
+          decisionStage: null,
+          checkDate: null,
+          problemFileURL: null,
+          teacherCommentary: null
+        },
+        commentaries: null
+      }
     }
-  },
-  mounted () {
-    // Запрос предыдущих попыток у сервера
-    // Смотрим ответ, в зависимости от этого инициализируем previousAttemptCount
-    this.studentInformation.sort((a, b) => {
-      if (a.isNewContent) {
-        return -1
-      }
-      if (b.isNewContent) {
-        return 1
-      } else {
-        return 0
-      }
-    })
-    this.previousAttemptCount = 5
-    this.currentPreviousAttempt = this.previousAttemptCount
   },
   methods: {
-    onDeletedPreviousCommentary (ID) {
-      const searchID = (element, index, array) => { return element.commentaryID === ID }
-      const commentaryIndex = this.previousAttemptCommentaries.findIndex(searchID)
-      this.previousAttemptCommentaries.splice(commentaryIndex, commentaryIndex + 1)
+    onMainPage () {
+      this.$router.push('/')
     },
-    onDeletedCurrentCommentary (ID) {
-      const searchID = (element, index, array) => { return element.commentaryID === ID }
-      const commentaryIndex = this.currentAttemptCommentaries.findIndex(searchID)
-      this.currentAttemptCommentaries.splice(commentaryIndex, commentaryIndex + 1)
-    },
-    onSunsetTask () {
-      // Вот тут отправлять запрос о сокрытии задачи на сервер
-      this.taskInformation.taskActive = false
-    }
-  },
-  computed: {
-    studentInformationForList () {
-      if (this.searchQuery === '') {
-        return this.studentInformation
-      } else {
-        return this.studentInformation.filter(student => student.studentFullName.startsWith(this.searchQuery))
+    bannerInit () {
+      this.mainBannerShow = false
+      if (this.problemStatus === 'Заблокирована') {
+        this.bannerMessage = 'Эта задача была заблокирована администратором. Автор потерял статус преподавателя.'
+        this.mainBannerShow = true
+      }
+      if (this.problemStatus === 'Отклонена') {
+        this.bannerMessage = 'Эта задача не была пропущена администраторами.' +
+        this.userIsTeacher
+          ? 'Комментарий: ' + this.rejectedCommentary
+          : ''
+        this.mainBannerShow = true
+      }
+      if (this.problemStatus === 'Скрыта' && !this.userIsTeacher) {
+        this.bannerMessage = 'Эта задача скрыта преподавателем. Начать решать ее сейчас не получиться.'
+        this.mainBannerShow = true
       }
     }
+  },
+  async created () {
+    this.pageLoading = true
+    const getParam = new URLSearchParams()
+    const currentUserID = this.$store.getters['userDataStore/userInformationGetter'].id
+    const currentProblemID = this.$route.params.task_id
+    getParam.append('userID', currentUserID)
+    try {
+      const problemDataResponse = await fetch(
+        Constants.SERVER_URL + '/api/problem/' + currentProblemID + '?' + getParam.toString(),
+        Constants.GET_INIT
+      )
+      const problemData = await problemDataResponse.json()
+      switch (problemData.message) {
+        case 'incorrect request':
+          await this.$router.push('/123')
+          break
+        case 'problem not found':
+          await this.$router.push('/123')
+          break
+        case 'problem is admitting':
+          this.bannerMessage = 'Данная задача еще проходит проверку у администраторов.'
+          this.mainBannerShow = true
+          return
+        case 'database error':
+          await this.$router.push('/server-error')
+          break
+      }
+      this.userIsTeacher = problemData.userRoleInTask === 'Учитель'
+      this.rejectedCommentary = problemData.problemRejectionReason
+      this.problemStatus = problemData.problemInfo.problemStatus
+      this.bannerInit()
+      if (this.mainBannerShow) {
+        return
+      }
+      this.problemInformation = problemData.problemInfo
+      const getParams = new URLSearchParams()
+      getParams.append('userID', currentUserID)
+      if (this.userIsTeacher) {
+        getParams.append('filterValue', this.filterValue)
+        getParams.append('currentPage', this.pagination.page)
+        getParams.append('pageSize', this.pagination.rowsPerPage)
+        const sessionResponse = await fetch(
+          Constants.SERVER_URL + '/api/session/' + this.$route.params.task_id + '?' + getParams.toString(),
+          Constants.GET_INIT
+        )
+        const sessionData = await sessionResponse.json()
+        if (sessionData.message !== 'success') {
+          await this.$router.push('/server-error')
+        }
+        this.pagination.rowsNumber = sessionData.sessionCount
+        for (let i = 0; i < sessionData.sessionInfo.length; i++) {
+          sessionData.sessionInfo[i].studentGroup =
+            sessionData.sessionInfo[i].studentGroup === '-1'
+              ? '-'
+              : sessionData.sessionInfo[i].studentGroup
+        }
+        this.sessionData = sessionData.sessionInfo
+        this.pageLoading = false
+      } else {
+        const sessionResponse = await fetch(
+          Constants.SERVER_URL + '/api/session/' + currentUserID + getParams.toString(),
+          Constants.GET_INIT
+        )
+        const sessionData = await sessionResponse.json()
+        if (sessionData.message !== 'success') {
+          await this.$router.push('/server-error')
+        }
+        if (sessionData.sessionStatus === 'not found') {
+          // Что нибудь, еще не придумал
+        } else {
+          this.currentStudentID = currentUserID
+          this.attemptMaxNumber = sessionData.attemptNumber
+          const attemptResponse = await fetch(Constants.SERVER_URL + '/api/get-attempt', {
+            method: 'POST',
+            headers: Constants.HEADERS,
+            body: JSON.stringify({
+              userID: currentUserID,
+              problemID: currentProblemID,
+              requestAttemptNumber: this.attemptMaxNumber
+            })
+          })
+          const attemptData = await attemptResponse.json()
+          switch (attemptData.message) {
+            case 'incorrect request':
+              await this.$router.push('/123')
+              break
+            case 'session not found':
+              await this.$router.push('/123')
+              break
+            case 'attempt not found':
+              await this.$router.push('/123')
+              break
+            case 'database error':
+              await this.$router.push('/server-error')
+              break
+          }
+          this.currentAttempt.attemptID = attemptData.attemptID
+          this.currentAttempt.studentAttempt = attemptData.studentAttempt
+          this.currentAttempt.teacherFeedback = attemptData.teacherFeedback
+          this.currentAttempt.commentaries = attemptData.commentaries
+        }
+      }
+    } catch (e) {
+      await this.$router.push('/connection-error')
+    }
+  },
+  watch: {
+
   }
 }
 </script>

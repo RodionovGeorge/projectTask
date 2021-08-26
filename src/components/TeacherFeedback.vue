@@ -1,84 +1,98 @@
 <template>
 <div
-  class="column no-wrap  teacher-feedback"
+  class="column no-wrap teacher-feedback"
 >
   <div
     class="text-h6"
   >
     Отзыв
   </div>
-  <div
-    class="row q-gutter-x-sm"
+  <table
+    class="teacher-feedback-table"
   >
-    <div
-      class="teacher-feedback-titles"
+    <tr>
+      <td>
+        Степень решенности
+      </td>
+      <td>
+        {{decisionStage}}
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Время проверки:
+      </td>
+      <td>
+        {{checkDate !== '-' ? localeCheckDate : ' '}}
+      </td>
+    </tr>
+    <tr
+      style="vertical-align: top"
     >
-      Степень решенности:
-    </div>
-    <div
-      class="teacher-feedback-data"
-    >
-      {{ decisionStage }}
-    </div>
-  </div>
-  <div
-    class="row q-gutter-x-sm"
+      <td>
+        Комментарий
+      </td>
+      <td>
+        {{teacherCommentary}}
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Проверенное решение
+      </td>
+      <td
+        v-if="!!problemFileURL"
+      >
+        <div
+          class="q-gutter-x-sm"
+        >
+          <q-btn
+            flat
+            icon="bi-box-arrow-in-down"
+            @click="fileDownload"
+          />
+          <q-btn
+            flat
+            icon="bi-eye"
+            @click="showProblem = true"
+          />
+        </div>
+      </td>
+      <td
+        v-else
+      >
+        -
+      </td>
+    </tr>
+  </table>
+  <q-dialog
+    v-model="showProblem"
   >
-    <div
-      class="teacher-feedback-titles"
+    <q-pdfviewer
+      v-model="showProblem"
+      :src="problemFileURL"
     >
-      Время проверки:
-    </div>
-    <div
-      v-if="pathToProvenSolution !== '-'"
-      class="teacher-feedback-data"
-    >
-      {{ localeCheckDate }}
-    </div>
-    <div
-      v-else
-      class="teacher-feedback-data"
-    >
-      -
-    </div>
-  </div>
-  <div class="row q-gutter-x-sm">
-    <div
-      class="teacher-feedback-titles"
-    >
-      Проверенное решение:
-    </div>
-    <a
-      v-if="pathToProvenSolution !== '-'"
-      class="teacher-feedback-data" :href="pathToProvenSolution"
-    >
-      {{ fileName }}
-    </a>
-    <div
-      v-else
-      class="teacher-feedback-data"
-    >
-      -
-    </div>
-  </div>
-  <div class="row q-gutter-x-sm no-wrap">
-    <div
-      class="teacher-feedback-titles"
-    >
-      Комментарий:
-    </div>
-    <div
-      class="teacher-feedback-data"
-    >
-      {{ teacherCommentary }}
-    </div>
-  </div>
+    </q-pdfviewer>
+  </q-dialog>
 </div>
 </template>
 
 <script>
 export default {
   name: 'TeacherFeedback',
+  methods: {
+    fileDownload () {
+      const a = document.createElement('a')
+      a.href = this.problemFileURL
+      a.download = '' + this.$route.params.task_id + '.pdf'
+      a.click()
+    }
+  },
+  data () {
+    return {
+      showProblem: false
+    }
+  },
   props: {
     decisionStage: {
       type: String,
@@ -90,9 +104,9 @@ export default {
         return new Date(2000, 1, 1)
       }
     },
-    pathToProvenSolution: {
+    problemFileURL: {
       type: String,
-      default: '-'
+      default: ''
     },
     teacherCommentary: {
       type: String,
@@ -102,9 +116,6 @@ export default {
   computed: {
     localeCheckDate () {
       return this.checkDate.toLocaleDateString() + ' ' + this.checkDate.toLocaleTimeString()
-    },
-    fileName () {
-      return this.pathToProvenSolution.substr(this.pathToProvenSolution.lastIndexOf('/') + 1)
     }
   }
 }

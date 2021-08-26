@@ -8,10 +8,9 @@ const routes = [
       /* { path: '', component: () => import('pages/Index.vue') }, */
       { path: '/login', component: () => import('pages/Login.vue') },
       { path: '', component: () => import('pages/MainPage') },
-      { path: '/my/task', component: () => import('pages/TaskS') },
       { path: '/task-opening/:task_id', component: () => import('pages/OpeningTaskPage') },
       { path: '/editTask', component: () => import('pages/EditPage') },
-      { path: '/my/Ttask', component: () => import('pages/TaskT') },
+      { path: '/task/:task_id', component: () => import('pages/TaskT') },
       { path: '/my/profile', component: () => import('pages/UserProfilePage') },
       { path: '/registration', component: () => import('pages/RegistrationPage') },
       { path: '/account-recovery', component: () => import('pages/ForgotPasswordPage') },
@@ -25,10 +24,13 @@ const routes = [
         beforeEnter: async (to, from, next) => {
           if (!Constants.DEV_MODE) {
             try {
-              const response = await fetch(Constants.SERVER_URL + '/api/admin-status-check', Constants.GET_INIT)
+              const getParametr = new URLSearchParams()
+              getParametr.append('r1', 'Администратор')
+              getParametr.append('r2', 'Помощник администратора')
+              const response = await fetch(Constants.SERVER_URL + '/api/role-check?' + getParametr.toString(), Constants.GET_INIT)
               const data = await response.json()
               if (data.message === 'success') {
-                if (data.adminCheck) {
+                if (data.roleCheck) {
                   next()
                 } else {
                   next(false)

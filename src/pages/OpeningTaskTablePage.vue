@@ -52,7 +52,6 @@
         bordered
         @request="fetchData"
         @row-click="onRowClick"
-        no-results-label="Здесь пока ничего нет"
         :loading="tableLoading"
         :data="data"
         :columns="columns"
@@ -217,18 +216,23 @@ export default {
           ? props.pagination
           : this.pagination
       this.tableLoading = true
-      const getParameters = new URLSearchParams()
       if (this.currentColumnForSearch.value === 'authorGroup' && this.filter === '-') {
         this.filter = '-1'
       }
-      getParameters.append('currentPage', page)
-      getParameters.append('pageSize', rowsPerPage)
-      getParameters.append('filterField', this.currentColumnForSearch.value || 'problemTitle')
-      getParameters.append('filterValue', this.filter)
-      getParameters.append('sortField', sortBy)
-      getParameters.append('sortDirection', descending ? 'desc' : 'asc')
-      fetch(Constants.SERVER_URL + '/api/admitting-problem/-1?' + getParameters.toString(),
-        Constants.GET_INIT
+      const data = {
+        currentPage: page,
+        pageSize: rowsPerPage,
+        filterField: this.currentColumnForSearch.value || 'problemTitle',
+        filterValue: this.filter,
+        sortField: sortBy,
+        sortDirection: descending ? 'desc' : 'asc'
+      }
+      fetch(Constants.SERVER_URL + '/api/admitting-problem/-1',
+        {
+          method: 'POST',
+          headers: Constants.HEADERS,
+          body: JSON.stringify(data)
+        }
       ).then(
         response => response.json()
       ).then(
@@ -260,15 +264,20 @@ export default {
   created () {
     this.data = null
     this.loading = true
-    const getParameters = new URLSearchParams()
-    getParameters.append('currentPage', this.pagination.page)
-    getParameters.append('pageSize', this.pagination.rowsPerPage)
-    getParameters.append('filterField', 'problemTitle')
-    getParameters.append('filterValue', this.filter)
-    getParameters.append('sortField', this.pagination.sortBy)
-    getParameters.append('sortDirection', this.pagination.descending ? 'desc' : 'asc')
-    fetch(Constants.SERVER_URL + '/api/admitting-problem/-1?' + getParameters.toString(),
-      Constants.GET_INIT
+    const data = {
+      currentPage: this.pagination.page,
+      pageSize: this.pagination.rowsPerPage,
+      filterField: 'problemTitle',
+      filterValue: this.filter,
+      sortField: this.pagination.sortBy,
+      sortDirection: this.pagination.descending ? 'desc' : 'asc'
+    }
+    fetch(Constants.SERVER_URL + '/api/admitting-problem/-1',
+      {
+        method: 'POST',
+        headers: Constants.HEADERS,
+        body: JSON.stringify(data)
+      }
     ).then(
       response => response.json()
     ).then(

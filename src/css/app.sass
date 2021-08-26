@@ -35,25 +35,8 @@ body
 .student-attempt
   padding: 0 10px 10px 10px
 
-.student-attempt-titles
-  width: 170px
-  text-align: left
-
-.student-attempt-data
-  overflow-wrap: normal
-  text-align: left
-
-.teacher-feedback
-  padding: 0 10px 10px 10px
-
-.teacher-feedback-titles
-  width: 170px
-  text-align: left
-
-.teacher-feedback-data
-  text-align: left
-  overflow-wrap: normal
-  max-width: 50%
+table.student-attempt-table tr td:first-child
+  width: 180px
 
 .attempt-discussion
   padding: 0 10px 10px 10px
@@ -61,17 +44,17 @@ body
 
 .previous-attempts
   max-width: 850px
-  margin-bottom: $flex-gutter-sm
+  padding: 0 10px 10px 10px
 
 .full-attempt
   width: 100%
 
 .full-attempt-student
-  width: 40%
+  width: 45%
   margin-right: 5px
 
 .full-attempt-teacher
-  width: 60%
+  width: calc(65% - 5px)
 
 .student-list-scroll-area
   width: 300px
@@ -175,6 +158,27 @@ table.info-table tr td:first-child
 table.info-table tr
   vertical-align: top
 
-.the-problem
+.vertical-align-middle
   vertical-align: middle
 
+table.task-info-table tr td:first-child
+  width: 200px
+
+table.task-info-table tr
+  vertical-align: top
+
+table.teacher-feedback-table tr td:first-child
+  width: 170px
+
+.teacher-feedback
+  padding: 0 10px 10px 10px
+
+.task-info
+  width: 50%
+  min-width: 600px
+  max-width: 700px
+
+.student-table
+  width: 50%
+  min-width: 600px
+  max-width: 700px

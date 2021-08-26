@@ -1,7 +1,7 @@
 <template>
   <div
-    class="column no-wrap"
-    style="width: 850px; padding: 0 10px 10px 10px"
+    class="column no-wrap task-info"
+    style="padding: 0 10px 10px 10px"
   >
     <div
       class="row"
@@ -11,7 +11,6 @@
       >
         Описание задачи
       </div>
-      <!-- Потом добавить проверку на то, что текущий пользователь является преподавателем -->
       <q-btn
         flat
         icon="bi-gear"
@@ -30,120 +29,105 @@
         @click="onSunsetClick"
       />
     </div>
-    <div
-      class="row"
+    <table
+      class="task-info-table"
     >
-      <div
-        style="width:250px"
-      >
-        Название задачи
-      </div>
-      <div
-        style="width:578px; overflow-wrap: normal"
-      >
-        {{ problemName }}
-      </div>
-    </div>
-    <div
-      class="row"
-    >
-      <div
-        style="width:250px"
-      >
-        Автор
-      </div>
-      <q-item
-        clickable
-        v-ripple
-        class="q-pa-none"
-      >
-        <q-item-section
-          side
+      <tr>
+        <td>
+          Название задачи
+        </td>
+        <td>
+          {{problemTitle}}
+        </td>
+      </tr>
+      <tr>
+        <td
+          class="vertical-align-middle"
         >
-          <q-avatar
-            square
+          Автор
+        </td>
+        <td>
+          <q-item
+            class="q-pa-none"
           >
-            <img
-              :src="authorAvatarPath"
-              alt=""
+            <q-item-section
+              side
+            >
+              <q-avatar>
+                <img
+                  :src="authorAvatarPath"
+                  alt=""
+                />
+              </q-avatar>
+            </q-item-section>
+            <q-item-section>
+              {{ authorFullName }}
+            </q-item-section>
+          </q-item>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          Группа
+        </td>
+        <td>
+          {{ authorGroup === '-1' ? 'Не указана' : authorGroup }}
+        </td>
+      </tr>
+      <tr>
+        <td>
+          Предмет
+        </td>
+        <td>
+          {{ problemDiscipline }}
+        </td>
+      </tr>
+      <tr>
+        <td>
+          Сложность
+        </td>
+        <td>
+          {{ problemComplexity }}
+        </td>
+      </tr>
+      <tr>
+        <td>
+          Интервал приема решений
+        </td>
+        <td>
+          {{ problemStartLine }} - {{ problemDeadline }}
+        </td>
+      </tr>
+      <tr>
+        <td>
+          Комментарий к задаче
+        </td>
+        <td>
+          {{ authorCommentary }}
+        </td>
+      </tr>
+      <tr>
+        <td class="vertical-align-middle">
+          Условия задачи
+        </td>
+        <td>
+          <div
+            class="q-gutter-x-sm"
+          >
+            <q-btn
+              flat
+              icon="bi-box-arrow-in-down"
+              @click="fileDownload"
             />
-          </q-avatar>
-        </q-item-section>
-        <q-item-section>
-          {{ authorFullName }} ({{authorGroup}})
-        </q-item-section>
-      </q-item>
-    </div>
-    <div
-      class="row"
-    >
-      <div
-        style="width:250px"
-      >
-        Предмет
-      </div>
-      <div>
-        {{problemDiscipline}}
-      </div>
-    </div>
-    <div
-      class="row"
-    >
-      <div
-        style="width:250px"
-      >
-        Дата начала
-      </div>
-      <div>
-        {{problemDateStart}}
-      </div>
-    </div>
-    <div
-      class="row"
-    >
-      <div
-        style="width:250px"
-      >
-        Дата окончания
-      </div>
-      <div>
-        {{problemDateEnd}}
-      </div>
-    </div>
-    <div
-      class="row"
-    >
-      <div
-        style="width:250px; height: 32px"
-      >
-        Комментарий к задаче
-      </div>
-      <div
-        style="width: 578px"
-      >
-        {{authorCommentary}}
-      </div>
-    </div>
-    <div class="row items-center">
-      <div
-        style="width: 250px"
-      >
-        Условия задачи
-      </div>
-      <div
-        class="q-gutter-x-sm"
-      >
-        <q-btn
-          flat
-          icon="bi-box-arrow-in-down"
-        />
-        <q-btn
-          flat
-          icon="bi-eye"
-          @click="showProblem = true"
-        />
-      </div>
-    </div>
+            <q-btn
+              flat
+              icon="bi-eye"
+              @click="showProblem = true"
+            />
+          </div>
+        </td>
+      </tr>
+    </table>
     <q-dialog
       v-model="showProblem"
     >
@@ -153,30 +137,6 @@
       >
       </q-pdfviewer>
     </q-dialog>
-    <!-- <div
-      class="row q-gutter-x-md"
-    >
-      <div
-        style="width:250px; display:flex; align-items: center;"
-      >
-        Показать условие задачи
-      </div>
-      <q-toggle
-        v-model="problemVisible"
-      />
-    </div>
-    <q-slide-transition>
-      <div
-        v-show="problemVisible"
-      >
-        <q-pdfviewer
-          v-model="problemVisible"
-          :src="problemPath"
-          style="height: 900px; border: 1px solid black"
-        >
-        </q-pdfviewer>
-      </div>
-    </q-slide-transition> -->
   </div>
 </template>
 
@@ -185,12 +145,7 @@ export default {
   name: 'TaskInfo',
   data () {
     return {
-      showProblem: false,
-      problemName: 'Название задачи',
-      authorCommentary: 'Комментарий',
-      problemDateStart: '20.01.2000',
-      problemDateEnd: '20.01.2020',
-      problemDiscipline: 'Область математики'
+      showProblem: false
     }
   },
   props: {
@@ -200,22 +155,52 @@ export default {
     },
     authorFullName: {
       type: String,
-      default: 'Некто'
+      default: 'Родионов Георгий Витальевич'
     },
     authorGroup: {
       type: String,
-      default: '0000'
+      default: '-1'
+    },
+    authorCommentary: {
+      type: String,
+      default: '123 123 123 123123 123 123 123123 123 123 123123 123 123 123123 123 123 123123 123 123 123'
     },
     problemPath: {
       type: String,
       default: 'pdfExample/OS1.pdf'
     },
-    taskActive: { // Задача активна, то есть видна в общей таблице задач
+    problemHidden: {
       type: Boolean,
-      default: true
+      default: false
+    },
+    problemTitle: {
+      type: String,
+      default: 'ИДЗ по алгебре'
+    },
+    problemStartLine: {
+      type: String,
+      default: '12.12.2021'
+    },
+    problemDeadline: {
+      type: String,
+      default: '24.12.2021'
+    },
+    problemDiscipline: {
+      type: String,
+      default: 'Алгебра и геометрия'
+    },
+    problemComplexity: {
+      type: String,
+      default: 'Средняя'
     }
   },
   methods: {
+    fileDownload () {
+      const a = document.createElement('a')
+      a.href = this.problemFileURL
+      a.download = '' + this.$route.params.task_id + '.pdf'
+      a.click()
+    },
     onSunriseClick () {
       this.$emit('sunrise')
     },

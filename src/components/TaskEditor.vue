@@ -78,7 +78,6 @@
   </svg>
   <q-dialog
     v-model="showProblem"
-    class="task-condition-dialog"
   >
     <q-pdfviewer
       v-model="showProblem"
@@ -139,10 +138,8 @@ export default {
             canvases.push(document.createElement('canvas'))
             const height = parseInt(svgStyle.getPropertyValue('height')) - 2 // Исключая размер границы элемента
             const width = parseInt(svgStyle.getPropertyValue('width')) - 2 // Исключая размер границы элемента
-            console.log(width, height)
             canvases[i].height = height
             canvases[i].width = width
-            console.log(canvases[i].height)
             contexts[i] = canvases[i].getContext('2d')
             backgroundImages.push(new Image(width, height))
             backgroundImages[i].onload = () => {
@@ -150,7 +147,6 @@ export default {
               SVGImages.push(new Image(width, height))
               SVGImages[i].onload = () => {
                 contexts[i].drawImage(SVGImages[i], 0, 0)
-                console.log(canvases[i].height)
                 resultB64Array.push(canvases[i].toDataURL('image/png'))
                 this.imageTransformationCounter++
                 if (this.imageTransformationCounter === this.imagePaths.length) {

@@ -90,7 +90,7 @@
             </td>
           </tr>
           <tr>
-            <td class="the-problem">
+            <td class="vertical-align-middle">
               Условия задачи
             </td>
             <td>

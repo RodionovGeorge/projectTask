@@ -7,69 +7,83 @@
   >
     Попытка
   </div>
-  <div
-    class="row q-gutter-x-sm"
+  <table
+    class="student-attempt-table"
   >
-    <div
-      class="student-attempt-titles"
-    >
-      Номер попытки:
-    </div>
-    <div
-      class="student-attempt-data"
-    >
-      Попытка {{ attemptNumber }}
-    </div>
-  </div>
-  <div
-    class="row q-gutter-x-sm"
+    <tr>
+      <td>
+        Номер попытки
+      </td>
+      <td>
+        Попытка {{ attemptNumber }}
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Статус ответа на попытку
+      </td>
+      <td>
+        {{checkStatus}}
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Последнее изменение
+      </td>
+      <td>
+        {{localeDateOfLastChange}}
+      </td>
+    </tr>
+    <tr>
+      <td>
+        Файл с решеннием
+      </td>
+      <td>
+        <div
+          class="q-gutter-x-sm"
+        >
+          <q-btn
+            flat
+            icon="bi-box-arrow-in-down"
+            @click="fileDownload"
+          />
+          <q-btn
+            flat
+            icon="bi-eye"
+            @click="showProblem = true"
+          />
+        </div>
+      </td>
+    </tr>
+  </table>
+  <q-dialog
+    v-model="showProblem"
   >
-    <div
-      class="student-attempt-titles"
+    <q-pdfviewer
+      v-model="showProblem"
+      :src="problemFileURL"
     >
-      Статус ответа на попытку:
-    </div>
-    <div
-      class="student-attempt-data"
-    >
-      {{ checkStatus }}
-    </div>
-  </div>
-  <div
-    class="row q-gutter-x-sm"
-  >
-    <div
-      class="student-attempt-titles"
-    >
-      Последнее изменение:
-    </div>
-    <div
-      class="student-attempt-data"
-    >
-      {{ localeDateOfLastChange }}
-    </div>
-  </div>
-  <div
-    class="row q-gutter-x-sm"
-  >
-    <div
-      class="student-attempt-titles"
-    >
-      Файл с решением:
-    </div>
-    <a
-      class="student-attempt-data"
-      :href="pathToSolution"
-    >
-      {{ fileName }}
-    </a>
-  </div>
+    </q-pdfviewer>
+  </q-dialog>
 </div>
 </template>
 
 <script>
 export default {
   name: 'AttemptForStudent',
+  methods: {
+    fileDownload () {
+      const a = document.createElement('a')
+      a.href = this.problemFileURL
+      a.download = '' + this.$route.params.task_id + '.pdf'
+      a.click()
+    }
+  },
+  data () {
+    return {
+      showProblem: false
+    }
+  },
   props: {
     attemptNumber: {
       type: Number,
@@ -85,7 +99,7 @@ export default {
         return new Date(2000, 1, 1)
       }
     },
-    pathToSolution: {
+    problemFileURL: {
       type: String,
       default: 'pdfExample/OS1.pdf'
     }
