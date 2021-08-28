@@ -5,25 +5,9 @@
   <LoadingSpinner
     :loading="pageLoading"
   />
-  <q-banner
-    inline-actions
-    class="content-shadow q-my-xs"
-    v-if="mainBannerShow"
-  >
-    {{bannerMessage}}
-    <template v-slot:action>
-      <q-btn
-        no-caps
-        color="white"
-        text-color="black"
-        label="На главную"
-        @click="onMainPage"
-      />
-    </template>
-  </q-banner>
   <div
-    v-else
     class="column items-center q-py-sm q-gutter-y-sm"
+    v-if="!pageLoading"
   >
     <TaskInfo
       v-bind="problemInformation"
@@ -33,6 +17,7 @@
     />
     <div
       class="column student-table content-shadow content-background"
+      v-if="problemInformation.userStatus === 'Учитель'"
       style="padding: 10px 10px 10px 10px"
     >
       <div
@@ -74,13 +59,19 @@
         no-data-label="Задачи не найдены."
       />
     </div>
+    <q-btn
+      class="content-background"
+      label="Добавить попытку"
+      no-caps
+    >
+    </q-btn>
     <div
       class="column no-wrap q-gutter-x-sm"
-      v-if="true"
+      v-if="problemInformation.userStatus === 'Ученик'"
     >
       <div
-        class="column q-gutter-y-sm"
-        v-if="currentStudentID !== null"
+        class="column q-gutter-y-sm items-center"
+        v-if="currentStudentID === null"
       >
         <div
           class="row no-wrap full-attempt"
@@ -93,6 +84,25 @@
             v-bind="currentAttempt.teacherFeedback"
             class="content-background content-shadow full-attempt-teacher"
           />
+        </div>
+        <q-btn
+          label="Проверить попытку"
+          style="width: 25%"
+          class="content-background"
+          no-caps
+        >
+        </q-btn>
+        <div
+          class="row"
+        >
+          <q-btn
+            label="Удалить попытку"
+            no-caps
+          ></q-btn>
+          <q-btn
+            label="Редактировать попытку"
+            no-caps
+          ></q-btn>
         </div>
         <div
           class="attempt-discussion content-shadow content-background"
@@ -195,7 +205,7 @@
         v-else
         class="text-h6 content-shadow content-background student-not-selected-message"
       >
-        Пожалуйста, выберите ученика в списке слева
+        Пожалуйста, выберите ученика в списке выше
       </div>
     </div>
   </div>
@@ -269,7 +279,7 @@ import AttemptForStudent from 'components/AttemptForStudent'
 import TeacherFeedback from 'components/TeacherFeedback'
 import Commentary from 'components/Commentary'
 import LoadingSpinner from 'components/LoadingSpinner'
-import { Constants } from 'boot/Constants'
+import { Constants, toLocalDate } from 'boot/Constants'
 export default {
   name: 'TaskT',
   components: { LoadingSpinner, TaskInfo, AttemptForStudent, TeacherFeedback, Commentary },
@@ -277,13 +287,8 @@ export default {
     return {
       pageLoading: false,
       listLoading: false,
-      mainBannerShow: null,
       sunsetTaskDialogShow: false,
-      bannerMessage: null,
-      problemStatus: null,
       infoDialogShow: false,
-      rejectedCommentary: '',
-      userIsTeacher: false,
       pagination: {
         sortBy: '',
         descending: false,
@@ -357,30 +362,53 @@ export default {
     }
   },
   methods: {
-    onMainPage () {
-      this.$router.push('/')
+    async firstStep (currentUserID, currentProblemID) {
+      const getParams = new URLSearchParams()
+      getParams.append('userID', currentUserID)
+      const response = await fetch(
+        Constants.SERVER_URL + '/api/problem/' + currentProblemID + '?' + getParams.toString(),
+        Constants.GET_INIT
+      )
+      const data = await response.json()
+      if (data.message !== 'success') {
+        throw new Error(data.message)
+      }
+      data.data.problemStartLine = toLocalDate(data.data.problemStartLine)
+      data.data.problemDeadline = toLocalDate(data.data.problemDeadline)
+      this.problemInformation = data.data
     },
-    bannerInit () {
-      this.mainBannerShow = false
-      if (this.problemStatus === 'Заблокирована') {
-        this.bannerMessage = 'Эта задача была заблокирована администратором. Автор потерял статус преподавателя.'
-        this.mainBannerShow = true
-      }
-      if (this.problemStatus === 'Отклонена') {
-        this.bannerMessage = 'Эта задача не была пропущена администраторами.' +
-        this.userIsTeacher
-          ? 'Комментарий: ' + this.rejectedCommentary
-          : ''
-        this.mainBannerShow = true
-      }
-      if (this.problemStatus === 'Скрыта' && !this.userIsTeacher) {
-        this.bannerMessage = 'Эта задача скрыта преподавателем. Начать решать ее сейчас не получиться.'
-        this.mainBannerShow = true
-      }
+    async uploadOfStudentsForTeacher() {
+
     }
   },
   async created () {
     this.pageLoading = true
+    while (this.$store.getters['userDataStore/userInformationGetter'] === null) {
+      await new Promise((resolve, reject) => setTimeout(resolve, 200))
+    }
+    const currentUserID = this.$store.getters['userDataStore/userInformationGetter'].id
+    const currentProblemID = this.$route.params.task_id
+    try {
+      await this.firstStep(currentUserID, currentProblemID)
+      this.pageLoading = false
+    } catch (e) {
+      console.log(e)
+      switch (e.message) {
+        case 'incorrect request':
+          await this.$router.push(Constants.AT_404)
+          break
+        case 'problem not found':
+          await this.$router.push(Constants.AT_404)
+          break
+        case 'database error':
+          await this.$router.push('/server-error')
+          break
+        default:
+          await this.$router.push('/connection-error')
+          break
+      }
+    }
+    /* this.pageLoading = true
     const getParam = new URLSearchParams()
     const currentUserID = this.$store.getters['userDataStore/userInformationGetter'].id
     const currentProblemID = this.$route.params.task_id
@@ -483,7 +511,7 @@ export default {
       }
     } catch (e) {
       await this.$router.push('/connection-error')
-    }
+    } */
   },
   watch: {
 

@@ -161,11 +161,7 @@ export default {
   },
   methods: {
     onRowClick (evt, row) {
-      const role =
-        this.$store.getters['userDataStore/userInformationGetter'].id === row.problemID
-          ? 'teacher'
-          : 'student'
-      this.$router.push('/problem/' + row.problemID + '/' + role)
+      this.$router.push('/task/' + row.problemID)
     },
     fetchData (props) {
       const { page, rowsPerPage, sortBy, descending } =

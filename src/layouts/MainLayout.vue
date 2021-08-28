@@ -198,23 +198,23 @@ export default {
       isAuthenticated: false
     }
   },
-  created () {
+  async created () {
     // Восстановление данных после перезагрузки страницы
     // Если пришла ошибка, сервер удалит cookie
     // Фронт удалит CSRF токен. По итогу произойдет операция logout
     if (window.localStorage.getItem('csrfToken') && !Constants.DEV_MODE) {
-      fetch(Constants.SERVER_URL + '/api/restore-data', Constants.GET_INIT).then(
-        response => response.json()
-      ).then(
-        data => {
-          if (data.message === 'success') {
-            this.$store.dispatch('userDataStore/setUserInformation', data.userData)
-          } else {
-            localStorage.removeItem('session-token')
-            this.$router.push('/login')
-          }
+      try {
+        const response = await fetch(Constants.SERVER_URL + '/api/restore-data', Constants.GET_INIT)
+        const data = await response.json()
+        if (data.message === 'success') {
+          await this.$store.dispatch('userDataStore/setUserInformation', data.userData)
+        } else {
+          localStorage.removeItem('session-token')
+          await this.$router.push('/login')
         }
-      )
+      } catch {
+        await this.$router.push('/connection-error')
+      }
     }
   },
   methods: {

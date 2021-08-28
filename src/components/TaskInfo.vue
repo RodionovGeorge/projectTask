@@ -17,13 +17,13 @@
         @click="onEditTaskClick"
       />
       <q-btn
-        v-if="!taskActive"
+        v-if="problemStatus === 'Скрыта'"
         flat
         icon="bi-sunrise"
         @click="onSunriseClick"
       />
       <q-btn
-        v-else
+        v-if="problemStatus === 'Принята'"
         flat
         icon="bi-sunset"
         @click="onSunsetClick"
@@ -37,7 +37,7 @@
           Название задачи
         </td>
         <td>
-          {{problemTitle}}
+          {{ problemTitle }}
         </td>
       </tr>
       <tr>
@@ -84,10 +84,36 @@
       </tr>
       <tr>
         <td>
+          Статус задачи
+        </td>
+        <td>
+          {{problemStatus}}
+        </td>
+      </tr>
+      <tr
+        v-if="userStatus === 'Учитель' && problemStatus === 'Отклонена'"
+      >
+        <td>
+          Комментарий администратора
+        </td>
+        <td>
+          {{problemRejectionReason}}
+        </td>
+      </tr>
+      <tr>
+        <td>
           Сложность
         </td>
         <td>
-          {{ problemComplexity }}
+          {{ problemStatus === 'Проверяется' ? '-' : problemComplexity }}
+        </td>
+      </tr>
+      <tr>
+        <td>
+          Комментарий преподавателя
+        </td>
+        <td>
+          {{authorCommentary}}
         </td>
       </tr>
       <tr>
@@ -149,55 +175,52 @@ export default {
     }
   },
   props: {
+    userStatus: {
+      type: String,
+      required: true
+    },
     authorAvatarPath: {
       type: String,
       default: 'https://cdn.quasar.dev/img/boy-avatar.png'
     },
+    problemStatus: {
+      type: String
+    },
     authorFullName: {
-      type: String,
-      default: 'Родионов Георгий Витальевич'
+      type: String
     },
     authorGroup: {
-      type: String,
-      default: '-1'
+      type: String
     },
     authorCommentary: {
-      type: String,
-      default: '123 123 123 123123 123 123 123123 123 123 123123 123 123 123123 123 123 123123 123 123 123'
+      type: String
     },
     problemPath: {
-      type: String,
-      default: 'pdfExample/OS1.pdf'
-    },
-    problemHidden: {
-      type: Boolean,
-      default: false
+      type: String
     },
     problemTitle: {
-      type: String,
-      default: 'ИДЗ по алгебре'
+      type: String
     },
     problemStartLine: {
-      type: String,
-      default: '12.12.2021'
+      type: String
     },
     problemDeadline: {
-      type: String,
-      default: '24.12.2021'
+      type: String
     },
     problemDiscipline: {
-      type: String,
-      default: 'Алгебра и геометрия'
+      type: String
     },
     problemComplexity: {
-      type: String,
-      default: 'Средняя'
+      type: String
+    },
+    problemRejectionReason: {
+      type: String
     }
   },
   methods: {
     fileDownload () {
       const a = document.createElement('a')
-      a.href = this.problemFileURL
+      a.href = this.problemPath
       a.download = '' + this.$route.params.task_id + '.pdf'
       a.click()
     },
