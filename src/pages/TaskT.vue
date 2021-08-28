@@ -376,9 +376,6 @@ export default {
       data.data.problemStartLine = toLocalDate(data.data.problemStartLine)
       data.data.problemDeadline = toLocalDate(data.data.problemDeadline)
       this.problemInformation = data.data
-    },
-    async uploadOfStudentsForTeacher() {
-
     }
   },
   async created () {

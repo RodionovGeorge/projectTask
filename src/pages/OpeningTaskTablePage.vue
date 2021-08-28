@@ -230,6 +230,7 @@ export default {
       fetch(Constants.SERVER_URL + '/api/admitting-problem/-1',
         {
           method: 'POST',
+          credentials: 'same-origin',
           headers: Constants.HEADERS,
           body: JSON.stringify(data)
         }
@@ -261,41 +262,50 @@ export default {
       )
     }
   },
-  created () {
-    this.data = null
-    this.loading = true
-    const data = {
-      currentPage: this.pagination.page,
-      pageSize: this.pagination.rowsPerPage,
-      filterField: 'problemTitle',
-      filterValue: this.filter,
-      sortField: this.pagination.sortBy,
-      sortDirection: this.pagination.descending ? 'desc' : 'asc'
-    }
-    fetch(Constants.SERVER_URL + '/api/admitting-problem/-1',
-      {
-        method: 'POST',
-        headers: Constants.HEADERS,
-        body: JSON.stringify(data)
+  async created () {
+    try {
+      this.data = null
+      this.loading = true
+      const requestData = {
+        currentPage: this.pagination.page,
+        pageSize: this.pagination.rowsPerPage,
+        filterField: 'problemTitle',
+        filterValue: this.filter,
+        sortField: this.pagination.sortBy,
+        sortDirection: this.pagination.descending ? 'desc' : 'asc'
       }
-    ).then(
-      response => response.json()
-    ).then(
-      data => {
-        if (data.message === 'success') {
+      while (this.$store.getters['userDataStore/userInformationGetter'] === null) {
+        await new Promise((resolve, reject) => setTimeout(resolve, 200))
+      }
+      const response = await fetch(Constants.SERVER_URL + '/api/admitting-problem/-1',
+        {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: Constants.HEADERS,
+          body: JSON.stringify(requestData)
+        }
+      )
+      const data = await response.json()
+      switch (data.message) {
+        case 'success':
           this.pagination.rowsNumber = data.problemCount
           this.data = data.problems
           this.timeToLocal()
           this.loading = false
-        } else {
-          this.$router.push('/server-error')
-        }
+          break
+        case 'permission denied':
+          await this.$router.push('/permission error')
+          break
+        case 'need authentication':
+          await this.$router.push('/login')
+          break
+        default:
+          await this.$router.push('/server-error')
+          break
       }
-    ).catch(
-      () => {
-        this.$router.push('/connection-error')
-      }
-    )
+    } catch {
+      await this.$router.push('/connection-error')
+    }
   }
 }
 </script>

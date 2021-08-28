@@ -23,7 +23,6 @@
         outlined
         :rules="[val => !!val || 'Пожалуйста, введите вашу фамилию']"
         class="registration-field"
-        color="black"
       />
       <q-input
         v-model="userFirstName"
@@ -32,7 +31,6 @@
         outlined
         :rules="[val => !!val || 'Пожалуйста, введите ваше имя']"
         class="registration-field"
-        color="black"
       />
       <q-input
         v-model="userMiddleName"
@@ -41,7 +39,6 @@
         outlined
         :rules="[val => !!val || 'Пожалуйста, введите ваше отчество']"
         class="registration-field"
-        color="black"
       />
       <q-input
         v-model="userEmail"
@@ -50,7 +47,6 @@
         outlined
         :rules="[val => !!val || 'Пожалуйста, введите ваш email', val => val.length < 50 || 'Пароль слишком длинный!']"
         class="registration-field"
-        color="black"
       />
       <q-input
         v-model="userPassword"
@@ -60,7 +56,6 @@
         type="password"
         :rules="[val => !!val || 'Пожалуйста, введите пароль']"
         class="registration-field"
-        color="black"
       />
       <q-input
         v-model="userGroup"
@@ -70,7 +65,6 @@
         :rules="[val => val.length === 4 || 'Номер группы состоит из 4 символов']"
         label="Учебная группа (если есть)"
         class="registration-field"
-        color="black"
       />
       <q-btn
         label="Зарегистрироваться"
@@ -103,7 +97,6 @@
         :rules="[val => !!val || 'Пожалуйста, введите проверочный код']"
         label="Код из письма"
         class="registration-field"
-        color="black"
       />
       <div
         style="display:flex; justify-content: space-between; width: 100%"

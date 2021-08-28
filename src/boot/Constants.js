@@ -39,7 +39,9 @@ const Constants = {
     'not author': 'Вы не являетесь автором этой задачи.',
     'problem not found': 'Задача не найдена.',
     'not admin': 'Вы не являетесь администратором.',
-    'problem already admitted': 'Проблема уже была оценена'
+    'problem already admitted': 'Проблема уже была оценена.',
+    'permission denied': 'Нет доступа.',
+    'need authentication': 'Ошибка авторизации. Пожалуйста, обновите страницу.'
   },
   PATHS_WITHOUT_AUTHENTICATION: [
     '/login',

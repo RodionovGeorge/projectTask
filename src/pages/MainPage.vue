@@ -183,6 +183,7 @@ export default {
       fetch(Constants.SERVER_URL + '/api/problem/-1',
         {
           method: 'POST',
+          credentials: 'same-origin',
           headers: Constants.HEADERS,
           body: JSON.stringify(data)
         }
@@ -216,43 +217,47 @@ export default {
       )
     }
   },
-  created () {
-    this.data = null
-    this.pageLoading = true
-    const data = {
-      currentPage: this.pagination.page,
-      pageSize: this.pagination.rowsPerPage,
-      filterField: 'problemTitle',
-      filterValue: this.filter,
-      sortField: this.pagination.sortBy,
-      sortDirection: this.pagination.descending ? 'desc' : 'asc'
-    }
-    fetch(Constants.SERVER_URL + '/api/problem/-1',
-      {
-        method: 'POST',
-        headers: Constants.HEADERS,
-        body: JSON.stringify(data)
+  async created () {
+    try {
+      this.data = null
+      this.pageLoading = true
+      const requestData = {
+        currentPage: this.pagination.page,
+        pageSize: this.pagination.rowsPerPage,
+        filterField: 'problemTitle',
+        filterValue: this.filter,
+        sortField: this.pagination.sortBy,
+        sortDirection: this.pagination.descending ? 'desc' : 'asc'
       }
-    ).then(
-      response => response.json()
-    ).then(
-      data => {
-        if (data.message === 'success') {
-          this.pagination.rowsNumber = data.problemCount
-          for (let i = 0; i < data.problems.length; i++) {
-            data.problems[i].authorGroup = data.problems[i].authorGroup === '-1' ? '-' : data.problems[i].authorGroup
-          }
-          this.data = data.problems
-          this.pageLoading = false
+      while (this.$store.getters['userDataStore/userInformationGetter'] === null) {
+        await new Promise((resolve, reject) => setTimeout(resolve, 200))
+      }
+      const response = await fetch(Constants.SERVER_URL + '/api/problem/-1',
+        {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: Constants.HEADERS,
+          body: JSON.stringify(requestData)
+        }
+      )
+      const data = await response.json()
+      if (data.message === 'success') {
+        this.pagination.rowsNumber = data.problemCount
+        for (let i = 0; i < data.problems.length; i++) {
+          data.problems[i].authorGroup = data.problems[i].authorGroup === '-1' ? '-' : data.problems[i].authorGroup
+        }
+        this.data = data.problems
+        this.pageLoading = false
+      } else {
+        if (data.message === 'need authentication') {
+          await this.$router.push('/login')
         } else {
-          this.$router.push('/server-error')
+          await this.$router.push('/server-error')
         }
       }
-    ).catch(
-      () => {
-        this.$router.push('/connection-error')
-      }
-    )
+    } catch {
+      await this.$router.push('/connection-error')
+    }
   }
 }
 </script>

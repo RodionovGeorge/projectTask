@@ -18,6 +18,7 @@ const routes = [
       { path: '/new-task', component: () => import('pages/NewTaskPage') },
       { path: '/connection-error', component: () => import('pages/ConnectionErrorPage') },
       { path: '/server-error', component: () => import('pages/Error500') },
+      { path: '/permission-error', component: () => import('pages/Error403') },
       {
         path: '/task-opening',
         component: () => import('pages/OpeningTaskTablePage'),

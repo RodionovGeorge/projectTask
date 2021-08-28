@@ -176,8 +176,9 @@ export default {
             startDate: date.extractDate(this.dateRange.from, 'YYYY/MM/DD'),
             endDate: date.extractDate(this.dateRange.to, 'YYYY/MM/DD')
           }
-          fetch(Constants.SERVER_URL + '/api/problem-editing', {
+          fetch(Constants.SERVER_URL + '/api/add-problem', {
             method: 'POST',
+            credentials: 'same-origin',
             headers: Constants.HEADERS,
             body: JSON.stringify(data)
           }).then(
@@ -188,14 +189,8 @@ export default {
                 localStorage.setItem('csrfToken', data.csrfToken)
                 this.$router.go(-1)
               } else {
-                if (data.message === 'need authentication') {
-                  window.localStorage.removeItem('csrfToken')
-                  this.$store.dispatch('userDataStore/dropUserInformation')
-                  this.$router.push('/login')
-                } else {
-                  this.errorMessage = Constants.ERROR_MESSAGES[data.message]
-                  this.errorDialogShow = true
-                }
+                this.errorMessage = Constants.ERROR_MESSAGES[data.message]
+                this.errorDialogShow = true
               }
               this.submitting = false
             }
@@ -203,6 +198,7 @@ export default {
             () => {
               this.errorMessage = 'Нет соединения.'
               this.errorDialogShow = true
+              this.submitting = false
             }
           )
         }).catch(() => {
@@ -211,6 +207,11 @@ export default {
           this.submitting = false
         })
       }
+    }
+  },
+  async created () {
+    while (this.$store.getters['userDataStore/userInformationGetter'] === null) {
+      await new Promise((resolve, reject) => setTimeout(resolve, 200))
     }
   }
 }

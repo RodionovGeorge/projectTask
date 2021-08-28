@@ -12,18 +12,19 @@
         Описание задачи
       </div>
       <q-btn
+        v-if="userStatus === 'Учитель'"
         flat
         icon="bi-gear"
         @click="onEditTaskClick"
       />
       <q-btn
-        v-if="problemStatus === 'Скрыта'"
+        v-if="problemStatus === 'Скрыта' && userStatus === 'Учитель'"
         flat
         icon="bi-sunrise"
         @click="onSunriseClick"
       />
       <q-btn
-        v-if="problemStatus === 'Принята'"
+        v-if="problemStatus === 'Принята' && userStatus === 'Учитель'"
         flat
         icon="bi-sunset"
         @click="onSunsetClick"
@@ -106,14 +107,6 @@
         </td>
         <td>
           {{ problemStatus === 'Проверяется' ? '-' : problemComplexity }}
-        </td>
-      </tr>
-      <tr>
-        <td>
-          Комментарий преподавателя
-        </td>
-        <td>
-          {{authorCommentary}}
         </td>
       </tr>
       <tr>

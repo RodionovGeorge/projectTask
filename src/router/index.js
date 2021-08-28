@@ -51,7 +51,7 @@ export default function (/* { store, ssrContext } */) {
           } else {
             if (!Constants.PATHS_WITHOUT_AUTHENTICATION.includes(to.path)) {
               localStorage.removeItem('csrfToken')
-              store().dispatch('userDataStore/dropUserInformation')
+              await store().dispatch('userDataStore/dropUserInformation')
               next('/login')
             } else {
               next()

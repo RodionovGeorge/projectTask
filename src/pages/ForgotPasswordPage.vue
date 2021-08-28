@@ -315,6 +315,7 @@ export default {
           headers: Constants.HEADERS,
           body: JSON.stringify({
             email: this.userEmail,
+            code: this.userCode,
             password: this.userNewPassword
           })
         }).then(

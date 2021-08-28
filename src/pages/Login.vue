@@ -166,6 +166,10 @@ export default {
             }
             this.enterSubmitting = false
           }
+        ).catch(
+          () => {
+            this.$router.push('/connection-error')
+          }
         )
       }
     }

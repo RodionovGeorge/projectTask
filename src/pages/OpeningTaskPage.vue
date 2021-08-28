@@ -292,7 +292,7 @@ export default {
           if (data.message === 'success') {
             this.authorFullName = data.data.authorFullname
             this.authorGroup = data.data.authorGroup
-            this.problemFileURL = Constants.SERVER_URL + '/' + data.data.problemURL
+            this.problemFileURL = data.data.problemURL
             this.authorCommentary = data.data.authorCommentary
             this.problemTitle = data.data.problemTitle
             this.problemDiscipline = data.data.problemDiscipline
@@ -300,11 +300,17 @@ export default {
             this.endDate = toLocalDate(data.data.problemDeadline)
           } else {
             switch (data.message) {
+              case 'permission denied':
+                this.$router.push('/permission-error')
+                break
               case 'problem not found':
                 this.$router.push('/123')
                 break
               case 'problem already admitted':
                 this.problemAlreadyAdmitted = true
+                break
+              case 'need authentication':
+                this.$router.push('/login')
                 break
               case 'database error':
                 this.$router.push('/server-error')
@@ -340,14 +346,9 @@ export default {
             window.localStorage.setItem('csrfToken', data.csrfToken)
             this.$router.go(-1)
           } else {
-            if (data.message === 'need authentication') {
-              window.localStorage.removeItem('csrfToken')
-              this.$store.dispatch('userDataStore/dropUserInformation')
-              this.$router.push('/login')
-            } else {
-              this.errorMessage = Constants.ERROR_MESSAGES[data.message]
-              this.errorDialogShow = true
-            }
+            console.log(data.message)
+            this.errorMessage = Constants.ERROR_MESSAGES[data.message]
+            this.errorDialogShow = true
           }
           this.submitting = false
         }
@@ -359,7 +360,10 @@ export default {
       )
     }
   },
-  created () {
+  async created () {
+    while (this.$store.getters['userDataStore/userInformationGetter'] === null) {
+      await new Promise((resolve, reject) => setTimeout(resolve, 200))
+    }
     this.fetchData()
   },
   watch: {

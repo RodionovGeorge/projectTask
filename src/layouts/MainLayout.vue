@@ -42,6 +42,7 @@
             padding
           >
             <q-item
+              to="/"
               clickable
               v-ripple
             >
@@ -75,7 +76,7 @@
               </q-item-section>
             </q-item>
 
-            <q-item
+            <!-- <q-item
               active
               clickable
               v-ripple
@@ -90,7 +91,7 @@
               <q-item-section>
                 Профиль
               </q-item-section>
-            </q-item>
+            </q-item> -->
 
             <q-item
               clickable
@@ -209,7 +210,7 @@ export default {
         if (data.message === 'success') {
           await this.$store.dispatch('userDataStore/setUserInformation', data.userData)
         } else {
-          localStorage.removeItem('session-token')
+          localStorage.removeItem('csrfToken')
           await this.$router.push('/login')
         }
       } catch {
@@ -233,7 +234,7 @@ export default {
       return this.$store.getters['userDataStore/userInformationGetter']
     },
     isTeacher () {
-      return this.userInformation.roles.includes('Teacher')
+      return this.userInformation.roles.includes('Учитель')
     }
   }
 }
