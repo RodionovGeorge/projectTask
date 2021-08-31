@@ -1,6 +1,6 @@
 <template>
   <q-dialog
-    v-model="errorDialogShow"
+    v-model="show"
     persistent
     transition-show="scale"
     transition-hide="scale"
@@ -30,7 +30,7 @@
         <q-btn
           flat
           label="OK"
-          v-close-popup
+          @click="off"
         />
       </q-card-actions>
     </q-card>
@@ -55,6 +55,16 @@ export default {
       type: String,
       required: true,
       default: ''
+    }
+  },
+  methods: {
+    off () {
+      this.$emit('off')
+    }
+  },
+  computed: {
+    show () {
+      return this.pErrorDialogShow
     }
   }
 }

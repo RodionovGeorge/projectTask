@@ -99,10 +99,7 @@ export default {
       default: '-'
     },
     checkDate: {
-      type: Date,
-      default: function () {
-        return new Date(2000, 1, 1)
-      }
+      type: String
     },
     problemFileURL: {
       type: String,
@@ -114,8 +111,15 @@ export default {
     }
   },
   computed: {
+    cCheckDate () {
+      return this.checkDate ? new Date(this.checkDate) : null
+    },
     localeCheckDate () {
-      return this.checkDate.toLocaleDateString() + ' ' + this.checkDate.toLocaleTimeString()
+      const x = this.checkDate
+      return x
+        ? x.getDate() + '/' + ((x.getMonth() + 1) < 10 ? '' + 0 + (x.getMonth() + 1) : (x.getMonth() + 1)) +
+          '/' + x.getFullYear() + ' ' + x.getHours() + ':' + x.getMinutes()
+        : '-'
     }
   }
 }

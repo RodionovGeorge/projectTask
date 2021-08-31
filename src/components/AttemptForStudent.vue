@@ -94,10 +94,7 @@ export default {
       default: 'Проверяется'
     },
     dateOfLastChange: {
-      type: Date,
-      default: function () {
-        return new Date(2000, 1, 1)
-      }
+      type: String
     },
     problemFileURL: {
       type: String,
@@ -105,11 +102,13 @@ export default {
     }
   },
   computed: {
-    localeDateOfLastChange () {
-      return this.dateOfLastChange.toLocaleDateString() + ' ' + this.dateOfLastChange.toLocaleTimeString()
+    cDateOfLastChange () {
+      return new Date(this.dateOfLastChange)
     },
-    fileName () {
-      return this.pathToSolution.substr(this.pathToSolution.lastIndexOf('/') + 1)
+    localeDateOfLastChange () {
+      const x = this.cDateOfLastChange
+      return x.getDate() + '/' + ((x.getMonth() + 1) < 10 ? '' + 0 + (x.getMonth() + 1) : (x.getMonth() + 1)) +
+        '/' + x.getFullYear() + ' ' + x.getHours() + ':' + x.getMinutes()
     }
   }
 }

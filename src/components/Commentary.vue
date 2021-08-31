@@ -12,7 +12,7 @@
     </q-item-section>
     <q-item-section>
       <q-item-label>
-        {{ authorFullName }} - {{ commentaryDate }}
+        {{ authorFullName }} - {{ cDate }}
       </q-item-label>
       <q-item-label>
         {{ commentaryText }}
@@ -20,6 +20,7 @@
     </q-item-section>
     <q-item-section
       side
+      v-if="userID === authorID"
     >
       <q-btn
         icon="delete"
@@ -36,30 +37,39 @@
 export default {
   name: 'Commentary',
   props: {
+    userStatus: {
+      type: String
+    },
     commentaryID: {
-      type: Number,
-      default: 1
+      type: Number
+    },
+    authorID: {
+      type: Number
     },
     avatarPath: {
-      type: String,
-      default: 'https://cdn.quasar.dev/img/avatar2.jpg'
+      type: String
     },
     authorFullName: {
-      type: String,
-      default: 'Некто Нектович'
+      type: String
     },
     commentaryDate: {
-      type: String,
-      default: 'Четверг, 12.04.21, 21:12'
+      type: String
     },
     commentaryText: {
-      type: String,
-      default: 'Hello world!'
+      type: String
     }
   },
   methods: {
     deleted () {
       this.$emit('deleted', this.commentaryID)
+    }
+  },
+  computed: {
+    cDate () {
+      return new Date(this.commentaryDate).toLocaleDateString()
+    },
+    userID () {
+      return this.$store.getters['userDataStore/userInformationGetter'].id
     }
   }
 }

@@ -229,6 +229,7 @@
   <ErrorDialog
     :p-error-message="errorMessage"
     :p-error-dialog-show="errorDialogShow"
+    @off="errorDialogShow = false"
   />
 </q-page>
 </template>
