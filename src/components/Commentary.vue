@@ -12,7 +12,7 @@
     </q-item-section>
     <q-item-section>
       <q-item-label>
-        {{ authorFullName }} - {{ cDate }}
+        {{ authorFullName }} - {{ commentaryDateString }}
       </q-item-label>
       <q-item-label>
         {{ commentaryText }}
@@ -23,12 +23,20 @@
       v-if="userID === authorID"
     >
       <q-btn
-        icon="delete"
+        icon="bi-trash"
         dense
         flat
-        size="15px"
+        :loading="loading"
         @click="deleted"
-      />
+      >
+        <template
+          v-slot:loading
+        >
+          <q-spinner
+            :thickness="2"
+          />
+        </template>
+      </q-btn>
     </q-item-section>
   </q-item>
 </template>
@@ -46,6 +54,9 @@ export default {
     authorID: {
       type: Number
     },
+    userID: {
+      type: Number
+    },
     avatarPath: {
       type: String
     },
@@ -57,6 +68,9 @@ export default {
     },
     commentaryText: {
       type: String
+    },
+    loading: {
+      type: Boolean
     }
   },
   methods: {
@@ -66,10 +80,15 @@ export default {
   },
   computed: {
     cDate () {
-      return new Date(this.commentaryDate).toLocaleDateString()
+      return new Date(this.commentaryDate)
     },
-    userID () {
-      return this.$store.getters['userDataStore/userInformationGetter'].id
+    commentaryDateString () {
+      const x = this.cDate
+      const day = x.getDate() < 10 ? '' + 0 + x.getDate() : x.getDate()
+      const month = (x.getMonth() + 1) < 10 ? '' + 0 + (x.getMonth() + 1) : (x.getMonth() + 1)
+      const hour = x.getHours() < 10 ? '' + 0 + x.getHours() : x.getHours()
+      const minute = x.getMinutes() < 10 ? '' + 0 + x.getMinutes() : x.getMinutes()
+      return day + '/' + month + '/' + x.getFullYear() + ' ' + hour + ':' + minute
     }
   }
 }

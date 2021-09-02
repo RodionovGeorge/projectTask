@@ -41,7 +41,9 @@ const Constants = {
     'not admin': 'Вы не являетесь администратором.',
     'problem already admitted': 'Проблема уже была оценена.',
     'permission denied': 'Нет доступа.',
-    'need authentication': 'Ошибка авторизации. Пожалуйста, обновите страницу.'
+    'need authentication': 'Ошибка авторизации. Пожалуйста, перезайдите на сайт.',
+    'file preparing error': 'Не удалось подготовить ваш файл к передаче.',
+    'commentary not found': 'Комментарий не найден.'
   },
   PATHS_WITHOUT_AUTHENTICATION: [
     '/login',
@@ -72,7 +74,7 @@ const Constants = {
     'Средняя',
     'Сложная'
   ],
-  AT_404: 'asdfasdfdqwe'
+  AT_404: '/asdfasdfdqwe'
 }
 
 function toBase64 (file) {
@@ -80,7 +82,7 @@ function toBase64 (file) {
     const reader = new FileReader()
     reader.readAsDataURL(file)
     reader.onload = () => resolve(reader.result)
-    reader.onerror = error => reject(error)
+    reader.onerror = () => reject(new Error('file preparing error'))
   })
 }
 

@@ -19,6 +19,7 @@ const routes = [
       { path: '/connection-error', component: () => import('pages/ConnectionErrorPage') },
       { path: '/server-error', component: () => import('pages/Error500') },
       { path: '/permission-error', component: () => import('pages/Error403') },
+      { path: '*', component: () => import('pages/Error404.vue') },
       {
         path: '/task-opening',
         component: () => import('pages/OpeningTaskTablePage'),
@@ -48,13 +49,6 @@ const routes = [
         }
       }
     ]
-  },
-
-  // Always leave this as last one,
-  // but you can also remove it
-  {
-    path: '*',
-    component: () => import('pages/Error404.vue')
   }
 ]
 

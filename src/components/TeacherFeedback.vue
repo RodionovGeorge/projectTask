@@ -3,9 +3,19 @@
   class="column no-wrap teacher-feedback"
 >
   <div
-    class="text-h6"
+    class="row"
+    style="justify-content: space-between"
   >
-    Отзыв
+    <div
+      class="text-h6"
+    >
+      Отзыв
+    </div>
+    <q-btn
+      icon="bi-trash"
+      flat
+      dense
+    />
   </div>
   <table
     class="teacher-feedback-table"
@@ -116,9 +126,15 @@ export default {
     },
     localeCheckDate () {
       const x = this.checkDate
+      let day, month, hour, minute
+      if (x) {
+        day = x.getDate() < 10 ? '' + 0 + x.getDate() : x.getDate()
+        month = (x.getMonth() + 1) < 10 ? '' + 0 + (x.getMonth() + 1) : (x.getMonth() + 1)
+        hour = x.getHours() < 10 ? '' + 0 + x.getHours() : x.getHours()
+        minute = x.getMinutes() < 10 ? '' + 0 + x.getMinutes() : x.getMinutes()
+      }
       return x
-        ? x.getDate() + '/' + ((x.getMonth() + 1) < 10 ? '' + 0 + (x.getMonth() + 1) : (x.getMonth() + 1)) +
-          '/' + x.getFullYear() + ' ' + x.getHours() + ':' + x.getMinutes()
+        ? day + '/' + month + '/' + x.getFullYear() + ' ' + hour + ':' + minute
         : '-'
     }
   }

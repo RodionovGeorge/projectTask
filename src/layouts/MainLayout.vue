@@ -219,14 +219,11 @@ export default {
     }
   },
   methods: {
-    onLogout () {
-      fetch(Constants.SERVER_URL + '/api/logout', Constants.GET_INIT).then(
-        response => {
-          window.localStorage.removeItem('csrfToken')
-          this.$store.dispatch('userDataStore/dropUserInformation')
-          this.$router.push('/login')
-        }
-      )
+    async onLogout () {
+      await fetch(Constants.SERVER_URL + '/api/logout', Constants.GET_INIT)
+      window.localStorage.removeItem('csrfToken')
+      await this.$store.dispatch('userDataStore/dropUserInformation')
+      await this.$router.push('/login')
     }
   },
   computed: {

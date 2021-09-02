@@ -3,9 +3,19 @@
   class="column no-wrap student-attempt"
 >
   <div
-    class="text-h6"
+    class="row"
+    style="justify-content: space-between"
   >
-    Попытка
+    <div
+      class="text-h6"
+    >
+      Попытка
+    </div>
+    <q-btn
+      icon="bi-trash"
+      dense
+      flat
+    />
   </div>
   <table
     class="student-attempt-table"
@@ -107,8 +117,11 @@ export default {
     },
     localeDateOfLastChange () {
       const x = this.cDateOfLastChange
-      return x.getDate() + '/' + ((x.getMonth() + 1) < 10 ? '' + 0 + (x.getMonth() + 1) : (x.getMonth() + 1)) +
-        '/' + x.getFullYear() + ' ' + x.getHours() + ':' + x.getMinutes()
+      const day = x.getDate() < 10 ? '' + 0 + x.getDate() : x.getDate()
+      const month = (x.getMonth() + 1) < 10 ? '' + 0 + (x.getMonth() + 1) : (x.getMonth() + 1)
+      const hour = x.getHours() < 10 ? '' + 0 + x.getHours() : x.getHours()
+      const minute = x.getMinutes() < 10 ? '' + 0 + x.getMinutes() : x.getMinutes()
+      return day + '/' + month + '/' + x.getFullYear() + ' ' + hour + ':' + minute
     }
   }
 }

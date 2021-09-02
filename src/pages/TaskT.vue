@@ -11,13 +11,14 @@
   >
     <TaskInfo
       v-bind="problemInformation"
+      :loading="statusChangeLoading"
       class="content-background content-shadow"
-      @sunset="sunsetTaskDialogShow = true"
+      @status-change="wdStatusChange"
       @edit="editTaskDialogShow = true"
     />
     <div
       class="column student-table content-shadow content-background"
-      v-if="problemInformation.userStatus === 'Учитель'"
+      v-if="isTeacher"
       style="padding: 10px 10px 10px 10px"
     >
       <div
@@ -28,7 +29,7 @@
           outlined
           square
           style="width: 90%; margin-right: 5px"
-          @input="exceptionHandler"
+          @input="wdUpdateSessionTable"
           debounce="1000"
           label="Поиск"
         >
@@ -51,10 +52,12 @@
         square
         flat
         bordered
-        @request="exceptionHandler"
+        @request="wdUpdateSessionTable"
+        @row-click="wdOnRowClick"
         :columns="columns"
         :visible-columns="visibleColumns"
         :pagination.sync="pagination"
+        :loading="listLoading"
         :rows-per-page-options="pagination.rowsPerPage"
         row-key="sessionID"
         :data="sessionData"
@@ -70,7 +73,7 @@
     />
     <div
       class="column no-wrap q-gutter-x-sm"
-      v-if="problemInformation.userStatus === 'Ученик'"
+      v-if="problemInformation.userStatus === 'Ученик' || (isTeacher && currentSessionID)"
     >
       <div
         class="column q-gutter-y-sm items-center"
@@ -88,14 +91,14 @@
           />
         </div>
         <q-btn
-          v-if="problemInformation.userStatus === 'Учитель' && currentAttempt.studentAttempt.checkStatus === 'Проверяется'"
+          v-if="isTeacher && currentAttempt.studentAttempt.checkStatus === 'Проверяется'"
           label="Проверить попытку"
           style="width: 25%"
           class="content-background"
           no-caps
         >
         </q-btn>
-        <div
+        <!-- <div
           class="row content-shadow content-background"
         >
           <q-btn
@@ -115,7 +118,7 @@
             label="Редактировать попытку"
             no-caps
           ></q-btn>
-        </div>
+        </div> -->
         <div
           class="attempt-discussion content-shadow content-background"
         >
@@ -135,32 +138,36 @@
                 v-slot="{ item }"
               >
                 <Commentary
-                  :author-full-name="item.authorID === userID ? teacherInfo.fullName : studentInfo.fullName"
+                  :author-full-name="!(isTeacher ? (item.authorID !== userID) : (item.authorID === userID)) ? teacherInfo.fullName : studentInfo.fullName"
                   :author-i-d="item.authorID"
-                  :avatar-path="item.authorID === userID ? teacherInfo.fullName : studentInfo.fullName"
+                  :avatar-path="!(isTeacher ? (item.authorID !== userID) : (item.authorID === userID)) ? teacherInfo.avatarPath : studentInfo.avatarPath"
                   :commentary-date="item.commentaryDate"
                   :commentary-i-d="item.commentaryID"
                   :commentary-text="item.commentaryText"
                   :user-status="problemInformation.userStatus"
+                  :loading="deleteCommentaryLoading"
+                  :user-i-d="userID"
+                  @deleted="wdDeleteCommentary"
                 />
               </template>
             </q-virtual-scroll>
             <div
               class="row"
-              style="width: 840px; display: flex; justify-content: space-between; padding-right: 10px"
+              style="width: 840px; padding-right: 10px"
             >
               <q-input
                 v-model="currentCommentary"
                 autogrow
+                v-on:keydown.enter.prevent="wdAddNewCommentary"
+                :loading="newCommentaryLoading"
                 outlined
                 placeholder="Напишите комментарий"
-                color="black"
-                style="width:700px"
+                style="width: 100%"
               />
-              <q-btn
+              <!-- <q-btn
                 label="Отправить"
                 style="height: 50px; width:100px"
-              />
+              /> -->
             </div>
           </div>
         </div>
@@ -211,13 +218,14 @@
                     v-slot="{ item }"
                   >
                     <Commentary
-                      :author-full-name="item.authorID === userID ? teacherInfo.fullName : studentInfo.fullName"
+                      :author-full-name="!(isTeacher ? (item.authorID !== userID) : (item.authorID === userID)) ? teacherInfo.fullName : studentInfo.fullName"
                       :author-i-d="item.authorID"
-                      :avatar-path="item.authorID === userID ? teacherInfo.fullName : studentInfo.fullName"
+                      :avatar-path="!(isTeacher ? (item.authorID !== userID) : (item.authorID === userID)) ? teacherInfo.avatarPath : studentInfo.avatarPath"
                       :commentary-date="item.commentaryDate"
                       :commentary-i-d="item.commentaryID"
                       :commentary-text="item.commentaryText"
                       :user-status="problemInformation.userStatus"
+                      :user-i-d="userID"
                     />
                   </template>
                 </q-virtual-scroll>
@@ -310,7 +318,7 @@
       </q-card-actions>
     </q-card>
   </q-dialog>
-  <q-dialog
+  <!-- <q-dialog
     v-model="sunsetTaskDialogShow"
     persistent
   >
@@ -333,7 +341,6 @@
       <q-card-actions
         align="right"
       >
-        <!-- Добавить события на сокрытие задачи -->
         <q-btn
           flat
           label="Отмена"
@@ -348,7 +355,7 @@
         />
       </q-card-actions>
     </q-card>
-  </q-dialog>
+  </q-dialog> -->
 </q-page>
 </template>
 
@@ -367,8 +374,10 @@ export default {
     return {
       pageLoading: false,
       listLoading: false,
+      deleteCommentaryLoading: false,
+      statusChangeLoading: false,
+      newCommentaryLoading: false,
       newAttemptLoading: false,
-      sunsetTaskDialogShow: false,
       newAttemptDialogShow: false,
       infoDialogShow: false,
       errorDialogShow: false,
@@ -410,6 +419,11 @@ export default {
           field: 'sessionHaveNewContentForTeacher'
         }
       ],
+      // Из-за механизма обработки ошибок это поле может принимать
+      // либо значение false, когда преподаватель ничего не выбрал или при выборе произошла ошибка
+      // либо числовое значние, когда все в порядке
+      currentSessionID: false,
+      userID: null,
       teacherInfo: {
         avatarPath: null,
         fullName: null
@@ -455,11 +469,117 @@ export default {
     }
   },
   methods: {
-    addNewAttempt () {
+    async statusChange (...args) {
+      this.statusChangeLoading = true
+      const requestData = {
+        csrfToken: window.localStorage.getItem('csrfToken'),
+        problemID: this.problemInformation.problemID,
+        newStatusTitle: args[0][0]
+      }
+      const response = await fetch(Constants.SERVER_URL + '/api/hide-status', {
+        method: 'PATCH',
+        credentials: 'same-origin',
+        headers: Constants.HEADERS,
+        body: JSON.stringify(requestData)
+      })
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      }
+      this.problemInformation.problemStatus = responseData.newStatus
+      window.localStorage.setItem('csrfToken', responseData.csrfToken)
+      this.statusChangeLoading = false
+    },
+    wdStatusChange: null,
+    async deleteCommentary (...args) {
+      this.deleteCommentaryLoading = true
+      const requestData = {
+        csrfToken: window.localStorage.getItem('csrfToken'),
+        commentaryID: args[0][0]
+      }
+      const response = await fetch(Constants.SERVER_URL + '/api/commentary-editing', {
+        method: 'PUT',
+        credentials: 'same-origin',
+        headers: Constants.HEADERS,
+        body: JSON.stringify(requestData)
+      })
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      }
+      let index = this.currentAttempt.commentaries.findIndex((e, i, a) => e.commentaryID === requestData.commentaryID)
+      if (~index) {
+        this.currentAttempt.commentaries.splice(index, 1)
+      } else {
+        index = this.previousAttempt.commentaries.findIndex((e, i, a) => e.commentaryID === requestData.commentaryID)
+        this.previousAttempt.commentaries.splice(index, 1)
+      }
+      window.localStorage.setItem('csrfToken', responseData.csrfToken)
+      this.deleteCommentaryLoading = false
+    },
+    wdDeleteCommentary: null,
+    async addNewCommentary (...args) {
+      this.newCommentaryLoading = true
+      const requestData = {
+        csrfToken: window.localStorage.getItem('csrfToken'),
+        attemptID: this.currentAttempt.attemptID,
+        commentaryText: this.currentCommentary
+      }
+      const response = await fetch(Constants.SERVER_URL + '/api/commentary-editing', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: Constants.HEADERS,
+        body: JSON.stringify(requestData)
+      })
+      const data = await response.json()
+      if (data.message !== 'success') {
+        throw new Error(data.message)
+      }
+      window.localStorage.setItem('csrfToken', data.csrfToken)
+      this.currentAttempt.commentaries.push({
+        authorID: this.userID,
+        commentaryText: this.currentCommentary,
+        commentaryDate: data.commentaryTime,
+        commentaryID: data.commentaryID
+      })
+      this.currentCommentary = ''
+      this.newCommentaryLoading = false
+    },
+    wdAddNewCommentary: null,
+    async addNewAttempt (...args) {
       const fileInputCheck = this.$refs.filePicker.validate()
       if (fileInputCheck) {
         this.newAttemptLoading = true
-        toBase64(this.newAttemptFile).then(
+        const fileForTransmitting = await toBase64(this.newAttemptFile)
+        const data = {
+          csrfToken: window.localStorage.getItem('csrfToken'),
+          file: fileForTransmitting.substring(fileForTransmitting.indexOf(',') + 1),
+          fileMIMEType: this.newAttemptFile.type,
+          problemID: this.$route.params.task_id
+        }
+        const response = await fetch(Constants.SERVER_URL + '/api/attempt-editing', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: Constants.HEADERS,
+          body: JSON.stringify(data)
+        })
+        const responseData = await response.json()
+        if (responseData.message !== 'success') {
+          throw new Error(responseData.message)
+        }
+        Object.assign(this.previousAttempt, this.currentAttempt)
+        this.currentPreviousAttemptNumber = this.attemptMaxNumber
+        this.currentAttempt.attemptID = responseData.attemptID
+        this.currentAttempt.attemptID = responseData.attemptID
+        this.currentAttempt.teacherFeedback = null
+        this.currentAttempt.commentaries = []
+        this.currentAttempt.studentAttempt = responseData.attempt
+        this.problemInformation.userStatus = 'Ученик'
+        this.attemptMaxNumber++
+        window.localStorage.setItem('csrfToken', responseData.csrfToken)
+        this.newAttemptDialogShow = false
+        this.newAttemptLoading = false
+        /* toBase64(this.newAttemptFile).then(
           file => {
             const data = {
               csrfToken: window.localStorage.getItem('csrfToken'),
@@ -509,9 +629,18 @@ export default {
             this.errorDialogShow = true
             this.newAttemptLoading = false
           }
-        )
+        ) */
       }
     },
+    wdAddNewAttempt: null,
+    async onRowClick (...args) {
+      this.listLoading = true
+      const r = args[0][1]
+      this.currentSessionID = r.sessionID
+      await this.getSession()
+      this.listLoading = false
+    },
+    wdOnRowClick: null,
     async getProblem () {
       const currentProblemID = this.$route.params.task_id
       const response = await fetch(
@@ -526,8 +655,9 @@ export default {
       data.data.problemDeadline = toLocalDate(data.data.problemDeadline)
       this.problemInformation = data.data
     },
-    async updateSessionTable (props) {
+    async updateSessionTable (...args) {
       this.listLoading = true
+      const props = args[0][0]
       const { page, rowsPerPage } =
         typeof props === 'string'
           ? this.pagination
@@ -547,9 +677,9 @@ export default {
       }
       for (let i = 0; i < data.sessionInfo.length; i++) {
         data.sessionInfo[i].studentGroup =
-          data.sessionInfo[i].studentGroup === '-1'
-            ? '-'
-            : data.sessionInfo[i].studentGroup
+          ~data.sessionInfo[i].studentGroup
+            ? data.sessionInfo[i].studentGroup
+            : '-'
         data.sessionInfo[i].sessionHaveNewContentForTeacher =
           data.sessionInfo[i].sessionHaveNewContentForTeacher
             ? 'Есть'
@@ -562,8 +692,10 @@ export default {
       this.listLoading = false
     },
     async getAttemptNumber () {
+      const userStatus = this.problemInformation.userStatus
       const getParameters = new URLSearchParams()
-      getParameters.append('problemID', this.$route.params.task_id)
+      getParameters.append('problemID', userStatus === 'Учитель' ? '-1' : this.$route.params.task_id)
+      getParameters.append('sessionID', userStatus === 'Учитель' ? this.currentSessionID : '-1')
       const response = await fetch(
         Constants.SERVER_URL + '/api/get-attempt?' + getParameters.toString(),
         Constants.GET_INIT
@@ -576,8 +708,10 @@ export default {
       }
     },
     async getAttempt (attemptNumber) {
+      const userStatus = this.problemInformation.userStatus
       const requestData = {
-        problemID: this.$route.params.task_id,
+        problemID: userStatus === 'Учитель' ? '-1' : this.$route.params.task_id,
+        sessionID: userStatus === 'Учитель' ? this.currentSessionID : '-1',
         requestAttemptNumber: attemptNumber
       }
       const response = await fetch(
@@ -596,45 +730,56 @@ export default {
         return responseData.attempt
       }
     },
-    async exceptionHandler (props) {
-      try {
-        await this.updateSessionTable(props)
-      } catch (e) {
-        this.errorMessage =
-          Object.prototype.hasOwnProperty.call(Constants.ERROR_MESSAGES, e.message)
-            ? Constants.ERROR_MESSAGES[e.message]
-            : 'Нет соединения.'
-        this.errorDialogShow = true
+    decoratorExceptionHandler (f, ...flags) {
+      return async (...args) => {
+        try {
+          await f(args)
+        } catch (e) {
+          console.log(e)
+          for (let i = 0; i < flags.length; i++) {
+            this[flags[i]] = false
+          }
+          this.errorMessage =
+            Object.prototype.hasOwnProperty.call(Constants.ERROR_MESSAGES, e.message)
+              ? Constants.ERROR_MESSAGES[e.message]
+              : 'Нет соединения.'
+          this.errorDialogShow = true
+        }
       }
+    },
+    wdUpdateSessionTable: null,
+    async getSession () {
+      await this.getAttemptNumber()
+      const currentAttempt = await this.getAttempt(this.attemptMaxNumber)
+      this.teacherInfo = currentAttempt.commentariesInfo.teacherInfo
+      this.studentInfo = currentAttempt.commentariesInfo.studentInfo
+      if (this.attemptMaxNumber > 1) {
+        const lastPreviousAttempt = await this.getAttempt(this.attemptMaxNumber - 1)
+        this.previousAttempt.attemptID = lastPreviousAttempt.attemptID
+        this.previousAttempt.studentAttempt = lastPreviousAttempt.studentAttempt
+        this.previousAttempt.teacherFeedback = lastPreviousAttempt.teacherFeedback
+        this.previousAttempt.commentaries = lastPreviousAttempt.commentaries
+      }
+      this.currentAttempt.attemptID = currentAttempt.attemptID
+      this.currentAttempt.studentAttempt = currentAttempt.studentAttempt
+      this.currentAttempt.teacherFeedback = currentAttempt.teacherFeedback
+      this.currentAttempt.commentaries = currentAttempt.commentariesInfo.commentaries || []
     },
     async initPage () {
       this.pageLoading = true
       while (this.$store.getters['userDataStore/userInformationGetter'] === null) {
         await new Promise((resolve, reject) => setTimeout(resolve, 200))
       }
+      this.userID = this.$store.getters['userDataStore/userInformationGetter'].id
       try {
         await this.getProblem()
-        let currentAttempt
         switch (this.problemInformation.userStatus) {
           case 'Учитель':
-            await this.updateSessionTable('random string')
+            await this.updateSessionTable(['random string'])
             break
           case 'Ученик':
-            await this.getAttemptNumber()
-            currentAttempt = await this.getAttempt(this.attemptMaxNumber)
-            this.teacherInfo = currentAttempt.commentariesInfo.teacherInfo
-            this.studentInfo = currentAttempt.commentariesInfo.studentInfo
-            if (this.attemptMaxNumber > 1) {
-              const lastPreviousAttempt = await this.getAttempt(this.attemptMaxNumber - 1)
-              this.previousAttempt.attemptID = lastPreviousAttempt.attemptID
-              this.previousAttempt.studentAttempt = lastPreviousAttempt.studentAttempt
-              this.previousAttempt.teacherFeedback = lastPreviousAttempt.teacherFeedback
-              this.previousAttempt.commentaries = lastPreviousAttempt.commentaries
-            }
-            this.currentAttempt.attemptID = currentAttempt.attemptID
-            this.currentAttempt.studentAttempt = currentAttempt.studentAttempt
-            this.currentAttempt.teacherFeedback = currentAttempt.teacherFeedback
-            this.currentAttempt.commentaries = currentAttempt.commentaries
+            await this.getSession()
+            break
         }
         this.pageLoading = false
       } catch (e) {
@@ -663,6 +808,12 @@ export default {
     }
   },
   async created () {
+    this.wdUpdateSessionTable = this.decoratorExceptionHandler(this.updateSessionTable, 'listLoading')
+    this.wdAddNewAttempt = this.decoratorExceptionHandler(this.addNewAttempt, 'newAttemptLoading')
+    this.wdAddNewCommentary = this.decoratorExceptionHandler(this.addNewCommentary, 'newCommentaryLoading')
+    this.wdOnRowClick = this.decoratorExceptionHandler(this.onRowClick, 'listLoading', 'currentSessionID')
+    this.wdDeleteCommentary = this.decoratorExceptionHandler(this.deleteCommentary, 'deleteCommentaryLoading')
+    this.wdStatusChange = this.decoratorExceptionHandler(this.statusChange, 'statusChangeLoading')
     await this.initPage()
   },
   watch: {
@@ -672,8 +823,8 @@ export default {
     }
   },
   computed: {
-    userID () {
-      return this.$store.getters['userDataStore/userInformationGetter'].id
+    isTeacher () {
+      return this.problemInformation.userStatus === 'Учитель'
     }
   }
 }

@@ -1,34 +1,46 @@
 <template>
   <div
     class="column no-wrap task-info"
-    style="padding: 0 10px 10px 10px"
+    style="padding: 0 0 10px 10px"
   >
     <div
       class="row"
+      style="justify-content: space-between"
     >
       <div
         class="text-h6 text-center"
       >
         Описание задачи
       </div>
-      <q-btn
-        v-if="userStatus === 'Учитель'"
-        flat
-        icon="bi-gear"
-        @click="onEditTaskClick"
-      />
-      <q-btn
-        v-if="problemStatus === 'Скрыта' && userStatus === 'Учитель'"
-        flat
-        icon="bi-sunrise"
-        @click="onSunriseClick"
-      />
-      <q-btn
-        v-if="problemStatus === 'Принята' && userStatus === 'Учитель'"
-        flat
-        icon="bi-sunset"
-        @click="onSunsetClick"
-      />
+      <div>
+        <q-btn
+          v-if="userStatus === 'Учитель'"
+          flat
+          dense
+          icon="bi-gear"
+          @click="onEditTaskClick"
+        />
+        <q-btn
+          v-if="problemStatus === 'Скрыта' && userStatus === 'Учитель'"
+          flat
+          dense
+          icon="bi-sunrise"
+          @click="onSunriseClick"
+        />
+        <q-btn
+          v-if="problemStatus === 'Принята' && userStatus === 'Учитель'"
+          flat
+          dense
+          icon="bi-sunset"
+          @click="onSunsetClick"
+        />
+        <q-btn
+          v-if="userStatus === 'Учитель'"
+          icon="bi-trash"
+          flat
+          dense
+        />
+      </div>
     </div>
     <table
       class="task-info-table"
@@ -172,9 +184,11 @@ export default {
       type: String,
       required: true
     },
+    problemID: {
+      type: String
+    },
     authorAvatarPath: {
-      type: String,
-      default: 'https://cdn.quasar.dev/img/boy-avatar.png'
+      type: String
     },
     problemStatus: {
       type: String
@@ -208,6 +222,9 @@ export default {
     },
     problemRejectionReason: {
       type: String
+    },
+    loading: {
+      type: Boolean
     }
   },
   methods: {
@@ -218,10 +235,10 @@ export default {
       a.click()
     },
     onSunriseClick () {
-      this.$emit('sunrise')
+      this.$emit('status-change', 'Принята')
     },
     onSunsetClick () {
-      this.$emit('sunset')
+      this.$emit('status-change', 'Скрыта')
     },
     onEditTaskClick () {
       this.$emit('edit')
