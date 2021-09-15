@@ -43,7 +43,9 @@ const Constants = {
     'permission denied': 'Нет доступа.',
     'need authentication': 'Ошибка авторизации. Пожалуйста, перезайдите на сайт.',
     'file preparing error': 'Не удалось подготовить ваш файл к передаче.',
-    'commentary not found': 'Комментарий не найден.'
+    'commentary not found': 'Комментарий не найден.',
+    'attempt already checked': 'Попытка уже была проверена.',
+    'pdf creating failed': 'Не удалось обработать проверенное решение.'
   },
   PATHS_WITHOUT_AUTHENTICATION: [
     '/login',
@@ -95,7 +97,35 @@ function toLocalDate (UTCDate) {
   return day + '.' + month + '.' + date.getFullYear().toString()
 }
 
+function roleCheckDecorator (...roles) {
+  return async function (to, from, next) {
+    if (!Constants.DEV_MODE) {
+      try {
+        const getParameters = new URLSearchParams()
+        for (let i = 0; i < roles.length; i++) {
+          getParameters.append('r' + i, roles[i])
+        }
+        const response = await fetch(Constants.SERVER_URL + '/api/role-check?' + getParameters.toString(), Constants.GET_INIT)
+        const data = await response.json()
+        if (data.message === 'success') {
+          if (data.roleCheck) {
+            next()
+          } else {
+            next(false)
+          }
+        } else {
+          next(false)
+        }
+      } catch (e) {
+        next('/connection-error')
+      }
+    } else {
+      next()
+    }
+  }
+}
+
 export default async ({ Vue }) => {
   Vue.prototype.$Constants = Constants
 }
-export { Constants, toBase64, toLocalDate }
+export { Constants, toBase64, toLocalDate, roleCheckDecorator }

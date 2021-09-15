@@ -96,6 +96,7 @@
           style="width: 25%"
           class="content-background"
           no-caps
+          @click="onEdit"
         >
         </q-btn>
         <!-- <div
@@ -164,10 +165,6 @@
                 placeholder="Напишите комментарий"
                 style="width: 100%"
               />
-              <!-- <q-btn
-                label="Отправить"
-                style="height: 50px; width:100px"
-              /> -->
             </div>
           </div>
         </div>
@@ -293,7 +290,10 @@
           outlined
         />
       </q-card-section>
-      <q-card-actions align="right" class="text-primary">
+      <q-card-actions
+        align="right"
+        class="text-primary"
+      >
         <q-btn
           flat
           no-caps
@@ -318,44 +318,6 @@
       </q-card-actions>
     </q-card>
   </q-dialog>
-  <!-- <q-dialog
-    v-model="sunsetTaskDialogShow"
-    persistent
-  >
-    <q-card>
-      <q-card-section
-        class="row items-center"
-      >
-        <q-avatar
-          icon="bi-exclamation-circle"
-          color="white"
-          size="xl"
-        />
-        <span
-          class="q-ml-sm"
-        >
-          Вы уверены, что хотите скрыть эту задачу?
-        </span>
-      </q-card-section>
-
-      <q-card-actions
-        align="right"
-      >
-        <q-btn
-          flat
-          label="Отмена"
-          color="primary"
-          v-close-popup
-        />
-        <q-btn
-          flat
-          label="Да"
-          color="primary"
-          v-close-popup
-        />
-      </q-card-actions>
-    </q-card>
-  </q-dialog> -->
 </q-page>
 </template>
 
@@ -570,7 +532,6 @@ export default {
         Object.assign(this.previousAttempt, this.currentAttempt)
         this.currentPreviousAttemptNumber = this.attemptMaxNumber
         this.currentAttempt.attemptID = responseData.attemptID
-        this.currentAttempt.attemptID = responseData.attemptID
         this.currentAttempt.teacherFeedback = null
         this.currentAttempt.commentaries = []
         this.currentAttempt.studentAttempt = responseData.attempt
@@ -776,6 +737,9 @@ export default {
         switch (this.problemInformation.userStatus) {
           case 'Учитель':
             await this.updateSessionTable(['random string'])
+            if (this.currentSessionID) {
+              await this.getSession()
+            }
             break
           case 'Ученик':
             await this.getSession()
@@ -805,6 +769,9 @@ export default {
             break
         }
       }
+    },
+    onEdit () {
+      this.$router.push(`/check-attempt/${this.$route.params.task_id}/${this.currentSessionID.toString()}`)
     }
   },
   async created () {
@@ -826,6 +793,13 @@ export default {
     isTeacher () {
       return this.problemInformation.userStatus === 'Учитель'
     }
+  },
+  beforeRouteEnter (to, from, next) {
+    next(vm => {
+      if (from.params.session_id) {
+        vm.currentSessionID = from.params.session_id
+      }
+    })
   }
 }
 </script>

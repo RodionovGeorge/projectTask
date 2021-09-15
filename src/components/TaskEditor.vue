@@ -56,6 +56,12 @@
       />
     </q-dialog>
   </div>
+  <!-- Планировался спинер на загрузку страницы, но событие не работает
+  <q-spinner-tail
+    v-show="pageLoading"
+    size="2em"
+    color="primary"
+  /> -->
   <svg
     id="svg"
     @mouseup="onMouseUp"
@@ -65,7 +71,8 @@
   >
     <image
       :href="imagePaths[currentPage]"
-      class="a4-size"
+      height="1224px"
+      width="794px"
     />
     <polyline
       v-for="(pointsForPolyline, index) in polylineArrayOnPages[currentPage]"
@@ -94,11 +101,11 @@ export default {
   props: {
     problemPath: {
       type: String,
-      default: 'pdfExample/OS1.pdf'
+      required: true
     },
     imagePaths: {
       type: Array,
-      default: () => ['imagesExamples/OS1-01.png', 'imagesExamples/OS1-02.png', 'imagesExamples/OS1-03.png']
+      required: true
     },
     returnImagesFlag: {
       type: Boolean,
@@ -122,15 +129,46 @@ export default {
   },
   watch: {
     returnImagesFlag: {
-      handler: function (val, oldVal) {
+      handler: async function (val, oldVal) {
         if (val) {
           const resultB64Array = []
-          const backgroundImages = []
+          for (let i = 0; i < this.imagePaths.length; i++) {
+            this.currentPage = i
+            await new Promise((resolve, reject) => setTimeout(resolve, 200))
+            const svgElement = document.getElementById('svg')
+            const s = new XMLSerializer().serializeToString(svgElement)
+            const svgStyle = window.getComputedStyle(svgElement)
+            const encodeSVG = 'data:image/svg+xml;base64, ' + window.btoa(s)
+            const canvas = document.createElement('canvas')
+            const height = parseInt(svgStyle.getPropertyValue('height')) - 2 // Исключая размер границы элемента
+            const width = parseInt(svgStyle.getPropertyValue('width')) - 2 // Исключая размер границы элемента
+            canvas.height = height
+            canvas.width = width
+            const context = canvas.getContext('2d')
+            const backgroundImage = new Image(width, height)
+            backgroundImage.onload = () => {
+              context.drawImage(backgroundImage, 0, 0)
+              const SVGImage = new Image(width, height)
+              SVGImage.onload = () => {
+                context.drawImage(SVGImage, 0, 0)
+                resultB64Array[i] = canvas.toDataURL('image/png')
+                resultB64Array[i] = resultB64Array[i].substring(resultB64Array[i].indexOf(',') + 1)
+                this.imageTransformationCounter++
+                if (this.imageTransformationCounter === this.imagePaths.length) {
+                  this.$emit('returndata', resultB64Array)
+                }
+              }
+              SVGImage.src = encodeSVG
+            }
+            backgroundImage.src = this.imagePaths[i]
+          }
+        }
+        /* const backgroundImages = []
           const SVGImages = []
           const canvases = []
           const contexts = []
-          this.currentPage = 0
           for (let i = 0; i < this.imagePaths.length; i++) {
+            this.currentPage = i
             const svgElement = document.getElementById('svg')
             const s = new XMLSerializer().serializeToString(svgElement)
             const svgStyle = window.getComputedStyle(svgElement)
@@ -140,11 +178,15 @@ export default {
             const width = parseInt(svgStyle.getPropertyValue('width')) - 2 // Исключая размер границы элемента
             canvases[i].height = height
             canvases[i].width = width
+            console.log(i, height, width)
             contexts[i] = canvases[i].getContext('2d')
+            console.log(i, contexts[i])
             backgroundImages.push(new Image(width, height))
+            console.log(i, backgroundImages[i])
             backgroundImages[i].onload = () => {
               contexts[i].drawImage(backgroundImages[i], 0, 0)
               SVGImages.push(new Image(width, height))
+              console.log(i, SVGImages[i])
               SVGImages[i].onload = () => {
                 contexts[i].drawImage(SVGImages[i], 0, 0)
                 resultB64Array.push(canvases[i].toDataURL('image/png'))
@@ -157,7 +199,7 @@ export default {
             }
             backgroundImages[i].src = this.imagePaths[i]
           }
-        }
+        } */
       }
     }
   },

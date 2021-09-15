@@ -2,8 +2,28 @@
 <q-page
   class="column items-center q-py-md"
 >
+  <LoadingSpinner
+    :loading="pageLoading"
+  />
+  <q-banner
+    inline-actions
+    class="content-shadow q-my-xs"
+    v-if="attemptAlreadyChecked"
+  >
+    Эта попытка уже была проверена.
+    <template v-slot:action>
+      <q-btn
+        no-caps
+        color="white"
+        text-color="black"
+        label="На главную"
+        @click="onMainPage"
+      />
+    </template>
+  </q-banner>
   <div
     class="column q-gutter-y-sm"
+    v-if="!pageLoading && !attemptAlreadyChecked"
   >
     <div
       class="row q-pa-sm content-shadow content-background"
@@ -15,30 +35,30 @@
         Автор решения
       </div>
       <q-item
-        clickable
-        v-ripple
         class="q-pa-none"
       >
         <q-item-section
           side
         >
           <q-avatar
-            square
+            rounded
           >
             <img
-              :src="authorAvatarPath"
+              :src="informationAboutAuthor.authorAvatarPath"
               alt=""
             />
           </q-avatar>
         </q-item-section>
         <q-item-section>
-          {{ authorFullName }} ({{authorGroup}})
+          {{ informationAboutAuthor.authorFullName }} ({{informationAboutAuthor.authorGroup}})
         </q-item-section>
       </q-item>
     </div>
     <TaskEditor
       class="content-background content-shadow"
       :return-images-flag="returnImagesFlag"
+      :image-paths="imagePaths"
+      :problem-path="problemPath"
       @returndata="onReturn"
     />
     <div
@@ -54,22 +74,22 @@
         <q-radio
           v-model="decisionStage"
           label="Пока не решена"
-          val="0"
+          val="Пока не решена"
         />
         <q-radio
           v-model="decisionStage"
           label="Есть идея"
-          val="1"
+          val="Есть идея"
         />
         <q-radio
           v-model="decisionStage"
           label="Почти решена"
-          val="2"
+          val="Почти решена"
         />
         <q-radio
           v-model="decisionStage"
           label="Полность решена"
-          val="3"
+          val="Полность решена"
         />
       </div>
       <q-input
@@ -87,45 +107,147 @@
       class="row q-gutter-x-md justify-center"
     >
       <q-btn
-        label="Back"
+        label="Назад"
         text-color="black"
         style="width:100px"
         class="content-background"
+        @click="onBack"
+        no-caps
       />
       <q-btn
-        label="Submit"
+        label="Подтвердить"
         text-colot="black"
         style="width:100px"
         class="content-background"
+        :loading="submitting"
         @click="returnImagesFlag = true"
-      />
+        no-caps
+      >
+        <template
+          v-slot:loading
+        >
+          <q-spinner
+            :thickness="2"
+          />
+        </template>
+      </q-btn>
     </div>
   </div>
+  <ErrorDialog
+    :p-error-message="errorMessage"
+    :p-error-dialog-show="errorDialogShow"
+    @off="errorDialogShow = false"
+  />
 </q-page>
 </template>
 
 <script>
+import { Constants } from 'boot/Constants'
 import TaskEditor from 'components/TaskEditor'
+import ErrorDialog from 'components/ErrorDialog'
+import LoadingSpinner from 'components/LoadingSpinner'
 export default {
   name: 'EditPage',
-  components: { TaskEditor },
+  components: { LoadingSpinner, ErrorDialog, TaskEditor },
   data () {
     return {
+      errorDialogShow: false,
+      submitting: false,
+      attemptAlreadyChecked: false,
+      pageLoading: true,
+      errorMessage: '',
       teacherCommentary: '',
-      decisionStage: 0,
-      authorAvatarPath: 'https://cdn.quasar.dev/img/boy-avatar.png',
-      authorFullName: 'Некто',
-      authorGroup: 'Нектович',
-      problemPath: 'pdfExample/OS1.pdf',
+      decisionStage: '',
+      informationAboutAuthor: null,
+      problemPath: null,
+      imagePaths: null,
       returnImagesFlag: false
-
-      // decisionStageOption: ['Пока не решена', 'Есть идея', 'Почти решена', 'Полностью решена']
     }
   },
   methods: {
-    onReturn (resultImages) {
-      console.log(resultImages[1])
+    async onReturn (resultImages) {
+      try {
+        this.submitting = true
+        this.returnImagesFlag = false
+        const sessionID = this.$route.params.session_id
+        const requestData = {
+          pages: resultImages,
+          teacherCommentary: this.teacherCommentary,
+          solutionDegree: this.decisionStage,
+          csrfToken: window.localStorage.getItem('csrfToken')
+        }
+        const response = await fetch(Constants.SERVER_URL + '/api/check-attempt/' + sessionID, {
+          method: 'POST',
+          headers: Constants.HEADERS,
+          credentials: 'same-origin',
+          body: JSON.stringify(requestData)
+        })
+        const responseData = await response.json()
+        if (responseData.message !== 'success') {
+          this.errorMessage = Constants.ERROR_MESSAGES[responseData.message]
+          this.errorDialogShow = true
+          this.submitting = false
+        } else {
+          window.localStorage.setItem('csrfToken', responseData.csrfToken)
+          await this.$router.push(`/task/${this.$route.params.task_id}`)
+        }
+      } catch (e) {
+        console.log(e)
+        this.errorMessage = 'Нет соединения.'
+        this.errorDialogShow = true
+        this.submitting = false
+      }
+    },
+    async initPage () {
+      try {
+        this.pageLoading = true
+        const sessionID = this.$route.params.session_id
+        const response = await fetch(Constants.SERVER_URL + '/api/check-attempt/' + sessionID, Constants.GET_INIT)
+        const responseData = await response.json()
+        if (responseData.message !== 'success') {
+          switch (responseData.message) {
+            case 'session not found':
+              await this.$router.push(Constants.AT_404)
+              break
+            case 'attempt already checked':
+              this.attemptAlreadyChecked = true
+              break
+            case 'permission denied':
+              await this.$router.push('/permission-error')
+              break
+            case 'database error':
+              await this.$router.push('/server-error')
+              break
+            default:
+              await this.$router.push('/server-error')
+          }
+        } else {
+          this.informationAboutAuthor = responseData.authorInf
+          this.problemPath = responseData.problemPath
+          this.imagePaths = responseData.imagePaths
+        }
+        this.pageLoading = false
+      } catch (e) {
+        await this.$router.push('/connection-error')
+      }
+    },
+    async onBack () {
+      await this.$router.push(`/task/${this.$route.params.task_id}`)
+    },
+    async onMainPage () {
+      await this.$router.push('/')
     }
+  },
+  watch: {
+    $route: function () {
+      this.initPage()
+    }
+  },
+  async created () {
+    while (this.$store.getters['userDataStore/userInformationGetter'] === null) {
+      await new Promise((resolve, reject) => setTimeout(resolve, 200))
+    }
+    await this.initPage()
   }
 }
 </script>

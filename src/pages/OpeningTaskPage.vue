@@ -10,7 +10,7 @@
     class="content-shadow q-my-xs"
     v-if="problemAlreadyAdmitted"
   >
-    Эта задача уже была проверена администратором
+    Эта задача уже была проверена администратором.
     <template v-slot:action>
       <q-btn
         no-caps

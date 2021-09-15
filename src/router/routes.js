@@ -1,4 +1,4 @@
-import { Constants } from 'boot/Constants'
+import { roleCheckDecorator } from 'boot/Constants'
 
 const routes = [
   {
@@ -8,8 +8,16 @@ const routes = [
       /* { path: '', component: () => import('pages/Index.vue') }, */
       { path: '/login', component: () => import('pages/Login.vue') },
       { path: '', component: () => import('pages/MainPage') },
-      { path: '/task-opening/:task_id', component: () => import('pages/OpeningTaskPage') },
-      { path: '/editTask', component: () => import('pages/EditPage') },
+      {
+        path: '/task-opening/:task_id',
+        component: () => import('pages/OpeningTaskPage'),
+        beforeEnter: roleCheckDecorator('Администратор', 'Помощник администратора')
+      },
+      {
+        path: '/check-attempt/:task_id/:session_id',
+        component: () => import('pages/EditPage'),
+        beforeEnter: roleCheckDecorator('Учитель')
+      },
       { path: '/task/:task_id', component: () => import('pages/TaskT') },
       { path: '/my/profile', component: () => import('pages/UserProfilePage') },
       { path: '/registration', component: () => import('pages/RegistrationPage') },
@@ -19,35 +27,12 @@ const routes = [
       { path: '/connection-error', component: () => import('pages/ConnectionErrorPage') },
       { path: '/server-error', component: () => import('pages/Error500') },
       { path: '/permission-error', component: () => import('pages/Error403') },
-      { path: '*', component: () => import('pages/Error404.vue') },
       {
         path: '/task-opening',
         component: () => import('pages/OpeningTaskTablePage'),
-        beforeEnter: async (to, from, next) => {
-          if (!Constants.DEV_MODE) {
-            try {
-              const getParametr = new URLSearchParams()
-              getParametr.append('r1', 'Администратор')
-              getParametr.append('r2', 'Помощник администратора')
-              const response = await fetch(Constants.SERVER_URL + '/api/role-check?' + getParametr.toString(), Constants.GET_INIT)
-              const data = await response.json()
-              if (data.message === 'success') {
-                if (data.roleCheck) {
-                  next()
-                } else {
-                  next(false)
-                }
-              } else {
-                next(false)
-              }
-            } catch (e) {
-              next('/connection-error')
-            }
-          } else {
-            next()
-          }
-        }
-      }
+        beforeEnter: roleCheckDecorator('Администратор', 'Помощник администратора')
+      },
+      { path: '*', component: () => import('pages/Error404.vue') }
     ]
   }
 ]

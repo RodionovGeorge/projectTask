@@ -96,19 +96,16 @@ export default {
   },
   props: {
     attemptNumber: {
-      type: Number,
-      default: 1
+      type: Number
     },
     checkStatus: {
-      type: String,
-      default: 'Проверяется'
+      type: String
     },
     dateOfLastChange: {
       type: String
     },
     problemFileURL: {
-      type: String,
-      default: 'pdfExample/OS1.pdf'
+      type: String
     }
   },
   computed: {

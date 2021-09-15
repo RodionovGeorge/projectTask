@@ -125,7 +125,7 @@ export default {
       return this.checkDate ? new Date(this.checkDate) : null
     },
     localeCheckDate () {
-      const x = this.checkDate
+      const x = this.cCheckDate
       let day, month, hour, minute
       if (x) {
         day = x.getDate() < 10 ? '' + 0 + x.getDate() : x.getDate()
