@@ -120,7 +120,7 @@
 </template>
 
 <script>
-import { Constants, toBase64 } from 'boot/Constants'
+import { Constants, exceptionHandlerDecorator, toBase64 } from 'boot/Constants'
 import { date } from 'quasar'
 
 export default {
@@ -151,7 +151,45 @@ export default {
         onlyDate: true
       })
     },
-    onEnter () {
+    async onEnter () {
+      const correctTitleEnter = this.$refs.taskName.validate()
+      const correctDisciplinesChoose = this.$refs.discipline.validate()
+      const correctFileChoose = this.$refs.file.validate()
+      if (this.dateRange.to === '' || this.dateRange.from === '') {
+        this.errorMessage = 'Пожалуйста, выберите интервал приема решений.'
+        this.errorDialogShow = true
+        return
+      }
+      if (correctDisciplinesChoose && correctTitleEnter && correctFileChoose) {
+        this.submitting = true
+        const file = await toBase64(this.file)
+        const requestData = {
+          csrfToken: window.localStorage.getItem('csrfToken'),
+          file: file.substring(file.indexOf(',') + 1),
+          fileMIMEType: this.file.type,
+          userID: this.$store.getters['userDataStore/userInformationGetter'].id,
+          title: this.taskName,
+          discipline: this.selectedTaskDiscipline,
+          authorCommentary: this.authorCommentary,
+          startDate: date.extractDate(this.dateRange.from, 'YYYY/MM/DD'),
+          endDate: date.extractDate(this.dateRange.to, 'YYYY/MM/DD')
+        }
+        const response = await fetch(Constants.SERVER_URL + '/api/add-problem', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: Constants.HEADERS,
+          body: JSON.stringify(requestData)
+        })
+        const responseData = await response.json()
+        if (responseData.message !== 'success') {
+          throw new Error(responseData.message)
+        }
+        localStorage.setItem('csrfToken', responseData.csrfToken)
+        await this.$router.go(-1)
+        this.submitting = false
+      }
+    }
+    /* onEnter () {
       const correctTitleEnter = this.$refs.taskName.validate()
       const correctDisciplinesChoose = this.$refs.discipline.validate()
       const correctFileChoose = this.$refs.file.validate()
@@ -207,9 +245,10 @@ export default {
           this.submitting = false
         })
       }
-    }
+    } */
   },
   async created () {
+    this.onEnter = exceptionHandlerDecorator.call(this, [this.onEnter], 'submitting')
     while (this.$store.getters['userDataStore/userInformationGetter'] === null) {
       await new Promise((resolve, reject) => setTimeout(resolve, 200))
     }

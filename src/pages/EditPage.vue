@@ -50,7 +50,7 @@
           </q-avatar>
         </q-item-section>
         <q-item-section>
-          {{ informationAboutAuthor.authorFullName }} ({{informationAboutAuthor.authorGroup}})
+          {{ informationAboutAuthor.authorFullName }} ({{informationAboutAuthor.authorGroup === '-1' ? '-' : informationAboutAuthor.authorGroup}})
         </q-item-section>
       </q-item>
     </div>
@@ -79,26 +79,6 @@
           inline
           color="primary"
         />
-        <!-- <q-radio
-          v-model="decisionStage"
-          label="Пока не решена"
-          val="Пока не решена"
-        />
-        <q-radio
-          v-model="decisionStage"
-          label="Есть идея"
-          val="Есть идея"
-        />
-        <q-radio
-          v-model="decisionStage"
-          label="Почти решена"
-          val="Почти решена"
-        />
-        <q-radio
-          v-model="decisionStage"
-          label="Полность решена"
-          val="Полность решена"
-        /> -->
       </div>
       <q-input
         v-model="teacherCommentary"
@@ -150,7 +130,7 @@
 </template>
 
 <script>
-import { Constants } from 'boot/Constants'
+import { Constants, exceptionHandlerDecorator } from 'boot/Constants'
 import TaskEditor from 'components/TaskEditor'
 import ErrorDialog from 'components/ErrorDialog'
 import LoadingSpinner from 'components/LoadingSpinner'
@@ -175,6 +155,29 @@ export default {
   },
   methods: {
     async onReturn (resultImages) {
+      this.submitting = true
+      this.returnImagesFlag = false
+      const sessionID = this.$route.params.session_id
+      const requestData = {
+        pages: resultImages,
+        teacherCommentary: this.teacherCommentary,
+        solutionDegree: this.decisionStage,
+        csrfToken: window.localStorage.getItem('csrfToken')
+      }
+      const response = await fetch(Constants.SERVER_URL + '/api/check-attempt/' + sessionID, {
+        method: 'POST',
+        headers: Constants.HEADERS,
+        credentials: 'same-origin',
+        body: JSON.stringify(requestData)
+      })
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      }
+      window.localStorage.setItem('csrfToken', responseData.csrfToken)
+      await this.$router.push(`/task/${this.$route.params.task_id}`)
+    },
+    /* async onReturn (resultImages) {
       try {
         this.submitting = true
         this.returnImagesFlag = false
@@ -205,8 +208,21 @@ export default {
         this.errorDialogShow = true
         this.submitting = false
       }
-    },
+    }, */
     async initPage () {
+      this.pageLoading = true
+      const sessionID = this.$route.params.session_id
+      const response = await fetch(Constants.SERVER_URL + '/api/check-attempt/' + sessionID, Constants.GET_INIT)
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      }
+      this.informationAboutAuthor = responseData.authorInf
+      this.problemPath = responseData.problemPath
+      this.imagePaths = responseData.imagePaths
+      this.pageLoading = false
+    },
+    /* async initPage () {
       try {
         this.pageLoading = true
         const sessionID = this.$route.params.session_id
@@ -238,7 +254,7 @@ export default {
       } catch (e) {
         await this.$router.push('/connection-error')
       }
-    },
+    }, */
     async onBack () {
       await this.$router.push(`/task/${this.$route.params.task_id}`)
     },
@@ -248,14 +264,15 @@ export default {
   },
   watch: {
     $route: function () {
-      this.initPage()
+      exceptionHandlerDecorator.call(this, [this.initPage], 'pageLoading')()
     }
   },
   async created () {
+    this.onReturn = exceptionHandlerDecorator.call(this, [this.onReturn])
     while (this.$store.getters['userDataStore/userInformationGetter'] === null) {
       await new Promise((resolve, reject) => setTimeout(resolve, 200))
     }
-    await this.initPage()
+    await exceptionHandlerDecorator.call(this, [this.initPage, true], 'pageLoading')()
   }
 }
 </script>

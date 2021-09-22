@@ -230,7 +230,7 @@
 </template>
 
 <script>
-import { Constants } from 'boot/Constants'
+import { Constants, exceptionHandlerDecorator } from 'boot/Constants'
 
 export default {
   name: 'ForgotPasswordPage',
@@ -251,7 +251,33 @@ export default {
     }
   },
   methods: {
-    onFirstStepClick () {
+    async onFirstStepClick () {
+      const correctUserEmailInput = this.$refs.userEmail.validate()
+      if (correctUserEmailInput) {
+        this.firstStepSubmitted = true
+        const response = await fetch(Constants.SERVER_URL + '/api/recall-password', {
+          method: 'POST',
+          headers: Constants.HEADERS,
+          body: JSON.stringify({
+            email: this.userEmail
+          })
+        })
+        const responseData = await response.json()
+        if (responseData.message !== 'success') {
+          if ('intervalLength' in responseData) {
+            this.errorMessage = `С предыдущей попытки нужно подождать ${responseData.intervalLength / 60} м.`
+            this.errorDialogShow = true
+            this.firstStepSubmitted = false
+          } else {
+            throw new Error(responseData.message)
+          }
+        } else {
+          this.step++
+          this.firstStepSubmitted = false
+        }
+      }
+    },
+    /* onFirstStepClick () {
       const correctUserEmailInput = this.$refs.userEmail.validate()
       if (correctUserEmailInput) {
         this.firstStepSubmitted = true
@@ -277,8 +303,35 @@ export default {
           }
         )
       }
+    }, */
+    async onSecondStepClick () {
+      const correctUserCodeInput = this.$refs.userCode.validate()
+      if (correctUserCodeInput) {
+        this.secondStepSubmitted = true
+        const response = await fetch(Constants.SERVER_URL + '/api/recall-password', {
+          method: 'PUT',
+          headers: Constants.HEADERS,
+          body: JSON.stringify({
+            email: this.userEmail,
+            code: this.userCode
+          })
+        })
+        const responseData = await response.json()
+        if (responseData.message !== 'success') {
+          if ('intervalLength' in responseData) {
+            this.errorMessage = `С предыдущей попытки нужно подождать ${responseData.intervalLength / 60} м.`
+            this.errorDialogShow = true
+            this.secondStepSubmitted = false
+          } else {
+            throw new Error(responseData.message)
+          }
+        } else {
+          this.step++
+          this.secondStepSubmitted = false
+        }
+      }
     },
-    onSecondStepClick () {
+    /* onSecondStepClick () {
       const correctUserCodeInput = this.$refs.userCode.validate()
       if (correctUserCodeInput) {
         this.secondStepSubmitted = true
@@ -305,8 +358,36 @@ export default {
           }
         )
       }
+    }, */
+    async onThirdStepClick () {
+      const correctUserNewPasswordInput = this.$refs.userNewPassword.validate()
+      if (correctUserNewPasswordInput) {
+        this.thirdStepSubmitted = true
+        const response = await fetch(Constants.SERVER_URL + '/api/change-password', {
+          method: 'PUT',
+          headers: Constants.HEADERS,
+          body: JSON.stringify({
+            email: this.userEmail,
+            code: this.userCode,
+            password: this.userNewPassword
+          })
+        })
+        const responseData = await response.json()
+        if (responseData.message !== 'success') {
+          if ('intervalLength' in responseData) {
+            this.errorMessage = `С предыдущей попытки нужно подождать ${responseData.intervalLength / 60} м.`
+            this.errorDialogShow = true
+            this.thirdStepSubmitted = false
+          } else {
+            throw new Error(responseData.message)
+          }
+        } else {
+          this.step++
+          this.thirdStepSubmitted = false
+        }
+      }
     },
-    onThirdStepClick () {
+    /* onThirdStepClick () {
       const correctUserNewPasswordInput = this.$refs.userNewPassword.validate()
       if (correctUserNewPasswordInput) {
         this.thirdStepSubmitted = true
@@ -334,8 +415,31 @@ export default {
           }
         )
       }
-    },
-    newCodeRequest () {
+    }, */
+    async newCodeRequest () {
+      this.newCodeRequestSubmitted = true
+      const response = await fetch(Constants.SERVER_URL + '/api/recall-password', {
+        method: 'POST',
+        headers: Constants.HEADERS,
+        body: JSON.stringify({
+          email: this.userEmail
+        })
+      })
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        if ('intervalLength' in responseData) {
+          this.errorMessage = `С предыдущей попытки нужно подождать ${responseData.intervalLength / 60} м.`
+          this.errorDialogShow = true
+          this.newCodeRequestSubmitted = false
+        } else {
+          throw new Error(responseData.message)
+        }
+      } else {
+        this.newCodeSuccessDialogShow = true
+        this.newCodeRequestSubmitted = false
+      }
+    }
+    /* newCodeRequest () {
       this.newCodeRequestSubmitted = true
       fetch(Constants.SERVER_URL + '/api/recall-password', {
         method: 'POST',
@@ -358,7 +462,13 @@ export default {
           this.newCodeRequestSubmitted = false
         }
       )
-    }
+    } */
+  },
+  created () {
+    this.onFirstStepClick = exceptionHandlerDecorator.call(this, [this.onFirstStepClick], 'firstStepSubmitted')
+    this.onSecondStepClick = exceptionHandlerDecorator.call(this, [this.onSecondStepClick], 'secondStepSubmitted')
+    this.onThirdStepClick = exceptionHandlerDecorator.call(this, [this.onThirdStepClick], 'thirdStepSubmitted')
+    this.newCodeRequest = exceptionHandlerDecorator.call(this, [this.newCodeRequest], 'newCodeRequestSubmitted')
   }
 }
 </script>

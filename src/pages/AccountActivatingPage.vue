@@ -128,7 +128,7 @@
 </template>
 
 <script>
-import { Constants } from 'boot/Constants'
+import { Constants, exceptionHandlerDecorator } from 'boot/Constants'
 
 export default {
   name: 'AccountActivatingPage',
@@ -142,7 +142,36 @@ export default {
     }
   },
   methods: {
-    codeSubmit () {
+    async codeSubmit () {
+      const correctSecretCodeInput = this.$refs.userSecretCode.validate()
+      if (correctSecretCodeInput) {
+        this.secondStepSubmitting = true
+        const data = {
+          email: this.$store.state.userDataStore.userData.email,
+          code: this.userSecretCode
+        }
+        const response = await fetch(Constants.SERVER_URL + '/api/account-activation', {
+          method: 'PUT',
+          headers: Constants.HEADERS,
+          body: JSON.stringify(data)
+        })
+        const responseData = await response.json()
+        if (responseData.message !== 'success') {
+          if ('intervalLength' in responseData) {
+            this.errorMessage = `С предыдущей попытки нужно подождать ${responseData.intervalLength / 60} м.`
+            this.errorDialogShow = true
+            this.secondStepSubmitting = false
+          } else {
+            throw new Error(responseData.message)
+          }
+        } else {
+          await this.$store.dispatch('userDataStore/setAccountActivatedStatus', true)
+          await this.$router.push('/')
+          this.secondStepSubmitting = false
+        }
+      }
+    },
+    /* codeSubmit () {
       const correctSecretCodeInput = this.$refs.userSecretCode.validate()
       if (correctSecretCodeInput) {
         // Отправка данных на сервер
@@ -158,13 +187,6 @@ export default {
         }).then(
           response => response.json()
         ).then(
-          /**
-           * @param {Object} data - Объект, содержащий ответ от сервера
-           * @param {string} data.message - Краткое текстовое сообщение с ответом
-           * @param {Number} data.intervalLength - Прилагается к ответу только если ошибка связана с нарушением
-           * временных интервалов между запросами на проверку кода или на создание нового кода. Содержит длину интервала
-           * в секундах
-           */
           data => {
             if (data.message === 'success') {
               this.$store.dispatch('userDataStore/setAccountActivatedStatus', true)
@@ -179,8 +201,31 @@ export default {
           }
         )
       }
-    },
-    newCodeRequest () {
+    }, */
+    async newCodeRequest () {
+      this.newCodeRequestSubmitting = true
+      const response = await fetch(Constants.SERVER_URL + '/api/account-activation', {
+        method: 'POST',
+        headers: Constants.HEADERS,
+        body: JSON.stringify({
+          email: this.$store.state.userDataStore.userData.email
+        })
+      })
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        if ('intervalLength' in responseData) {
+          this.errorMessage = `С предыдущей попытки нужно подождать ${responseData.intervalLength / 60} м.`
+          this.errorDialogShow = true
+          this.newCodeRequestSubmitting = false
+        } else {
+          throw new Error(responseData.message)
+        }
+      } else {
+        this.newCodeSuccessDialogShow = true
+        this.newCodeRequestSubmitting = false
+      }
+    }
+    /* newCodeRequest () {
       this.newCodeRequestSubmitting = true
       fetch(Constants.SERVER_URL + '/api/account-activation', {
         method: 'POST',
@@ -191,13 +236,6 @@ export default {
       }).then(
         response => response.json()
       ).then(
-        /**
-         * @param {Object} data - Объект, содержащий ответ от сервера
-         * @param {string} data.message - Краткое текстовое сообщение с ответом
-         * @param {Number} data.intervalLength - Прилагается к ответу только если ошибка связана с нарушением
-         * временных интервалов между запросами на проверку кода или на создание нового кода. Содержит длину интервала
-         * в секундах
-         */
         data => {
           if (data.message === 'success') {
             this.newCodeSuccessDialogShow = true
@@ -210,7 +248,11 @@ export default {
           this.newCodeRequestSubmitting = false
         }
       )
-    }
+    } */
+  },
+  created () {
+    this.newCodeRequest = exceptionHandlerDecorator.call(this, [this.newCodeRequest], 'newCodeRequestSubmitting')
+    this.codeSubmit = exceptionHandlerDecorator.call(this, [this.codeSubmit], 'secondStepSubmitting')
   }
 }
 </script>

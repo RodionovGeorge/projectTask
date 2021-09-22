@@ -10,6 +10,8 @@
 
 // Еще: На каждый опасный для данных запрос не забыть обновить CSRF токен (когда уже авторизован)
 
+const AT_404 = '/asdfasdfdqwe'
+
 const Constants = {
   SERVER_URL: 'http://localhost',
   TASK_DISCIPLINES: [
@@ -36,34 +38,41 @@ const Constants = {
       value: 'Полностью решена'
     }
   ],
+  /*
+    Ошибки ниже являются сообщениями, которые могут прийти с сервера или возникнуть при работе некоторых компонентов.
+    Если путь стоит 'error-400', то для всех ошибок, кроме 'bad request', это путь-заглушка.
+    При нормальном функционировании клиент-серверного взаимодействия при инициализации страниц
+    прийти с ответом сервера не может.
+   */
   ERROR_MESSAGES: {
-    'account not found': 'Аккаунт не найден!',
-    'time interval has not passed':
-      intervalLength => 'С предыдущей попытки нужно подождать ' + intervalLength / 60 + ' м.',
-    'wrong code': 'Неверный код.',
-    'code expired': 'Код устарел. Пожалуйста, запросите новый код.',
-    'wrong login': 'Пользователя с такой почтой не существует.',
-    'wrong password': 'Неверный пароль.',
-    'database error': 'Внутренняя ошибка сервера.',
-    'SMTP error': 'Внутренняя ошибка сервера.',
-    'incorrect email': 'Неправильный адрес почты.',
-    'internal error': 'Внутренняя ошибка сервера.',
-    'Internal Server Error': 'Внутренняя ошибка сервера.',
-    'user already exists': 'Аккаунт с такой почтой уже существует.',
-    'tex conversion failed': 'Не удалось преобразовать ваш tex-файл в PDF.',
-    'user is not a teacher': 'У вас нет роли преподавателя.',
-    'problem deleted': 'Задача была удалена.',
-    'incorrect request': 'Некорректный запрос.',
-    'not author': 'Вы не являетесь автором этой задачи.',
-    'problem not found': 'Задача не найдена.',
-    'not admin': 'Вы не являетесь администратором.',
-    'problem already admitted': 'Проблема уже была оценена.',
-    'permission denied': 'Нет доступа.',
-    'need authentication': 'Ошибка авторизации. Пожалуйста, перезайдите на сайт.',
-    'file preparing error': 'Не удалось подготовить ваш файл к передаче.',
-    'commentary not found': 'Комментарий не найден.',
-    'attempt already checked': 'Попытка уже была проверена.',
-    'pdf creating failed': 'Не удалось обработать проверенное решение.'
+    'account not found': { message: 'Аккаунт не найден!', path: AT_404 },
+    // 'time interval has not passed' Эта ошибка обрабатывается отдельно прямо в компонентах
+    'wrong code': { message: 'Неверный код.', path: '/error-400' },
+    'code expired': { message: 'Код устарел. Пожалуйста, запросите новый код.', path: '/error-400' },
+    'wrong login': { message: 'Пользователя с такой почтой не существует.', path: '/error-400' },
+    'wrong password': { message: 'Неверный пароль.', path: '/error-400' },
+    'database error': { message: 'Внутренняя ошибка сервера.', path: '/server-error' },
+    'SMTP error': { message: 'Внутренняя ошибка сервера.', path: '/server-error' },
+    'incorrect email': { message: 'Неправильный адрес почты.', path: '/error-400' },
+    'internal error': { message: 'Внутренняя ошибка сервера.', path: '/server-error' },
+    'Internal Server Error': { message: 'Внутренняя ошибка сервера.', path: '/server-error' },
+    'user already exists': { message: 'Аккаунт с такой почтой уже существует.', path: '/error-400' },
+    'tex conversion failed': { message: 'Не удалось преобразовать ваш tex-файл в PDF.', path: '/error-400' },
+    'user is not a teacher': { message: 'У вас нет роли преподавателя.', path: '/permission-error' },
+    'problem deleted': { message: 'Задача была удалена.', path: AT_404 },
+    'incorrect request': { message: 'Некорректный запрос.', path: '/error-400' },
+    'not author': { message: 'Вы не являетесь автором этой задачи.', path: '/permission-error' },
+    'problem not found': { message: 'Задача не найдена.', path: AT_404 },
+    'not admin': { message: 'Вы не являетесь администратором.', path: '/permission-error' },
+    'problem already admitted': { message: 'Проблема уже была оценена.', path: '/error-400' },
+    'permission denied': { message: 'Нет доступа.', path: '/permission-error' },
+    'need authentication': { message: 'Ошибка авторизации. Пожалуйста, перезайдите на сайт.', path: '/login' },
+    // Ошибка ниже вообще не может прийти с сервера. Путь на всякий случай
+    'file preparing error': { message: 'Не удалось подготовить ваш файл к передаче.', path: '/error-400' },
+    'commentary not found': { message: 'Комментарий не найден.', path: AT_404 },
+    'attempt already checked': { message: 'Попытка уже была проверена.', path: '/error-400' },
+    'pdf creating failed': { message: 'Не удалось обработать проверенное решение.', path: '/server-error' },
+    'Failed to fetch': { message: 'Нет соединения.', path: '/connection-error' }
   },
   PATHS_WITHOUT_AUTHENTICATION: [
     '/login',
@@ -88,13 +97,52 @@ const Constants = {
     'Content-Type': 'application/json; charset=UTF-8',
     Accept: 'application/json; */*; q=0.01'
   },
-  DEV_MODE: true,
+  DEV_MODE: false,
   DIFFICULTY_LEVELS: [
     'Простая',
     'Средняя',
     'Сложная'
-  ],
-  AT_404: '/asdfasdfdqwe'
+  ]
+}
+
+/*
+  Декоратор, который призван обрабатывать исключения, которые будут выбрасывать обработчики разных событий
+  В качестве аргументов ожидает:
+  Массив, состоящий из следующей тройки:
+    Первым аргументов идет сама функция. Она будет вызвана как метод компонента, с которым будет связан сам декоратор
+      при вызове
+    Вторым аргументов идет флаг. Если он true, то это означает, что ошибки следует обрабатывать перенаправлением по
+      соответствующему ошибке пути. В противном случае ожидается наличия в компоненте двух переменных:
+      errorMessage и errorDialogShow. В первую из них будет записано соответствующее сообщение об ошибке. Вторая
+      отвечает за отображение диалогового окна
+    Третьим идет объект для расширения стандартного набора исключений. Этот объект должен отображать сообщение в
+      исключении на обработчик. Обработчик также будет вызван как метод компонента.
+   Псевдомассив флагов, который необходим для корректной работы интерфейса
+ */
+function exceptionHandlerDecorator ([f, redirectingMode = false, customHandlers = {}], ...flags) {
+  return async (...args) => {
+    try {
+      console.log(f)
+      await f.call(this, ...args)
+    } catch (e) {
+      console.log(e)
+      for (const flag of flags) {
+        this[flag] = false
+      }
+      if (e.message in customHandlers) {
+        await customHandlers[e.message].call(this, e)
+      } else if (e.message in Constants.ERROR_MESSAGES) {
+        if (redirectingMode) {
+          await this.$router.push(Constants.ERROR_MESSAGES[e.message].path)
+        } else {
+          this.errorMessage = Constants.ERROR_MESSAGES[e.message].message
+          this.errorDialogShow = true
+        }
+      } else {
+        throw e
+      }
+    }
+  }
 }
 
 function toBase64 (file) {
@@ -146,4 +194,4 @@ function roleCheckDecorator (...roles) {
 export default async ({ Vue }) => {
   Vue.prototype.$Constants = Constants
 }
-export { Constants, toBase64, toLocalDate, roleCheckDecorator }
+export { Constants, toBase64, toLocalDate, roleCheckDecorator, exceptionHandlerDecorator }

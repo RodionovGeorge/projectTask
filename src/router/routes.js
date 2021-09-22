@@ -33,6 +33,7 @@ const routes = [
         component: () => import('pages/OpeningTaskTablePage'),
         beforeEnter: roleCheckDecorator('Администратор', 'Помощник администратора')
       },
+      { path: '/error-400', component: () => import('pages/Error400') },
       { path: '*', component: () => import('pages/Error404.vue') }
     ]
   }

@@ -103,7 +103,7 @@
 </template>
 
 <script>
-import { Constants, toLocalDate } from 'boot/Constants'
+import { Constants, exceptionHandlerDecorator, toLocalDate } from 'boot/Constants'
 import LoadingSpinner from 'components/LoadingSpinner'
 
 export default {
@@ -189,7 +189,7 @@ export default {
           sortable: true
         }
       ],
-      data: [],
+      data: null,
       pagination: {
         sortBy: '',
         descending: false,
@@ -204,13 +204,52 @@ export default {
       this.$router.push('/task-opening/' + row.problemID)
     },
     timeToLocal () {
-      for (let i = 0; i < this.data.length; i++) {
-        this.data[i].problemStartLine = toLocalDate(this.data[i].problemStartLine)
-        this.data[i].problemDeadline = toLocalDate(this.data[i].problemDeadline)
-        this.data[i].authorGroup = this.data[i].authorGroup === '-1' ? '-' : this.data[i].authorGroup
+      for (const problem of this.data) {
+        problem.problemStartLine = toLocalDate(problem.problemStartLine)
+        problem.problemDeadline = toLocalDate(problem.problemDeadline)
+        problem.authorGroup = problem.authorGroup === '-1' ? '-' : problem.authorGroup
       }
     },
-    fetchData (props) {
+    async fetchData (props) {
+      const { page, rowsPerPage, sortBy, descending } =
+        !Object.prototype.hasOwnProperty.call(props, 'label') && typeof props !== 'string'
+          ? props.pagination
+          : this.pagination
+      this.tableLoading = true
+      if (this.currentColumnForSearch.value === 'authorGroup' && this.filter === '-') {
+        this.filter = '-1'
+      }
+      const requestData = {
+        currentPage: page,
+        pageSize: rowsPerPage,
+        filterField: this.currentColumnForSearch.value || 'problemTitle',
+        filterValue: this.filter,
+        sortField: sortBy,
+        sortDirection: descending ? 'desc' : 'asc'
+      }
+      const response = await fetch(Constants.SERVER_URL + '/api/admitting-problem/-1',
+        {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: Constants.HEADERS,
+          body: JSON.stringify(requestData)
+        }
+      )
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      }
+      this.pagination.rowsNumber = responseData.problemCount
+      this.data = responseData.problems
+      console.log(this.data)
+      this.timeToLocal()
+      this.pagination.page = page
+      this.pagination.rowsPerPage = rowsPerPage
+      this.pagination.sortBy = sortBy
+      this.pagination.descending = descending
+      this.tableLoading = false
+    },
+    /* fetchData (props) {
       const { page, rowsPerPage, sortBy, descending } =
         !Object.prototype.hasOwnProperty.call(props, 'label') && typeof props !== 'string'
           ? props.pagination
@@ -260,9 +299,43 @@ export default {
           this.tableLoading = false
         }
       )
+    } */
+    async init () {
+      this.loading = true
+      const requestData = {
+        currentPage: this.pagination.page,
+        pageSize: this.pagination.rowsPerPage,
+        filterField: 'problemTitle',
+        filterValue: this.filter,
+        sortField: this.pagination.sortBy,
+        sortDirection: this.pagination.descending ? 'desc' : 'asc'
+      }
+      while (this.$store.getters['userDataStore/userInformationGetter'] === null) {
+        await new Promise((resolve, reject) => setTimeout(resolve, 200))
+      }
+      const response = await fetch(Constants.SERVER_URL + '/api/admitting-problem/-1',
+        {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: Constants.HEADERS,
+          body: JSON.stringify(requestData)
+        }
+      )
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      }
+      this.pagination.rowsNumber = responseData.problemCount
+      this.data = responseData.problems
+      this.timeToLocal()
+      this.loading = false
     }
   },
   async created () {
+    this.fetchData = exceptionHandlerDecorator.call(this, [this.fetchData], 'tableLoading')
+    await exceptionHandlerDecorator.call(this, [this.init, true], 'loading')()
+  }
+  /* async created () {
     try {
       this.data = null
       this.loading = true
@@ -306,7 +379,7 @@ export default {
     } catch {
       await this.$router.push('/connection-error')
     }
-  }
+  } */
 }
 </script>
 

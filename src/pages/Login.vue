@@ -110,7 +110,7 @@
 </template>
 
 <script>
-import { Constants } from 'boot/Constants'
+import { Constants, exceptionHandlerDecorator } from 'boot/Constants'
 
 export default {
   name: 'pageLogin',
@@ -124,7 +124,33 @@ export default {
     }
   },
   methods: {
-    onEnter () {
+    async onEnter () {
+      const correctLoginEnter = this.$refs.login.validate()
+      const correctPasswordEnter = this.$refs.password.validate()
+      if (correctLoginEnter && correctPasswordEnter) {
+        this.enterSubmitting = true
+        const requestData = {
+          login: this.login,
+          password: this.password
+        }
+        const response = await fetch(Constants.SERVER_URL + '/api/login', {
+          method: 'POST',
+          headers: Constants.HEADERS,
+          body: JSON.stringify(requestData)
+        })
+        const responseData = await response.json()
+        if (responseData.message !== 'success') {
+          throw new Error(responseData.message)
+        }
+        localStorage.setItem('csrfToken', responseData.csrfToken)
+        await this.$store.dispatch('userDataStore/setUserInformation', responseData.userData)
+        responseData.userData.accountActivated
+          ? await this.$router.push('/')
+          : await this.$router.push('/account-activating')
+        this.enterSubmitting = false
+      }
+    }
+    /* onEnter () {
       const correctLoginEnter = this.$refs.login.validate()
       const correctPasswordEnter = this.$refs.password.validate()
       if (correctLoginEnter && correctPasswordEnter) {
@@ -140,20 +166,6 @@ export default {
         }).then(
           response => response.json()
         ).then(
-          /**
-           * @param {Object} data - Объект, содержащий ответ сервера
-           * @param {String} data.message - Краткое описание результата запроса
-           * @param {String} data.csrfToken - CSRF токен
-           * @param {Object} data.userData - Объект с информацией о пользователе
-           * @param {Array} data.userData.roles - Массив ролей пользователя
-           * @param {Number} data.userData.id - ID пользователя в базе данных
-           * @param {String} data.userData.email - Электронная почта пользователя (логин)
-           * @param {String} data.userData.avatarURL - URL аватара
-           * @param {Boolean} data.userData.accountActivated - Пользователь активировал свой аккаунт? (Подтверждение почты)
-           * @param {String} data.userData.firstName - Имя
-           * @param {String} data.userData.middleName - Отчество
-           * @param {String} data.userData.lastName - Фамилия
-           */
           data => {
             if (data.message === 'success') {
               localStorage.setItem('csrfToken', data.csrfToken)
@@ -175,7 +187,10 @@ export default {
           }
         )
       }
-    }
+    } */
+  },
+  created () {
+    this.onEnter = exceptionHandlerDecorator.call(this, [this.onEnter], 'enterSubmitting')
   }
 }
 </script>

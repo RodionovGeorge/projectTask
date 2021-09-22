@@ -76,6 +76,24 @@
               </q-item-section>
             </q-item>
 
+            <q-item
+              to="/task-opening"
+              clickable
+              v-ripple
+              v-if="isAdmin"
+            >
+              <q-item-section
+                avatar
+              >
+                <q-icon
+                  name="bi-hand-thumbs-up"
+                />
+              </q-item-section>
+              <q-item-section>
+                Допуск задач
+              </q-item-section>
+            </q-item>
+
             <!-- <q-item
               active
               clickable
@@ -232,6 +250,10 @@ export default {
     },
     isTeacher () {
       return this.userInformation.roles.includes('Учитель')
+    },
+    isAdmin () {
+      return this.userInformation.roles.includes('Администратор') ||
+        this.userInformation.roles.includes('Помощник администратора')
     }
   }
 }

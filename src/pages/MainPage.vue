@@ -72,7 +72,7 @@
 <script>
 import LoadingSpinner from 'components/LoadingSpinner'
 import ErrorDialog from 'components/ErrorDialog'
-import { Constants } from 'boot/Constants'
+import { Constants, exceptionHandlerDecorator } from 'boot/Constants'
 export default {
   name: 'pageMain',
   components: { LoadingSpinner, ErrorDialog },
@@ -157,14 +157,84 @@ export default {
           sortable: true
         }
       ],
-      data: []
+      data: null
     }
   },
   methods: {
     onRowClick (evt, row) {
       this.$router.push('/task/' + row.problemID)
     },
-    fetchData (props) {
+    async fetchData (props) {
+      // Надо что-то придумать с тем, что q-select очищается клавиатурой
+      const { page, rowsPerPage, sortBy, descending } =
+        !Object.prototype.hasOwnProperty.call(props, 'label') && typeof props !== 'string'
+          ? props.pagination
+          : this.pagination
+      this.tableLoading = true
+      if (this.currentColumnForSearch.value === 'authorGroup' && this.filter === '-') {
+        this.filter = '-1'
+      }
+      const requestData = {
+        currentPage: page,
+        pageSize: rowsPerPage,
+        filterField: this.currentColumnForSearch.value || 'problemTitle',
+        filterValue: this.filter,
+        sortField: sortBy,
+        sortDirection: descending ? 'desc' : 'asc'
+      }
+      const response = await fetch(Constants.SERVER_URL + '/api/problem/-1',
+        {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: Constants.HEADERS,
+          body: JSON.stringify(requestData)
+        }
+      )
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      }
+      this.data = responseData.problems
+      this.pagination.page = page
+      this.pagination.rowsPerPage = rowsPerPage
+      this.pagination.sortBy = sortBy
+      this.pagination.descending = descending
+      this.tableLoading = false
+    },
+    async init () {
+      this.pageLoading = true
+      const requestData = {
+        currentPage: this.pagination.page,
+        pageSize: this.pagination.rowsPerPage,
+        filterField: 'problemTitle',
+        filterValue: this.filter,
+        sortField: this.pagination.sortBy,
+        sortDirection: this.pagination.descending ? 'desc' : 'asc'
+      }
+      while (this.$store.getters['userDataStore/userInformationGetter'] === null) {
+        await new Promise((resolve, reject) => setTimeout(resolve, 200))
+      }
+      const response = await fetch(Constants.SERVER_URL + '/api/problem/-1',
+        {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: Constants.HEADERS,
+          body: JSON.stringify(requestData)
+        }
+      )
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      }
+      this.pagination.rowsNumber = responseData.problemCount
+      for (const problem of responseData.problems) {
+        problem.authorGroup = problem.authorGroup === '-1' ? '-' : problem.authorGroup
+      }
+      this.data = responseData.problems
+      this.pageLoading = false
+    }
+  },
+  /* fetchData (props) {
       const { page, rowsPerPage, sortBy, descending } =
         !Object.prototype.hasOwnProperty.call(props, 'label') && typeof props !== 'string'
           ? props.pagination
@@ -217,10 +287,13 @@ export default {
         }
       )
     }
-  },
+  }, */
   async created () {
+    this.fetchData = exceptionHandlerDecorator.call(this, [this.fetchData], 'tableLoading')
+    await exceptionHandlerDecorator.call(this, [this.init, true], 'pageLoading')()
+  }
+  /* async created () {
     try {
-      this.data = null
       this.pageLoading = true
       const requestData = {
         currentPage: this.pagination.page,
@@ -259,6 +332,6 @@ export default {
     } catch {
       await this.$router.push('/connection-error')
     }
-  }
+  } */
 }
 </script>

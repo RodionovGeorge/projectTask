@@ -13,7 +13,7 @@
       v-bind="problemInformation"
       :loading="statusChangeLoading"
       class="content-background content-shadow"
-      @status-change="wdStatusChange"
+      @status-change="statusChange"
       @edit="editTaskDialogShow = true"
     />
     <div
@@ -29,7 +29,7 @@
           outlined
           square
           style="width: 90%; margin-right: 5px"
-          @input="wdUpdateSessionTable"
+          @input="updateSessionTable"
           debounce="1000"
           label="Поиск"
         >
@@ -52,8 +52,8 @@
         square
         flat
         bordered
-        @request="wdUpdateSessionTable"
-        @row-click="wdOnRowClick"
+        @request="updateSessionTable"
+        @row-click="onRowClick"
         :columns="columns"
         :visible-columns="visibleColumns"
         :pagination.sync="pagination"
@@ -143,7 +143,7 @@
                   :user-status="problemInformation.userStatus"
                   :loading="deleteCommentaryLoading"
                   :user-i-d="userID"
-                  @deleted="wdDeleteCommentary"
+                  @deleted="deleteCommentary"
                 />
               </template>
             </q-virtual-scroll>
@@ -154,7 +154,7 @@
               <q-input
                 v-model="currentCommentary"
                 autogrow
-                v-on:keydown.enter.prevent="wdAddNewCommentary"
+                v-on:keydown.enter.prevent="addNewCommentary"
                 :loading="newCommentaryLoading"
                 outlined
                 placeholder="Напишите комментарий"
@@ -308,7 +308,7 @@
           no-caps
           :loading="newAttemptLoading"
           label="Добавить попытку"
-          @click="wdAddNewAttempt"
+          @click="addNewAttempt"
         >
           <template
             v-slot:loading
@@ -330,7 +330,7 @@ import AttemptForStudent from 'components/AttemptForStudent'
 import TeacherFeedback from 'components/TeacherFeedback'
 import Commentary from 'components/Commentary'
 import LoadingSpinner from 'components/LoadingSpinner'
-import { Constants, toBase64, toLocalDate } from 'boot/Constants'
+import { Constants, exceptionHandlerDecorator, toBase64, toLocalDate } from 'boot/Constants'
 import ErrorDialog from 'components/ErrorDialog'
 export default {
   name: 'TaskT',
@@ -455,7 +455,6 @@ export default {
       window.localStorage.setItem('csrfToken', responseData.csrfToken)
       this.statusChangeLoading = false
     },
-    wdStatusChange: null,
     async deleteCommentary (...args) {
       this.deleteCommentaryLoading = true
       const requestData = {
@@ -482,7 +481,6 @@ export default {
       window.localStorage.setItem('csrfToken', responseData.csrfToken)
       this.deleteCommentaryLoading = false
     },
-    wdDeleteCommentary: null,
     async addNewCommentary (...args) {
       this.newCommentaryLoading = true
       const requestData = {
@@ -510,7 +508,6 @@ export default {
       this.currentCommentary = ''
       this.newCommentaryLoading = false
     },
-    wdAddNewCommentary: null,
     async addNewAttempt (...args) {
       const fileInputCheck = this.$refs.filePicker.validate()
       if (fileInputCheck) {
@@ -538,14 +535,19 @@ export default {
         this.currentAttempt.teacherFeedback = null
         this.currentAttempt.commentaries = []
         this.currentAttempt.studentAttempt = responseData.attempt
-        this.problemInformation.userStatus = 'Ученик'
+        if (this.problemInformation.userStatus === 'Нет') {
+          this.problemInformation.userStatus = 'Ученик'
+          this.teacherInfo.avatarPath = this.problemInformation.avatarPath
+          this.teacherInfo.fullName = this.problemInformation.authorFullName
+          this.studentInfo.avatarPath = this.$store.getters['userDataStore/userInformationGetter'].avatarURL
+          this.studentInfo.fullName = this.$store.getters['userDataStore/userFullName']
+        }
         this.attemptMaxNumber++
         window.localStorage.setItem('csrfToken', responseData.csrfToken)
         this.newAttemptDialogShow = false
         this.newAttemptLoading = false
       }
     },
-    wdAddNewAttempt: null,
     async onRowClick (...args) {
       this.listLoading = true
       const r = args[1]
@@ -553,7 +555,6 @@ export default {
       await this.getSession()
       this.listLoading = false
     },
-    wdOnRowClick: null,
     async getProblem () {
       const currentProblemID = this.$route.params.task_id
       const response = await fetch(
@@ -643,24 +644,6 @@ export default {
         return responseData.attempt
       }
     },
-    decoratorExceptionHandler (f, ...flags) {
-      return async (...args) => {
-        try {
-          await f.call(this, ...args)
-        } catch (e) {
-          console.log(e)
-          for (const flag of flags) {
-            this[flag] = false
-          }
-          this.errorMessage =
-            Object.prototype.hasOwnProperty.call(Constants.ERROR_MESSAGES, e.message)
-              ? Constants.ERROR_MESSAGES[e.message]
-              : 'Нет соединения.'
-          this.errorDialogShow = true
-        }
-      }
-    },
-    wdUpdateSessionTable: null,
     async getSession () {
       await this.getAttemptNumber()
       const currentAttempt = await this.getAttempt(this.attemptMaxNumber)
@@ -684,6 +667,26 @@ export default {
         await new Promise((resolve, reject) => setTimeout(resolve, 200))
       }
       this.userID = this.$store.getters['userDataStore/userInformationGetter'].id
+      await this.getProblem()
+      switch (this.problemInformation.userStatus) {
+        case 'Учитель':
+          await this.updateSessionTable('random string')
+          if (this.currentSessionID) {
+            await this.getSession()
+          }
+          break
+        case 'Ученик':
+          await this.getSession()
+          break
+      }
+      this.pageLoading = false
+    },
+    /* async initPage () {
+      this.pageLoading = true
+      while (this.$store.getters['userDataStore/userInformationGetter'] === null) {
+        await new Promise((resolve, reject) => setTimeout(resolve, 200))
+      }
+      this.userID = this.$store.getters['userDataStore/userInformationGetter'].id
       try {
         await this.getProblem()
         switch (this.problemInformation.userStatus) {
@@ -699,7 +702,6 @@ export default {
         }
         this.pageLoading = false
       } catch (e) {
-        console.log(e)
         switch (e.message) {
           case 'session not found':
             await this.$router.push(Constants.AT_404)
@@ -727,24 +729,23 @@ export default {
             break
         }
       }
-    },
+    }, */
     onEdit () {
       this.$router.push(`/check-attempt/${this.$route.params.task_id}/${this.currentSessionID.toString()}`)
     }
   },
   async created () {
-    this.wdUpdateSessionTable = this.decoratorExceptionHandler(this.updateSessionTable, 'listLoading')
-    this.wdAddNewAttempt = this.decoratorExceptionHandler(this.addNewAttempt, 'newAttemptLoading')
-    this.wdAddNewCommentary = this.decoratorExceptionHandler(this.addNewCommentary, 'newCommentaryLoading')
-    this.wdOnRowClick = this.decoratorExceptionHandler(this.onRowClick, 'listLoading', 'currentSessionID')
-    this.wdDeleteCommentary = this.decoratorExceptionHandler(this.deleteCommentary, 'deleteCommentaryLoading')
-    this.wdStatusChange = this.decoratorExceptionHandler(this.statusChange, 'statusChangeLoading')
-    await this.initPage()
+    this.updateSessionTable = exceptionHandlerDecorator.call(this, [this.updateSessionTable], 'listLoading')
+    this.addNewCommentary = exceptionHandlerDecorator.call(this, [this.addNewCommentary], 'newCommentaryLoading')
+    this.addNewAttempt = exceptionHandlerDecorator.call(this, [this.addNewAttempt], 'newAttemptLoading')
+    this.onRowClick = exceptionHandlerDecorator.call(this, [this.onRowClick], 'listLoading', 'currentSessionID')
+    this.deleteCommentary = exceptionHandlerDecorator.call(this, [this.deleteCommentary], 'deleteCommentaryLoading')
+    this.statusChange = exceptionHandlerDecorator.call(this, [this.statusChange], 'statusChangeLoading')
+    await exceptionHandlerDecorator.call(this, [this.initPage, true], 'pageLoading')()
   },
   watch: {
     $route: function () {
-      this.pageLoading = true
-      this.initPage()
+      exceptionHandlerDecorator.call(this, [this.initPage, true], 'pageLoading')()
     }
   },
   computed: {

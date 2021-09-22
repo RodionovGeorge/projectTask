@@ -7,7 +7,7 @@
     mode="out-in"
   >
     <div
-      class="column items-center content-background content-shadow registration-page q-gutter-y-sm"
+      class="column items-center content-background content-shadow registration-page q-gutter-y-sm q-pa-xs"
       v-if="step === 1"
       key="firstStep"
     >
@@ -212,7 +212,7 @@
 </template>
 
 <script>
-import { Constants } from 'boot/Constants'
+import { Constants, exceptionHandlerDecorator } from 'boot/Constants'
 
 export default {
   name: 'RegistrationPage',
@@ -235,7 +235,36 @@ export default {
     }
   },
   methods: {
-    onFirstStepClick () {
+    async onFirstStepClick () {
+      const correctLastNameInput = this.$refs.userLastName.validate()
+      const correctMiddleNameInput = this.$refs.userMiddleName.validate()
+      const correctFirstNameInput = this.$refs.userFirstName.validate()
+      const correctEmailInput = this.$refs.userEmail.validate()
+      const correctPasswordInput = this.$refs.userPassword.validate()
+      if (correctLastNameInput && correctMiddleNameInput && correctFirstNameInput && correctEmailInput && correctPasswordInput) {
+        this.firstStepSubmitting = true
+        const requestData = {
+          lastName: this.userLastName,
+          firstName: this.userFirstName,
+          middleName: this.userMiddleName,
+          email: this.userEmail,
+          group: this.userGroup,
+          password: this.userPassword
+        }
+        const response = await fetch(Constants.SERVER_URL + '/api/registration', {
+          method: 'POST',
+          headers: Constants.HEADERS,
+          body: JSON.stringify(requestData)
+        })
+        const responseData = await response.json()
+        if (responseData.message !== 'success') {
+          throw new Error(responseData.message)
+        }
+        this.step++
+        this.firstStepSubmitting = false
+      }
+    },
+    /* onFirstStepClick () {
       const correctLastNameInput = this.$refs.userLastName.validate()
       const correctMiddleNameInput = this.$refs.userMiddleName.validate()
       const correctFirstNameInput = this.$refs.userFirstName.validate()
@@ -270,8 +299,36 @@ export default {
           }
         )
       }
+    }, */
+    async onSecondStepClick () {
+      const correctSecretCodeInput = this.$refs.userSecretCode.validate()
+      if (correctSecretCodeInput) {
+        this.secondStepSubmitting = true
+        const requestData = {
+          email: this.userEmail,
+          code: this.userSecretCode
+        }
+        const response = await fetch(Constants.SERVER_URL + '/api/account-activation', {
+          method: 'PUT',
+          headers: Constants.HEADERS,
+          body: JSON.stringify(requestData)
+        })
+        const responseData = await response.json()
+        if (responseData.message !== 'success') {
+          if ('intervalLength' in responseData) {
+            this.errorMessage = `С предыдущей попытки нужно подождать ${responseData.intervalLength / 60} м.`
+            this.errorDialogShow = true
+            this.secondStepSubmitting = false
+          } else {
+            throw new Error(responseData.message)
+          }
+        } else {
+          await this.$router.push('/login')
+          this.secondStepSubmitting = false
+        }
+      }
     },
-    onSecondStepClick () {
+    /* onSecondStepClick () {
       const correctSecretCodeInput = this.$refs.userSecretCode.validate()
       if (correctSecretCodeInput) {
         this.secondStepSubmitting = true
@@ -286,13 +343,6 @@ export default {
         }).then(
           response => response.json()
         ).then(
-          /**
-           * @param {Object} data - Объект, содержащий ответ от сервера
-           * @param {string} data.message - Краткое текстовое сообщение с ответом
-           * @param {Number} data.intervalLength - Прилагается к ответу только если ошибка связана с нарушением
-           * временных интервалов между запросами на проверку кода или на создание нового кода. Содержит длину интервала
-           * в секундах
-           */
           data => {
             if (data.message === 'success') {
               // this.$store.dispatch('userDataStore/setAccountActivatedStatus', true)
@@ -307,8 +357,31 @@ export default {
           }
         )
       }
-    },
-    newCodeRequest () {
+    }, */
+    async newCodeRequest () {
+      this.newCodeRequestSubmitting = true
+      const response = await fetch(Constants.SERVER_URL + '/api/account-activation', {
+        method: 'POST',
+        headers: Constants.HEADERS,
+        body: JSON.stringify({
+          email: this.userEmail
+        })
+      })
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        if ('intervalLength' in responseData) {
+          this.errorMessage = `С предыдущей попытки нужно подождать ${responseData.intervalLength / 60} м.`
+          this.errorDialogShow = true
+          this.newCodeRequestSubmitting = false
+        } else {
+          throw new Error(responseData.message)
+        }
+      } else {
+        this.newCodeSuccessDialogShow = true
+        this.newCodeRequestSubmitting = false
+      }
+    }
+    /* newCodeRequest () {
       this.newCodeRequestSubmitting = true
       fetch(Constants.SERVER_URL + '/api/account-activation', {
         method: 'POST',
@@ -319,13 +392,6 @@ export default {
       }).then(
         response => response.json()
       ).then(
-        /**
-         * @param {Object} data - Объект, содержащий ответ от сервера
-         * @param {string} data.message - Краткое текстовое сообщение с ответом
-         * @param {Number} data.intervalLength - Прилагается к ответу только если ошибка связана с нарушением
-         * временных интервалов между запросами на проверку кода или на создание нового кода. Содержит длину интервала
-         * в секундах
-         */
         data => {
           if (data.message === 'success') {
             this.newCodeSuccessDialogShow = true
@@ -338,7 +404,12 @@ export default {
           this.newCodeRequestSubmitting = false
         }
       )
-    }
+    } */
+  },
+  created () {
+    this.onFirstStepClick = exceptionHandlerDecorator.call(this, [this.onFirstStepClick], 'firstStepSubmitting')
+    this.onSecondStepClick = exceptionHandlerDecorator.call(this, [this.onSecondStepClick], 'secondStepSubmitting')
+    this.newCodeRequest = exceptionHandlerDecorator.call(this, [this.newCodeRequest], 'newCodeRequestSubmitting')
   }
 }
 </script>

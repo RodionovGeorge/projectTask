@@ -21,10 +21,11 @@
       />
     </template>
   </q-banner>
+  <!-- Поправить верстку: кнопка влезает за footer -->
   <div
     v-if="!!problemTitle && !pageLoading"
     class="row no-wrap q-pa-xs"
-    style="height: calc(100vh - 100px); max-height: 800px"
+    style="height: calc(100vh - 110px); max-height: 800px"
   >
     <div
       class="column no-wrap q-gutter-y-sm q-mr-sm"
@@ -235,7 +236,7 @@
 </template>
 
 <script>
-import { Constants, toLocalDate } from 'boot/Constants'
+import { Constants, exceptionHandlerDecorator, toLocalDate } from 'boot/Constants'
 import LoadingSpinner from 'components/LoadingSpinner'
 import ErrorDialog from 'components/ErrorDialog'
 export default {
@@ -284,7 +285,27 @@ export default {
         this.transmitData()
       }
     },
-    fetchData () {
+    async fetchData () {
+      this.pageLoading = true
+      const response = await fetch(
+        Constants.SERVER_URL + '/api/admitting-problem/' + this.$route.params.task_id,
+        Constants.GET_INIT
+      )
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      }
+      this.authorFullName = responseData.data.authorFullname
+      this.authorGroup = responseData.data.authorGroup
+      this.problemFileURL = responseData.data.problemURL
+      this.authorCommentary = responseData.data.authorCommentary
+      this.problemTitle = responseData.data.problemTitle
+      this.problemDiscipline = responseData.data.problemDiscipline
+      this.startDate = toLocalDate(responseData.data.problemStartLine)
+      this.endDate = toLocalDate(responseData.data.problemDeadline)
+      this.pageLoading = false
+    },
+    /* fetchData () {
       this.pageLoading = true
       fetch(Constants.SERVER_URL + '/api/admitting-problem/' + this.$route.params.task_id, Constants.GET_INIT).then(
         response => response.json()
@@ -305,7 +326,7 @@ export default {
                 this.$router.push('/permission-error')
                 break
               case 'problem not found':
-                this.$router.push('/123')
+                this.$router.push(Constants.AT_404)
                 break
               case 'problem already admitted':
                 this.problemAlreadyAdmitted = true
@@ -325,8 +346,30 @@ export default {
           this.$router.push('/connection-error')
         }
       )
-    },
-    transmitData () {
+    }, */
+    async transmitData () {
+      this.submitting = true
+      const response = await fetch(Constants.SERVER_URL + '/api/admitting-problem/' + this.$route.params.task_id, {
+        method: 'PATCH',
+        credentials: 'same-origin',
+        headers: Constants.HEADERS,
+        body: JSON.stringify({
+          csrfToken: window.localStorage.getItem('csrfToken'),
+          userID: this.$store.getters['userDataStore/userInformationGetter'].id,
+          problemStatus: this.adminDecision,
+          problemComplexity: this.chosenDifficulty,
+          rejectionReason: this.rejectedCommentary
+        })
+      })
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      }
+      window.localStorage.setItem('csrfToken', responseData.csrfToken)
+      await this.$router.go(-1)
+      this.submitting = false
+    }
+    /* transmitData () {
       this.submitting = true
       fetch(Constants.SERVER_URL + '/api/admitting-problem/' + this.$route.params.task_id, {
         method: 'PATCH',
@@ -359,16 +402,27 @@ export default {
           this.errorDialogShow = true
         }
       )
-    }
+    } */
   },
   async created () {
+    this.transmitData = exceptionHandlerDecorator.call(this, [this.transmitData], 'submitting')
     while (this.$store.getters['userDataStore/userInformationGetter'] === null) {
       await new Promise((resolve, reject) => setTimeout(resolve, 200))
     }
-    this.fetchData()
+    await exceptionHandlerDecorator.call(
+      this,
+      [this.fetchData, true, { 'problem already admitted': e => { this.problemAlreadyAdmitted = true } }],
+      'pageLoading'
+    )()
   },
   watch: {
-    $route: 'fetchData'
+    $route: function () {
+      exceptionHandlerDecorator.call(
+        this,
+        [this.fetchData, true, { 'problem already admitted': e => { this.problemAlreadyAdmitted = true } }],
+        'pageLoading'
+      )()
+    }
   }
 }
 </script>
