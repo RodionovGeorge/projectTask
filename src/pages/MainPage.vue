@@ -15,7 +15,7 @@
       >
         <q-input
           v-model="filter"
-          placeholder="Поиск по столбцу"
+          label="Поиск по столбцу"
           debounce="1000"
           :readonly="this.currentColumnForSearch === ''"
           square
@@ -43,7 +43,7 @@
         />
       </div>
       <q-table
-        class="q-mt-sm"
+        class="q-mt-xs"
         wrap-cells
         style="width:1100px; border-radius: 0"
         flat
@@ -194,8 +194,8 @@ export default {
         data => {
           if (data.message === 'success') {
             this.pagination.rowsNumber = data.problemCount
-            for (let i = 0; i < data.problems.length; i++) {
-              data.problems[i].authorGroup = data.problems[i].authorGroup === '-1' ? '-' : data.problems[i].authorGroup
+            for (const problem of data.problems) {
+              problem.authorGroup = problem.authorGroup === '-1' ? '-' : problem.authorGroup
             }
             this.data = data.problems
             this.tableLoading = false

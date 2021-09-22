@@ -12,6 +12,7 @@
       Попытка
     </div>
     <q-btn
+      v-if="showDeleteButton"
       icon="bi-trash"
       dense
       flat
@@ -87,6 +88,9 @@ export default {
       a.href = this.problemFileURL
       a.download = '' + this.$route.params.task_id + '.pdf'
       a.click()
+    },
+    onDelete () {
+      this.$emit('delete')
     }
   },
   data () {
@@ -106,6 +110,9 @@ export default {
     },
     problemFileURL: {
       type: String
+    },
+    showDeleteButton: {
+      type: Boolean
     }
   },
   computed: {

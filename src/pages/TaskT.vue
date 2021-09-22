@@ -83,10 +83,12 @@
         >
           <AttemptForStudent
             v-bind="currentAttempt.studentAttempt"
+            :show-delete-button="sdbForStudentAttempt"
             class="content-background content-shadow full-attempt-student"
           />
           <TeacherFeedback
             v-bind="currentAttempt.teacherFeedback"
+            :show-delete-button="isTeacher"
             class="content-background content-shadow full-attempt-teacher"
           />
         </div>
@@ -97,29 +99,22 @@
           class="content-background"
           no-caps
           @click="onEdit"
-        >
-        </q-btn>
-        <!-- <div
-          class="row content-shadow content-background"
-        >
-          <q-btn
-            class="q-mr-xs"
-            label="Удалить попытку"
-            no-caps
-          >
-            <template
-              v-slot:loading
-            >
-              <q-spinner
-                :thickness="2"
-              />
-            </template>
-          </q-btn>
-          <q-btn
-            label="Редактировать попытку"
-            no-caps
-          ></q-btn>
-        </div> -->
+        />
+        <q-btn
+          v-if="isTeacher && currentAttempt.studentAttempt.checkStatus === 'Проверена'"
+          label="Редактировать отзыв"
+          style="width: 25%"
+          class="content-background"
+          no-caps
+        />
+        <q-btn
+          v-if="problemInformation.userStatus === 'Ученик' && currentAttempt.studentAttempt.checkStatus === 'Проверена'"
+          label="Добавить попытку"
+          style="width: 25%"
+          class="content-background"
+          no-caps
+          @click="newAttemptDialogShow = true"
+        />
         <div
           class="attempt-discussion content-shadow content-background"
         >
@@ -189,10 +184,12 @@
             >
               <AttemptForStudent
                 v-bind="previousAttempt.studentAttempt"
+                :show-delete-button="false"
                 class="content-shadow-for-white full-attempt-student"
               />
               <TeacherFeedback
                 v-bind="previousAttempt.teacherFeedback"
+                :show-delete-button="false"
                 class="content-shadow-for-white full-attempt-teacher"
               />
             </div>
@@ -208,6 +205,7 @@
                 class="q-gutter-y-sm"
               >
                 <q-virtual-scroll
+                  v-if="paCommentaryNotEmpty"
                   style="max-height: 200px"
                   :items="previousAttempt.commentaries"
                 >
@@ -226,6 +224,11 @@
                     />
                   </template>
                 </q-virtual-scroll>
+                <div
+                  v-else
+                >
+                  Комментариев нет.
+                </div>
               </div>
             </div>
           </div>
@@ -305,7 +308,7 @@
           no-caps
           :loading="newAttemptLoading"
           label="Добавить попытку"
-          @click="addNewAttempt"
+          @click="wdAddNewAttempt"
         >
           <template
             v-slot:loading
@@ -436,7 +439,7 @@ export default {
       const requestData = {
         csrfToken: window.localStorage.getItem('csrfToken'),
         problemID: this.problemInformation.problemID,
-        newStatusTitle: args[0][0]
+        newStatusTitle: args[0]
       }
       const response = await fetch(Constants.SERVER_URL + '/api/hide-status', {
         method: 'PATCH',
@@ -457,7 +460,7 @@ export default {
       this.deleteCommentaryLoading = true
       const requestData = {
         csrfToken: window.localStorage.getItem('csrfToken'),
-        commentaryID: args[0][0]
+        commentaryID: args[0]
       }
       const response = await fetch(Constants.SERVER_URL + '/api/commentary-editing', {
         method: 'PUT',
@@ -540,63 +543,12 @@ export default {
         window.localStorage.setItem('csrfToken', responseData.csrfToken)
         this.newAttemptDialogShow = false
         this.newAttemptLoading = false
-        /* toBase64(this.newAttemptFile).then(
-          file => {
-            const data = {
-              csrfToken: window.localStorage.getItem('csrfToken'),
-              file: file.substring(file.indexOf(',') + 1),
-              fileMIMEType: this.newAttemptFile.type,
-              problemID: this.$route.params.task_id
-            }
-            fetch(Constants.SERVER_URL + '/api/attempt-editing', {
-              method: 'POST',
-              credentials: 'same-origin',
-              headers: Constants.HEADERS,
-              body: JSON.stringify(data)
-            }).then(
-              response => response.json()
-            ).then(
-              data => {
-                if (data.message === 'success') {
-                  Object.assign(this.previousAttempt, this.currentAttempt)
-                  this.currentPreviousAttemptNumber = this.attemptMaxNumber
-                  this.currentAttempt.attemptID = data.attemptID
-                  this.currentAttempt.attemptID = data.attemptID
-                  this.currentAttempt.teacherFeedback = null
-                  this.currentAttempt.commentaries = null
-                  this.currentAttempt.studentAttempt = data.attempt
-                  this.attemptMaxNumber++
-                  window.localStorage.setItem('csrfToken', data.csrfToken)
-                  this.newAttemptDialogShow = false
-                } else {
-                  console.log(data.message)
-                  console.log(Constants.ERROR_MESSAGES[data.message])
-                  this.errorMessage = Constants.ERROR_MESSAGES[data.message]
-                  this.errorDialogShow = true
-                }
-                this.newAttemptLoading = false
-              }
-            ).catch(
-              () => {
-                this.errorMessage = 'Нет соединения.'
-                this.errorDialogShow = true
-                this.newAttemptLoading = false
-              }
-            )
-          }
-        ).catch(
-          () => {
-            this.errorMessage = 'Не удалось подготовить файл к передаче на сервер.'
-            this.errorDialogShow = true
-            this.newAttemptLoading = false
-          }
-        ) */
       }
     },
     wdAddNewAttempt: null,
     async onRowClick (...args) {
       this.listLoading = true
-      const r = args[0][1]
+      const r = args[1]
       this.currentSessionID = r.sessionID
       await this.getSession()
       this.listLoading = false
@@ -618,7 +570,7 @@ export default {
     },
     async updateSessionTable (...args) {
       this.listLoading = true
-      const props = args[0][0]
+      const props = args[0]
       const { page, rowsPerPage } =
         typeof props === 'string'
           ? this.pagination
@@ -636,13 +588,13 @@ export default {
       if (data.message !== 'success') {
         throw new Error(data.message)
       }
-      for (let i = 0; i < data.sessionInfo.length; i++) {
-        data.sessionInfo[i].studentGroup =
-          ~data.sessionInfo[i].studentGroup
-            ? data.sessionInfo[i].studentGroup
+      for (const inf of data.sessionInfo) {
+        inf.studentGroup =
+          ~inf.studentGroup
+            ? inf.studentGroup
             : '-'
-        data.sessionInfo[i].sessionHaveNewContentForTeacher =
-          data.sessionInfo[i].sessionHaveNewContentForTeacher
+        inf.sessionHaveNewContentForTeacher =
+          inf.sessionHaveNewContentForTeacher
             ? 'Есть'
             : 'Нет'
       }
@@ -694,11 +646,11 @@ export default {
     decoratorExceptionHandler (f, ...flags) {
       return async (...args) => {
         try {
-          await f(args)
+          await f.call(this, ...args)
         } catch (e) {
           console.log(e)
-          for (let i = 0; i < flags.length; i++) {
-            this[flags[i]] = false
+          for (const flag of flags) {
+            this[flag] = false
           }
           this.errorMessage =
             Object.prototype.hasOwnProperty.call(Constants.ERROR_MESSAGES, e.message)
@@ -719,7 +671,7 @@ export default {
         this.previousAttempt.attemptID = lastPreviousAttempt.attemptID
         this.previousAttempt.studentAttempt = lastPreviousAttempt.studentAttempt
         this.previousAttempt.teacherFeedback = lastPreviousAttempt.teacherFeedback
-        this.previousAttempt.commentaries = lastPreviousAttempt.commentaries
+        this.previousAttempt.commentaries = lastPreviousAttempt.commentaries || []
       }
       this.currentAttempt.attemptID = currentAttempt.attemptID
       this.currentAttempt.studentAttempt = currentAttempt.studentAttempt
@@ -736,7 +688,7 @@ export default {
         await this.getProblem()
         switch (this.problemInformation.userStatus) {
           case 'Учитель':
-            await this.updateSessionTable(['random string'])
+            await this.updateSessionTable('random string')
             if (this.currentSessionID) {
               await this.getSession()
             }
@@ -762,6 +714,12 @@ export default {
             await this.$router.push(Constants.AT_404)
             break
           case 'database error':
+            await this.$router.push('/server-error')
+            break
+          case 'Internal Server Error':
+            await this.$router.push('/server-error')
+            break
+          case 'internal server error':
             await this.$router.push('/server-error')
             break
           default:
@@ -790,8 +748,15 @@ export default {
     }
   },
   computed: {
+    paCommentaryNotEmpty () {
+      return this.previousAttempt.commentaries?.length
+    },
     isTeacher () {
       return this.problemInformation.userStatus === 'Учитель'
+    },
+    sdbForStudentAttempt () {
+      return this.problemInformation.userStatus === 'Ученик' &&
+        this.currentAttempt.studentAttempt.checkStatus === 'Проверяется'
     }
   },
   beforeRouteEnter (to, from, next) {

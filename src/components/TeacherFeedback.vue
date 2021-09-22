@@ -12,6 +12,7 @@
       Отзыв
     </div>
     <q-btn
+      v-if="showDeleteButton"
       icon="bi-trash"
       flat
       dense
@@ -96,6 +97,9 @@ export default {
       a.href = this.problemFileURL
       a.download = '' + this.$route.params.task_id + '.pdf'
       a.click()
+    },
+    onDelete () {
+      this.$emit('delete')
     }
   },
   data () {
@@ -118,6 +122,9 @@ export default {
     teacherCommentary: {
       type: String,
       default: '-'
+    },
+    showDeleteButton: {
+      type: Boolean
     }
   },
   computed: {

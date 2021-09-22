@@ -134,10 +134,11 @@ export default {
           const resultB64Array = []
           for (let i = 0; i < this.imagePaths.length; i++) {
             this.currentPage = i
-            await new Promise((resolve, reject) => setTimeout(resolve, 200))
-            const svgElement = document.getElementById('svg')
+            await this.$nextTick()
+            const el = document.getElementById('svg')
+            const svgElement = el.cloneNode(true)
             const s = new XMLSerializer().serializeToString(svgElement)
-            const svgStyle = window.getComputedStyle(svgElement)
+            const svgStyle = window.getComputedStyle(el)
             const encodeSVG = 'data:image/svg+xml;base64, ' + window.btoa(s)
             const canvas = document.createElement('canvas')
             const height = parseInt(svgStyle.getPropertyValue('height')) - 2 // Исключая размер границы элемента
@@ -163,43 +164,6 @@ export default {
             backgroundImage.src = this.imagePaths[i]
           }
         }
-        /* const backgroundImages = []
-          const SVGImages = []
-          const canvases = []
-          const contexts = []
-          for (let i = 0; i < this.imagePaths.length; i++) {
-            this.currentPage = i
-            const svgElement = document.getElementById('svg')
-            const s = new XMLSerializer().serializeToString(svgElement)
-            const svgStyle = window.getComputedStyle(svgElement)
-            const encodeSVG = 'data:image/svg+xml;base64, ' + window.btoa(s)
-            canvases.push(document.createElement('canvas'))
-            const height = parseInt(svgStyle.getPropertyValue('height')) - 2 // Исключая размер границы элемента
-            const width = parseInt(svgStyle.getPropertyValue('width')) - 2 // Исключая размер границы элемента
-            canvases[i].height = height
-            canvases[i].width = width
-            console.log(i, height, width)
-            contexts[i] = canvases[i].getContext('2d')
-            console.log(i, contexts[i])
-            backgroundImages.push(new Image(width, height))
-            console.log(i, backgroundImages[i])
-            backgroundImages[i].onload = () => {
-              contexts[i].drawImage(backgroundImages[i], 0, 0)
-              SVGImages.push(new Image(width, height))
-              console.log(i, SVGImages[i])
-              SVGImages[i].onload = () => {
-                contexts[i].drawImage(SVGImages[i], 0, 0)
-                resultB64Array.push(canvases[i].toDataURL('image/png'))
-                this.imageTransformationCounter++
-                if (this.imageTransformationCounter === this.imagePaths.length) {
-                  this.$emit('returndata', resultB64Array)
-                }
-              }
-              SVGImages[i].src = encodeSVG
-            }
-            backgroundImages[i].src = this.imagePaths[i]
-          }
-        } */
       }
     }
   },

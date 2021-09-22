@@ -70,8 +70,16 @@
       >
         Степень решения задачи
       </div>
-      <div class="row justify-center">
-        <q-radio
+      <div
+        class="row justify-center"
+      >
+        <q-option-group
+          v-model="decisionStage"
+          :options="solutionDegrees"
+          inline
+          color="primary"
+        />
+        <!-- <q-radio
           v-model="decisionStage"
           label="Пока не решена"
           val="Пока не решена"
@@ -90,7 +98,7 @@
           v-model="decisionStage"
           label="Полность решена"
           val="Полность решена"
-        />
+        /> -->
       </div>
       <q-input
         v-model="teacherCommentary"
@@ -161,7 +169,8 @@ export default {
       informationAboutAuthor: null,
       problemPath: null,
       imagePaths: null,
-      returnImagesFlag: false
+      returnImagesFlag: false,
+      solutionDegrees: Constants.SOLUTION_DEGREES
     }
   },
   methods: {
@@ -192,7 +201,6 @@ export default {
           await this.$router.push(`/task/${this.$route.params.task_id}`)
         }
       } catch (e) {
-        console.log(e)
         this.errorMessage = 'Нет соединения.'
         this.errorDialogShow = true
         this.submitting = false

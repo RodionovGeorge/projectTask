@@ -29,6 +29,7 @@
             outlined
             type="password"
             label="Пароль"
+            v-on:keydown.enter.prevent="onEnter"
             :rules="[value=>value.length > 0 || 'Пожалуйста, введите пароль']"
           />
           <q-btn
@@ -54,12 +55,14 @@
       >
         <q-btn
           to="/registration"
+          style="width: 40%"
           flat
           no-caps
           label="Регистрация"
         />
         <q-btn
           to="/account-recovery"
+          style="width: 55%"
           flat
           no-caps
           label="Забыли пароль?"
