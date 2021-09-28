@@ -140,7 +140,7 @@ export default {
       columns: [
         {
           name: 'problemID',
-          field: 'id'
+          field: 'problemID'
         },
         {
           name: 'problemTitle',
@@ -172,6 +172,7 @@ export default {
           label: 'Группа автора',
           align: 'center',
           field: 'authorGroup',
+          format: val => val === '-1' ? '-' : val,
           sortable: true
         },
         {
@@ -207,7 +208,6 @@ export default {
       for (const problem of this.data) {
         problem.problemStartLine = toLocalDate(problem.problemStartLine)
         problem.problemDeadline = toLocalDate(problem.problemDeadline)
-        problem.authorGroup = problem.authorGroup === '-1' ? '-' : problem.authorGroup
       }
     },
     async fetchData (props) {
@@ -224,7 +224,7 @@ export default {
         pageSize: rowsPerPage,
         filterField: this.currentColumnForSearch.value || 'problemTitle',
         filterValue: this.filter,
-        sortField: sortBy,
+        sortField: sortBy || 'problemTitle',
         sortDirection: descending ? 'desc' : 'asc'
       }
       const response = await fetch(Constants.SERVER_URL + '/api/admitting-problem/-1',
@@ -241,7 +241,6 @@ export default {
       }
       this.pagination.rowsNumber = responseData.problemCount
       this.data = responseData.problems
-      console.log(this.data)
       this.timeToLocal()
       this.pagination.page = page
       this.pagination.rowsPerPage = rowsPerPage
@@ -307,7 +306,7 @@ export default {
         pageSize: this.pagination.rowsPerPage,
         filterField: 'problemTitle',
         filterValue: this.filter,
-        sortField: this.pagination.sortBy,
+        sortField: 'problemTitle',
         sortDirection: this.pagination.descending ? 'desc' : 'asc'
       }
       while (this.$store.getters['userDataStore/userInformationGetter'] === null) {

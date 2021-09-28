@@ -41,6 +41,7 @@
           label="Поиск по столбцу"
           debounce="1000"
           :readonly="currentMode.columnForSearch === ''"
+          @input="getProblem"
           square
           outlined
           style="width:70%"
@@ -57,6 +58,7 @@
           square
           outlined
           :options="currentMode.namesOfSearchColumns"
+          @input="getProblem"
           label="Столбец"
           options-dense
           style="width:30%"
@@ -67,7 +69,11 @@
         :data="currentMode.data"
         :columns="currentMode.columns"
         :pagination.sync="currentMode.pagination"
+        :visible-columns="currentMode.visibleColumns"
         :rows-per-page-options="[currentMode.pagination.rowsPerPage]"
+        :loading="loadingData"
+        @request="getProblem"
+        @row-click="onRowClick"
         wrap-cells
         flat
         square
@@ -76,35 +82,41 @@
       />
     </div>
   </div>
+  <ErrorDialog
+    :p-error-dialog-show="errorDialogShow"
+    :p-error-message="errorMessage"
+    @off="errorDialogShow = false"
+  />
 </q-page>
 </template>
 
 <script>
 import LoadingSpinner from 'components/LoadingSpinner'
+import { Constants, exceptionHandlerDecorator, toLocalDate } from 'boot/Constants'
+import ErrorDialog from 'components/ErrorDialog'
 export default {
   name: 'AllUserTasks',
-  components: { LoadingSpinner },
+  components: { ErrorDialog, LoadingSpinner },
   data () {
     return {
       loadingPage: false,
-      currentTab: '',
+      loadingData: false,
+      errorDialogShow: false,
+      errorMessage: '',
+      currentTab: 'teacher',
       asStudent: {
         pagination: {
           sortBy: '',
           descending: false,
           page: 1,
-          rowsPerPage: 5
-          // rowsNumber: 5
+          rowsPerPage: Constants.ROWS_PER_PAGE,
+          rowsNumber: null
         },
         columnForSearch: '',
         filterValue: '',
-        data: [
-          { problemTitle: 'test1', authorFullName: 'Родионов Георгий Витальевич', authorGroup: '8305', problemDiscipline: 'Математический анализ', haveNewContent: 'Да' },
-          { problemTitle: 'test1', authorFullName: 'test1 t. t.', authorGroup: '8305', problemDiscipline: 'Математический анализ', haveNewContent: 'Да' },
-          { problemTitle: 'test1', authorFullName: 'test1 t. t.', authorGroup: '8305', problemDiscipline: 'Математический анализ', haveNewContent: 'Да' },
-          { problemTitle: 'test1', authorFullName: 'test1 t. t.', authorGroup: '8305', problemDiscipline: 'Математический анализ', haveNewContent: 'Да' },
-          { problemTitle: 'test1', authorFullName: 'test1 t. t.', authorGroup: '8305', problemDiscipline: 'Математический анализ', haveNewContent: 'Да' }
-        ],
+        getData: null,
+        data: null,
+        visibleColumns: ['problemTitle', 'authorFullName', 'problemDiscipline', 'haveNewContent'],
         columns: [
           {
             name: 'problemID',
@@ -115,8 +127,7 @@ export default {
             required: true,
             label: 'Название',
             align: 'center',
-            field: 'problemTitle',
-            sortable: true
+            field: 'problemTitle'
           },
           {
             name: 'authorFullName',
@@ -130,23 +141,22 @@ export default {
             required: true,
             label: 'Группа автора',
             align: 'center',
-            field: 'authorGroup',
-            sortable: true
+            format: val => val === '-1' ? '-' : val,
+            field: 'authorGroup'
           },
           {
             name: 'problemDiscipline',
             label: 'Предмет',
             field: 'problemDiscipline',
-            align: 'center',
-            sortable: true
+            align: 'center'
           },
           {
             name: 'haveNewContent',
             required: true,
             label: 'Наличие обновлений',
             align: 'center',
-            field: 'haveNewContent',
-            sortable: true
+            format: val => val ? 'Да' : 'Нет',
+            field: 'haveNewContent'
           }
         ],
         namesOfSearchColumns: [
@@ -165,10 +175,6 @@ export default {
           {
             label: 'Предмет',
             value: 'problemDiscipline'
-          },
-          {
-            label: 'Наличие обновлений',
-            value: 'haveNewContent'
           }
         ]
       },
@@ -177,80 +183,59 @@ export default {
           sortBy: '',
           descending: false,
           page: 1,
-          rowsPerPage: 3
-          // rowsNumber: 5
+          rowsPerPage: Constants.ROWS_PER_PAGE,
+          rowsNumber: null
         },
+        getData: null,
         columnForSearch: '',
         filterValue: '',
-        data: [
-          { problemTitle: 'test2', startDate: '23.07.2000', endDate: '23.08.2000', problemStatus: 'Заблокирована', haveNewContent: 'Нет' },
-          { problemTitle: 'test2', startDate: '23.07.2000', endDate: '23.08.2000', problemStatus: 'Заблокирована', haveNewContent: 'Нет' },
-          { problemTitle: 'test2', startDate: '23.07.2000', endDate: '23.08.2000', problemStatus: 'Заблокирована', haveNewContent: 'Нет' },
-          { problemTitle: 'test2', startDate: '23.07.2000', endDate: '23.08.2000', problemStatus: 'Заблокирована', haveNewContent: 'Нет' },
-          { problemTitle: 'test2', startDate: '23.07.2000', endDate: '23.08.2000', problemStatus: 'Заблокирована', haveNewContent: 'Нет' }
-        ],
+        data: null,
+        visibleColumns: ['problemTitle', 'startDate', 'endDate', 'problemStatus', 'haveNewContent'],
         columns: [
           {
             name: 'problemID',
-            field: 'id'
+            field: 'problemID'
           },
           {
             name: 'problemTitle',
             required: true,
             label: 'Название',
             align: 'center',
-            field: 'problemTitle',
-            sortable: true
+            field: 'problemTitle'
           },
           {
             name: 'startDate',
             required: true,
             label: 'Дата начала приема решений',
             align: 'center',
-            field: 'startDate',
-            sortable: true
+            field: 'startDate'
           },
           {
             name: 'endDate',
             required: true,
             label: 'Дата окончания приема решений',
             align: 'center',
-            field: 'endDate',
-            sortable: true
+            field: 'endDate'
           },
           {
             name: 'problemStatus',
             required: true,
             label: 'Статус задачи',
             align: 'center',
-            field: 'problemStatus',
-            sortable: true
+            field: 'problemStatus'
           },
           {
             name: 'haveNewContent',
             required: true,
             label: 'Наличие обновлений',
             align: 'center',
-            field: 'haveNewContent',
-            sortable: true
+            field: 'haveNewContent'
           }
         ],
         namesOfSearchColumns: [
           {
             label: 'Название',
             value: 'problemTitle'
-          },
-          {
-            label: 'Дата начала приема решений',
-            value: 'startDate'
-          },
-          {
-            label: 'Дата окончания приема решений',
-            value: 'endDate'
-          },
-          {
-            label: 'Наличие обновлений',
-            value: 'haveNewContent'
           },
           {
             label: 'Статус задачи',
@@ -260,8 +245,76 @@ export default {
       }
     }
   },
-  created () {
-    this.currentTab = 'teacher'
+  methods: {
+    onRowClick (evt, row) {
+      this.$router.push('/task/' + row.problemID)
+    },
+    async asTeacherGetData (requestData) {
+      const response = await fetch(Constants.SERVER_URL + '/api/teacher/problems', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: Constants.HEADERS,
+        body: JSON.stringify(requestData)
+      })
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      }
+      for (const problem of responseData.problems) {
+        problem.startDate = toLocalDate(problem.startDate)
+        problem.endDate = toLocalDate(problem.endDate)
+      }
+      return responseData
+    },
+    async asStudentGetData (requestData) {
+      const response = await fetch(Constants.SERVER_URL + '/api/student/problems', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: Constants.HEADERS,
+        body: JSON.stringify(requestData)
+      })
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      }
+      return responseData
+    },
+    async getProblem (props) {
+      const { page, rowsPerPage } =
+        !Object.prototype.hasOwnProperty.call(props, 'label') && typeof props !== 'string'
+          ? props.pagination
+          : this.currentMode.pagination
+      this.loadingData = true
+      const requestData = {
+        currentPage: page,
+        pageSize: rowsPerPage,
+        filterField: this.currentMode.columnForSearch.value || 'problemTitle',
+        filterValue: this.currentMode.filterValue
+      }
+      const responseData = await this.currentMode.getData(requestData)
+      this.currentMode.data = responseData.problems
+      this.currentMode.pagination.rowsNumber = responseData.problemCount
+      this.currentMode.pagination.page = page
+      this.loadingData = false
+    },
+    async initPage () {
+      await this.getProblem('rand string')
+      this.currentTab = 'student'
+      await this.$nextTick()
+      await this.getProblem('rand string')
+      this.currentTab = 'teacher'
+    }
+  },
+  async created () {
+    this.loadingPage = true
+    this.asStudent.getData = this.asStudentGetData
+    this.asTeacher.getData = this.asTeacherGetData
+    while (this.$store.getters['userDataStore/userInformationGetter'] === null) {
+      await new Promise((resolve, reject) => setTimeout(resolve, 200))
+    }
+    await exceptionHandlerDecorator.call(this, [this.initPage, true])()
+    this.getProblem = exceptionHandlerDecorator.call(this, [this.getProblem], 'loadingData')
+    this.loadingPage = false
   },
   computed: {
     currentMode () {

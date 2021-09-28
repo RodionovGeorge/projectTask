@@ -34,146 +34,147 @@
       :width="200"
       :breakpoint="400"
     >
-        <q-scroll-area
-          style="height: calc(100% - 150px); margin-top: 150px; border-right: 1px solid #ddd"
-          v-if="!!userInformation"
+      <q-scroll-area
+        style="height: calc(100% - 150px); margin-top: 150px; border-right: 1px solid #ddd"
+        v-if="!!userInformation"
+      >
+        <q-list
+          padding
         >
-          <q-list
-            padding
+          <q-item
+            to="/"
+            clickable
+            v-ripple
           >
-            <q-item
-              to="/"
-              clickable
-              v-ripple
+            <q-item-section
+              avatar
             >
-              <q-item-section
-                avatar
-              >
-                <q-icon
-                  name="bi-house"
-                />
-              </q-item-section>
-              <q-item-section>
-                Главная
-              </q-item-section>
-            </q-item>
+              <q-icon
+                name="bi-house"
+              />
+            </q-item-section>
+            <q-item-section>
+              Главная
+            </q-item-section>
+          </q-item>
 
-            <q-item
-              to="/new-task"
-              clickable
-              v-ripple
-              v-if="isTeacher"
+          <q-item
+            to="/new-task"
+            clickable
+            v-ripple
+            v-if="isTeacher"
+          >
+            <q-item-section
+              avatar
             >
-              <q-item-section
-                avatar
-              >
-                <q-icon
-                  name="bi-file-earmark-arrow-up"
-                />
-              </q-item-section>
-              <q-item-section>
-                Предложить задачу
-              </q-item-section>
-            </q-item>
+              <q-icon
+                name="bi-file-earmark-arrow-up"
+              />
+            </q-item-section>
+            <q-item-section>
+              Предложить задачу
+            </q-item-section>
+          </q-item>
 
-            <q-item
-              to="/task-opening"
-              clickable
-              v-ripple
-              v-if="isAdmin"
+          <q-item
+            to="/task-opening"
+            clickable
+            v-ripple
+            v-if="isAdmin"
+          >
+            <q-item-section
+              avatar
             >
-              <q-item-section
-                avatar
-              >
-                <q-icon
-                  name="bi-hand-thumbs-up"
-                />
-              </q-item-section>
-              <q-item-section>
-                Допуск задач
-              </q-item-section>
-            </q-item>
+              <q-icon
+                name="bi-hand-thumbs-up"
+              />
+            </q-item-section>
+            <q-item-section>
+              Допуск задач
+            </q-item-section>
+          </q-item>
 
-            <!-- <q-item
-              active
-              clickable
-              v-ripple
+          <!-- <q-item
+            active
+            clickable
+            v-ripple
+          >
+            <q-item-section
+              avatar
             >
-              <q-item-section
-                avatar
-              >
-                <q-icon
-                  name="bi-person-square"
-                />
-              </q-item-section>
-              <q-item-section>
-                Профиль
-              </q-item-section>
-            </q-item> -->
+              <q-icon
+                name="bi-person-square"
+              />
+            </q-item-section>
+            <q-item-section>
+              Профиль
+            </q-item-section>
+          </q-item> -->
 
-            <q-item
-              clickable
-              v-ripple
+          <q-item
+            to="/my/tasks"
+            clickable
+            v-ripple
+          >
+            <q-item-section
+              avatar
             >
-              <q-item-section
-                avatar
-              >
-                <q-icon
-                  name="bi-book"
-                />
-              </q-item-section>
-              <q-item-section>
-                Задачи
-              </q-item-section>
-            </q-item>
+              <q-icon
+                name="bi-book"
+              />
+            </q-item-section>
+            <q-item-section>
+              Задачи
+            </q-item-section>
+          </q-item>
 
-            <q-item
-              clickable
-              v-ripple
-              @click="onLogout"
+          <q-item
+            clickable
+            v-ripple
+            @click="onLogout"
+          >
+            <q-item-section
+              avatar
             >
-              <q-item-section
-                avatar
-              >
-                <q-icon
-                  name="bi-box-arrow-left"
-                />
-              </q-item-section>
-              <q-item-section>
-                Выход
-              </q-item-section>
-            </q-item>
-          </q-list>
-        </q-scroll-area>
+              <q-icon
+                name="bi-box-arrow-left"
+              />
+            </q-item-section>
+            <q-item-section>
+              Выход
+            </q-item-section>
+          </q-item>
+        </q-list>
+      </q-scroll-area>
 
-        <q-img
-          class="absolute-top"
-          src="https://cdn.quasar.dev/img/material.png"
-          style="height: 150px"
-          v-if="!!userInformation"
+      <q-img
+        class="absolute-top"
+        src="https://cdn.quasar.dev/img/material.png"
+        style="height: 150px"
+        v-if="!!userInformation"
+      >
+        <div
+          class="absolute-bottom bg-transparent column items-center"
         >
+          <q-avatar
+            size="56px"
+            class="q-mb-sm">
+            <img
+              :src="userInformation.avatarURL"
+            >
+          </q-avatar>
           <div
-            class="absolute-bottom bg-transparent column items-center"
+            class="text-weight-bold"
           >
-            <q-avatar
-              size="56px"
-              class="q-mb-sm">
-              <img
-                :src="userInformation.avatarURL"
-              >
-            </q-avatar>
-            <div
-              class="text-weight-bold"
-            >
-              {{ userInformation.lastName + ' ' +
-            userInformation.firstName[0] + ' .' +
-            userInformation.middleName[0] + '.' }}
-            </div>
-            <div>
-              {{ userInformation.email }}
-            </div>
+            {{ userInformation.lastName + ' ' +
+          userInformation.firstName[0] + ' .' +
+          userInformation.middleName[0] + '.' }}
           </div>
-        </q-img>
+          <div>
+            {{ userInformation.email }}
+          </div>
+        </div>
+      </q-img>
       <q-item
         clickable
         v-ripple
@@ -193,13 +194,13 @@
       </q-item>
     </q-drawer>
 
-    <q-footer>
+    <!-- <q-footer>
       <q-toolbar>
         <q-toolbar-title>
           some title
         </q-toolbar-title>
       </q-toolbar>
-    </q-footer>
+    </q-footer> -->
 
     <q-page-container>
       <router-view />

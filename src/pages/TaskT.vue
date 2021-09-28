@@ -375,12 +375,14 @@ export default {
           name: 'studentGroup',
           label: 'Группа',
           align: 'center',
+          format: val => val === '-1' ? '-' : val,
           field: 'studentGroup'
         },
         {
           name: 'haveNewContent',
           label: 'Обновления',
           align: 'center',
+          format: val => val ? 'Да' : 'Нет',
           field: 'sessionHaveNewContentForTeacher'
         }
       ],
@@ -589,16 +591,6 @@ export default {
       if (data.message !== 'success') {
         throw new Error(data.message)
       }
-      for (const inf of data.sessionInfo) {
-        inf.studentGroup =
-          ~inf.studentGroup
-            ? inf.studentGroup
-            : '-'
-        inf.sessionHaveNewContentForTeacher =
-          inf.sessionHaveNewContentForTeacher
-            ? 'Есть'
-            : 'Нет'
-      }
       this.sessionData = data.sessionInfo
       this.pagination.rowsNumber = data.sessionCount
       this.pagination.rowsPerPage = rowsPerPage
@@ -654,7 +646,7 @@ export default {
         this.previousAttempt.attemptID = lastPreviousAttempt.attemptID
         this.previousAttempt.studentAttempt = lastPreviousAttempt.studentAttempt
         this.previousAttempt.teacherFeedback = lastPreviousAttempt.teacherFeedback
-        this.previousAttempt.commentaries = lastPreviousAttempt.commentaries || []
+        this.previousAttempt.commentaries = lastPreviousAttempt.commentariesInfo.commentaries || []
       }
       this.currentAttempt.attemptID = currentAttempt.attemptID
       this.currentAttempt.studentAttempt = currentAttempt.studentAttempt

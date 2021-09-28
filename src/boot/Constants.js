@@ -6,14 +6,14 @@
 // На отклонение действий на самой странице показывать всплывающие окна
 // При этом /server-error имеет приоритет при маршрутизации (проходит без всяких приверок)
 
-// Еще: Магические константы на размер одного pdf для раскраски учителями: 793 на 1221
+// Еще: Магические константы на размер одного pdf для раскраски учителями: 794 на 1224
 
 // Еще: На каждый опасный для данных запрос не забыть обновить CSRF токен (когда уже авторизован)
 
-const AT_404 = '/asdfasdfdqwe'
+const AT_404 = '/error-404'
 
 const Constants = {
-  SERVER_URL: 'http://localhost',
+  SERVER_URL: 'http://192.168.100.5',
   TASK_DISCIPLINES: [
     'Дискретная математика',
     'Алгебра и геометрия',
@@ -72,7 +72,8 @@ const Constants = {
     'commentary not found': { message: 'Комментарий не найден.', path: AT_404 },
     'attempt already checked': { message: 'Попытка уже была проверена.', path: '/error-400' },
     'pdf creating failed': { message: 'Не удалось обработать проверенное решение.', path: '/server-error' },
-    'Failed to fetch': { message: 'Нет соединения.', path: '/connection-error' }
+    'Failed to fetch': { message: 'Нет соединения.', path: '/connection-error' },
+    'session not found': { message: 'Ученик не найден. Возможно попытка была удалена.', path: AT_404 }
   },
   PATHS_WITHOUT_AUTHENTICATION: [
     '/login',
@@ -122,7 +123,7 @@ const Constants = {
 function exceptionHandlerDecorator ([f, redirectingMode = false, customHandlers = {}], ...flags) {
   return async (...args) => {
     try {
-      console.log(f)
+      // console.log(f)
       await f.call(this, ...args)
     } catch (e) {
       console.log(e)

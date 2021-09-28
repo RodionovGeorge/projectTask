@@ -6,7 +6,7 @@
       :loading="pageLoading"
     />
     <div
-      class="column content-background content-shadow q-pa-xs"
+      class="column content-background content-shadow q-pa-xs q-ma-xs"
       v-if="data"
     >
       <div
@@ -117,7 +117,7 @@ export default {
       columns: [
         {
           name: 'problemID',
-          field: 'id'
+          field: 'problemID'
         },
         {
           name: 'problemTitle',
@@ -132,14 +132,17 @@ export default {
           required: true,
           label: 'Автор',
           align: 'center',
-          field: 'authorFullName'
+          field: 'authorFullName',
+          style: 'min-width: 150px'
         },
         {
           name: 'authorGroup',
           required: true,
+          format: val => val === '-1' ? '-' : val,
           label: 'Группа автора',
           align: 'center',
           field: 'authorGroup',
+          style: 'min-width: 150px',
           sortable: true
         },
         {
@@ -154,6 +157,7 @@ export default {
           label: 'Сложность',
           field: 'problemComplexity',
           align: 'center',
+          style: 'min-width: 150px',
           sortable: true
         }
       ],
@@ -179,7 +183,7 @@ export default {
         pageSize: rowsPerPage,
         filterField: this.currentColumnForSearch.value || 'problemTitle',
         filterValue: this.filter,
-        sortField: sortBy,
+        sortField: sortBy || 'problemTitle',
         sortDirection: descending ? 'desc' : 'asc'
       }
       const response = await fetch(Constants.SERVER_URL + '/api/problem/-1',
@@ -199,6 +203,7 @@ export default {
       this.pagination.rowsPerPage = rowsPerPage
       this.pagination.sortBy = sortBy
       this.pagination.descending = descending
+      this.pagination.rowsNumber = responseData.problemCount
       this.tableLoading = false
     },
     async init () {
@@ -208,7 +213,7 @@ export default {
         pageSize: this.pagination.rowsPerPage,
         filterField: 'problemTitle',
         filterValue: this.filter,
-        sortField: this.pagination.sortBy,
+        sortField: 'problemTitle',
         sortDirection: this.pagination.descending ? 'desc' : 'asc'
       }
       while (this.$store.getters['userDataStore/userInformationGetter'] === null) {
@@ -227,9 +232,6 @@ export default {
         throw new Error(responseData.message)
       }
       this.pagination.rowsNumber = responseData.problemCount
-      for (const problem of responseData.problems) {
-        problem.authorGroup = problem.authorGroup === '-1' ? '-' : problem.authorGroup
-      }
       this.data = responseData.problems
       this.pageLoading = false
     }
