@@ -14,9 +14,19 @@
     <q-btn
       v-if="showDeleteButton"
       icon="bi-trash"
+      :loading="deleting"
+      @click="onDelete"
       dense
       flat
-    />
+    >
+      <template
+        v-slot:loading
+      >
+        <q-spinner
+          :thickness="2"
+        />
+      </template>
+    </q-btn>
   </div>
   <table
     class="student-attempt-table"
@@ -113,6 +123,10 @@ export default {
     },
     showDeleteButton: {
       type: Boolean
+    },
+    deleting: {
+      type: Boolean,
+      default: false
     }
   },
   computed: {

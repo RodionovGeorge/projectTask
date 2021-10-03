@@ -14,7 +14,7 @@
       </div>
       <div>
         <q-btn
-          v-if="userStatus === 'Учитель'"
+          v-if="problemStatus === 'Открыта' && userStatus === 'Учитель'"
           flat
           dense
           icon="bi-gear"
@@ -25,21 +25,49 @@
           flat
           dense
           icon="bi-sunrise"
+          :loading="loading"
           @click="onSunriseClick"
-        />
+        >
+          <template
+            v-slot:loading
+          >
+            <q-spinner
+              :thickness="2"
+            />
+          </template>
+        </q-btn>
         <q-btn
           v-if="problemStatus === 'Принята' && userStatus === 'Учитель'"
           flat
           dense
           icon="bi-sunset"
+          :loading="loading"
           @click="onSunsetClick"
-        />
+        >
+          <template
+            v-slot:loading
+          >
+            <q-spinner
+              :thickness="2"
+            />
+          </template>
+        </q-btn>
         <q-btn
           v-if="userStatus === 'Учитель'"
           icon="bi-trash"
+          @click="onDelete"
+          :loading="deleting"
           flat
           dense
-        />
+        >
+          <template
+            v-slot:loading
+          >
+            <q-spinner
+              :thickness="2"
+            />
+          </template>
+        </q-btn>
       </div>
     </div>
     <table
@@ -113,7 +141,9 @@
           {{problemRejectionReason}}
         </td>
       </tr>
-      <tr>
+      <tr
+        v-if="problemStatus !== 'Отклонена' && problemStatus !== 'Проверяется'"
+      >
         <td>
           Сложность
         </td>
@@ -225,6 +255,10 @@ export default {
     },
     loading: {
       type: Boolean
+    },
+    deleting: {
+      type: Boolean,
+      default: false
     }
   },
   methods: {
@@ -242,6 +276,9 @@ export default {
     },
     onEditTaskClick () {
       this.$emit('edit')
+    },
+    onDelete () {
+      this.$emit('delete')
     }
   }
 }

@@ -12,8 +12,10 @@
     <TaskInfo
       v-bind="problemInformation"
       :loading="statusChangeLoading"
+      :deleting="deleteProblemLoading"
       class="content-background content-shadow"
       @status-change="statusChange"
+      @delete="deleteProblem"
       @edit="editTaskDialogShow = true"
     />
     <div
@@ -84,11 +86,15 @@
           <AttemptForStudent
             v-bind="currentAttempt.studentAttempt"
             :show-delete-button="sdbForStudentAttempt"
+            :deleting="deleteStudentAttemptLoading"
+            @delete="deleteStudentAttempt"
             class="content-background content-shadow full-attempt-student"
           />
           <TeacherFeedback
             v-bind="currentAttempt.teacherFeedback"
-            :show-delete-button="isTeacher"
+            :deleting="deleteTeacherFeedbackLoading"
+            :show-delete-button="isTeacher && currentAttempt.studentAttempt.checkStatus === 'Проверена'"
+            @delete="deleteTeacherFeedback"
             class="content-background content-shadow full-attempt-teacher"
           />
         </div>
@@ -165,7 +171,7 @@
         </div>
         <div
           class="content-background content-shadow previous-attempts"
-          v-if="attemptMaxNumber > 1"
+          v-if="attemptMaxNumber > 1 && !attemptLoading"
         >
           <div
             class="text-h6"
@@ -177,6 +183,7 @@
               class="flex flex-center"
               v-model="currentPreviousAttemptNumber"
               :max="attemptMaxNumber - 1"
+              @input="onPaginationClick"
               boundary-numbers
             />
             <div
@@ -233,6 +240,10 @@
             </div>
           </div>
         </div>
+        <LoadingSpinner
+          v-if="attemptLoading"
+          :loading="attemptLoading"
+        />
       </div>
     </div>
   </div>
@@ -340,11 +351,15 @@ export default {
       pageLoading: false,
       listLoading: false,
       deleteCommentaryLoading: false,
+      deleteTeacherFeedbackLoading: false,
+      deleteStudentAttemptLoading: false,
+      deleteProblemLoading: false,
       statusChangeLoading: false,
       newCommentaryLoading: false,
       newAttemptLoading: false,
       newAttemptDialogShow: false,
       infoDialogShow: false,
+      attemptLoading: false,
       errorDialogShow: false,
       errorMessage: '',
       pagination: {
@@ -456,6 +471,110 @@ export default {
       this.problemInformation.problemStatus = responseData.newStatus
       window.localStorage.setItem('csrfToken', responseData.csrfToken)
       this.statusChangeLoading = false
+    },
+    async getAttempt (attemptNumber) {
+      const userStatus = this.problemInformation.userStatus
+      const requestData = {
+        problemID: userStatus === 'Учитель' ? '-1' : this.$route.params.task_id,
+        sessionID: userStatus === 'Учитель' ? this.currentSessionID : '-1',
+        requestAttemptNumber: attemptNumber
+      }
+      const response = await fetch(
+        Constants.SERVER_URL + '/api/get-attempt',
+        {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: Constants.HEADERS,
+          body: JSON.stringify(requestData)
+        }
+      )
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      } else {
+        return responseData.attempt
+      }
+    },
+    async deleteProblem () {
+      this.deleteProblemLoading = true
+      const requestData = {
+        csrfToken: window.localStorage.getItem('csrfToken'),
+        problemID: this.$route.params.task_id
+      }
+      const response = await fetch(Constants.SERVER_URL + '/api/problem-editing', {
+        method: 'PUT',
+        credentials: 'same-origin',
+        headers: Constants.HEADERS,
+        body: JSON.stringify(requestData)
+      })
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      }
+      window.localStorage.setItem('csrfToken', responseData.csrfToken)
+      await this.$router.push('/my/tasks')
+    },
+    async deleteStudentAttempt () {
+      this.deleteStudentAttemptLoading = true
+      const requestData = {
+        csrfToken: window.localStorage.getItem('csrfToken'),
+        attemptID: this.currentAttempt.attemptID
+      }
+      const response = await fetch(Constants.SERVER_URL + '/api/attempt-editing', {
+        method: 'PUT',
+        credentials: 'same-origin',
+        headers: Constants.HEADERS,
+        body: JSON.stringify(requestData)
+      })
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      }
+      this.attemptMaxNumber--
+      if (this.attemptMaxNumber === 0) {
+        this.problemInformation.userStatus = 'Нет'
+        this.currentAttempt.attemptID = null
+        for (const field of Object.keys(this.currentAttempt.studentAttempt)) {
+          this.currentAttempt.studentAttempt[field] = null
+        }
+      } else {
+        const newCurrentAttempt = await this.getAttempt(this.attemptMaxNumber)
+        this.currentAttempt.attemptID = newCurrentAttempt.attemptID
+        this.currentAttempt.studentAttempt = newCurrentAttempt.studentAttempt
+        this.currentAttempt.teacherFeedback = newCurrentAttempt.teacherFeedback
+        this.currentAttempt.commentaries = newCurrentAttempt.commentariesInfo.commentaries || []
+        if (this.attemptMaxNumber > 1) {
+          const lastPreviousAttempt = await this.getAttempt(this.attemptMaxNumber - 1)
+          this.previousAttempt.attemptID = lastPreviousAttempt.attemptID
+          this.previousAttempt.studentAttempt = lastPreviousAttempt.studentAttempt
+          this.previousAttempt.teacherFeedback = lastPreviousAttempt.teacherFeedback
+          this.previousAttempt.commentaries = lastPreviousAttempt.commentariesInfo.commentaries || []
+        }
+      }
+      window.localStorage.setItem('csrfToken', responseData.csrfToken)
+      this.deleteStudentAttemptLoading = false
+    },
+    async deleteTeacherFeedback () {
+      this.deleteTeacherFeedbackLoading = true
+      const requestData = {
+        csrfToken: window.localStorage.getItem('csrfToken'),
+        attemptID: this.currentAttempt.attemptID
+      }
+      const response = await fetch(Constants.SERVER_URL + '/api/check-attempt/-1', {
+        method: 'PUT',
+        credentials: 'same-origin',
+        headers: Constants.HEADERS,
+        body: JSON.stringify(requestData)
+      })
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      }
+      window.localStorage.setItem('csrfToken', responseData.csrfToken)
+      this.currentAttempt.studentAttempt.checkStatus = 'Проверяется'
+      for (const field of Object.keys(this.currentAttempt.teacherFeedback)) {
+        this.currentAttempt.teacherFeedback[field] = null
+      }
     },
     async deleteCommentary (...args) {
       this.deleteCommentaryLoading = true
@@ -613,28 +732,14 @@ export default {
         this.attemptMaxNumber = responseData.attemptNumber
       }
     },
-    async getAttempt (attemptNumber) {
-      const userStatus = this.problemInformation.userStatus
-      const requestData = {
-        problemID: userStatus === 'Учитель' ? '-1' : this.$route.params.task_id,
-        sessionID: userStatus === 'Учитель' ? this.currentSessionID : '-1',
-        requestAttemptNumber: attemptNumber
-      }
-      const response = await fetch(
-        Constants.SERVER_URL + '/api/get-attempt',
-        {
-          method: 'POST',
-          credentials: 'same-origin',
-          headers: Constants.HEADERS,
-          body: JSON.stringify(requestData)
-        }
-      )
-      const responseData = await response.json()
-      if (responseData.message !== 'success') {
-        throw new Error(responseData.message)
-      } else {
-        return responseData.attempt
-      }
+    async onPaginationClick (attemptNumber) {
+      this.attemptLoading = true
+      const attempt = await this.getAttempt(attemptNumber)
+      this.previousAttempt.attemptID = attempt.attemptID
+      this.previousAttempt.studentAttempt = attempt.studentAttempt
+      this.previousAttempt.teacherFeedback = attempt.teacherFeedback
+      this.previousAttempt.commentaries = attempt.commentariesInfo.commentaries || []
+      this.attemptLoading = false
     },
     async getSession () {
       await this.getAttemptNumber()
@@ -647,6 +752,7 @@ export default {
         this.previousAttempt.studentAttempt = lastPreviousAttempt.studentAttempt
         this.previousAttempt.teacherFeedback = lastPreviousAttempt.teacherFeedback
         this.previousAttempt.commentaries = lastPreviousAttempt.commentariesInfo.commentaries || []
+        this.currentPreviousAttemptNumber = this.attemptMaxNumber - 1
       }
       this.currentAttempt.attemptID = currentAttempt.attemptID
       this.currentAttempt.studentAttempt = currentAttempt.studentAttempt
@@ -673,62 +779,17 @@ export default {
       }
       this.pageLoading = false
     },
-    /* async initPage () {
-      this.pageLoading = true
-      while (this.$store.getters['userDataStore/userInformationGetter'] === null) {
-        await new Promise((resolve, reject) => setTimeout(resolve, 200))
-      }
-      this.userID = this.$store.getters['userDataStore/userInformationGetter'].id
-      try {
-        await this.getProblem()
-        switch (this.problemInformation.userStatus) {
-          case 'Учитель':
-            await this.updateSessionTable('random string')
-            if (this.currentSessionID) {
-              await this.getSession()
-            }
-            break
-          case 'Ученик':
-            await this.getSession()
-            break
-        }
-        this.pageLoading = false
-      } catch (e) {
-        switch (e.message) {
-          case 'session not found':
-            await this.$router.push(Constants.AT_404)
-            break
-          case 'permission denied':
-            await this.$router.push('/permission-error')
-            break
-          case 'incorrect request':
-            await this.$router.push(Constants.AT_404)
-            break
-          case 'problem not found':
-            await this.$router.push(Constants.AT_404)
-            break
-          case 'database error':
-            await this.$router.push('/server-error')
-            break
-          case 'Internal Server Error':
-            await this.$router.push('/server-error')
-            break
-          case 'internal server error':
-            await this.$router.push('/server-error')
-            break
-          default:
-            await this.$router.push('/connection-error')
-            break
-        }
-      }
-    }, */
     onEdit () {
       this.$router.push(`/check-attempt/${this.$route.params.task_id}/${this.currentSessionID.toString()}`)
     }
   },
   async created () {
+    this.deleteProblem = exceptionHandlerDecorator.call(this, [this.deleteProblem])
+    this.deleteStudentAttempt = exceptionHandlerDecorator.call(this, [this.deleteStudentAttempt], 'deleteStudentAttemptLoading')
+    this.onPaginationClick = exceptionHandlerDecorator.call(this, [this.onPaginationClick], 'attemptLoading')
     this.updateSessionTable = exceptionHandlerDecorator.call(this, [this.updateSessionTable], 'listLoading')
     this.addNewCommentary = exceptionHandlerDecorator.call(this, [this.addNewCommentary], 'newCommentaryLoading')
+    this.deleteTeacherFeedback = exceptionHandlerDecorator.call(this, [this.deleteTeacherFeedback], 'deleteTeacherFeedbackLoading')
     this.addNewAttempt = exceptionHandlerDecorator.call(this, [this.addNewAttempt], 'newAttemptLoading')
     this.onRowClick = exceptionHandlerDecorator.call(this, [this.onRowClick], 'listLoading', 'currentSessionID')
     this.deleteCommentary = exceptionHandlerDecorator.call(this, [this.deleteCommentary], 'deleteCommentaryLoading')
