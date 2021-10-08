@@ -2,6 +2,7 @@
   <q-dialog
     v-model="show"
     persistent
+    square
     transition-show="scale"
     transition-hide="scale"
   >

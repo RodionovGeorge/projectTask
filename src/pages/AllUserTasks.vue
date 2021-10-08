@@ -116,7 +116,7 @@ export default {
         filterValue: '',
         getData: null,
         data: null,
-        visibleColumns: ['problemTitle', 'authorFullName', 'problemDiscipline', 'haveNewContent'],
+        visibleColumns: ['problemTitle', 'authorGroup', 'authorFullName', 'problemDiscipline', 'haveNewContent'],
         columns: [
           {
             name: 'problemID',

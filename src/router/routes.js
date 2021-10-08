@@ -25,6 +25,11 @@ const routes = [
       { path: '/account-recovery', component: () => import('pages/ForgotPasswordPage') },
       { path: '/account-activating', component: () => import('pages/AccountActivatingPage') },
       { path: '/new-task', component: () => import('pages/NewTaskPage') },
+      {
+        path: '/admin',
+        component: () => import('pages/AdminTablePage'),
+        beforeEnter: roleCheckDecorator('Администратор', 'Помощник администратора')
+      },
       { path: '/connection-error', component: () => import('pages/ConnectionErrorPage') },
       { path: '/server-error', component: () => import('pages/Error500') },
       { path: '/permission-error', component: () => import('pages/Error403') },
