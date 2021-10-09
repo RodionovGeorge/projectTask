@@ -20,7 +20,7 @@
     </q-item-section>
     <q-item-section
       side
-      v-if="userID === authorID"
+      v-if="showDeleteButton"
     >
       <q-btn
         icon="bi-trash"
@@ -54,8 +54,8 @@ export default {
     authorID: {
       type: Number
     },
-    userID: {
-      type: Number
+    showDeleteButton: {
+      type: Boolean
     },
     avatarPath: {
       type: String

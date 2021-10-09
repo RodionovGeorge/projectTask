@@ -305,48 +305,6 @@ export default {
       this.endDate = toLocalDate(responseData.data.problemDeadline)
       this.pageLoading = false
     },
-    /* fetchData () {
-      this.pageLoading = true
-      fetch(Constants.SERVER_URL + '/api/admitting-problem/' + this.$route.params.task_id, Constants.GET_INIT).then(
-        response => response.json()
-      ).then(
-        data => {
-          if (data.message === 'success') {
-            this.authorFullName = data.data.authorFullname
-            this.authorGroup = data.data.authorGroup
-            this.problemFileURL = data.data.problemURL
-            this.authorCommentary = data.data.authorCommentary
-            this.problemTitle = data.data.problemTitle
-            this.problemDiscipline = data.data.problemDiscipline
-            this.startDate = toLocalDate(data.data.problemStartLine)
-            this.endDate = toLocalDate(data.data.problemDeadline)
-          } else {
-            switch (data.message) {
-              case 'permission denied':
-                this.$router.push('/permission-error')
-                break
-              case 'problem not found':
-                this.$router.push(Constants.AT_404)
-                break
-              case 'problem already admitted':
-                this.problemAlreadyAdmitted = true
-                break
-              case 'need authentication':
-                this.$router.push('/login')
-                break
-              case 'database error':
-                this.$router.push('/server-error')
-                break
-            }
-          }
-          this.pageLoading = false
-        }
-      ).catch(
-        () => {
-          this.$router.push('/connection-error')
-        }
-      )
-    }, */
     async transmitData () {
       this.submitting = true
       const response = await fetch(Constants.SERVER_URL + '/api/admitting-problem/' + this.$route.params.task_id, {
@@ -369,40 +327,6 @@ export default {
       await this.$router.go(-1)
       this.submitting = false
     }
-    /* transmitData () {
-      this.submitting = true
-      fetch(Constants.SERVER_URL + '/api/admitting-problem/' + this.$route.params.task_id, {
-        method: 'PATCH',
-        credentials: 'same-origin',
-        headers: Constants.HEADERS,
-        body: JSON.stringify({
-          csrfToken: window.localStorage.getItem('csrfToken'),
-          userID: this.$store.getters['userDataStore/userInformationGetter'].id,
-          problemStatus: this.adminDecision,
-          problemComplexity: this.chosenDifficulty,
-          rejectionReason: this.rejectedCommentary
-        })
-      }).then(
-        response => response.json()
-      ).then(
-        data => {
-          if (data.message === 'success') {
-            window.localStorage.setItem('csrfToken', data.csrfToken)
-            this.$router.go(-1)
-          } else {
-            console.log(data.message)
-            this.errorMessage = Constants.ERROR_MESSAGES[data.message]
-            this.errorDialogShow = true
-          }
-          this.submitting = false
-        }
-      ).catch(
-        () => {
-          this.errorMessage = 'Нет соединения.'
-          this.errorDialogShow = true
-        }
-      )
-    } */
   },
   async created () {
     this.transmitData = exceptionHandlerDecorator.call(this, [this.transmitData], 'submitting')

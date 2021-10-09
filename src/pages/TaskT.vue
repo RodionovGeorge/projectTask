@@ -64,7 +64,18 @@
         row-key="sessionID"
         :data="sessionData"
         no-data-label="Ученики не найдены."
-      />
+      >
+        <template
+          v-slot:body-cell="props"
+        >
+          <q-td
+            :props="props"
+            :class="props.row.sessionID === currentSessionID ? 'bg-primary text-white' : 'bg-white text-black'"
+          >
+            {{props.value}}
+          </q-td>
+        </template>
+      </q-table>
     </div>
     <q-btn
       v-if="problemInformation.userStatus === 'Нет'"
@@ -148,7 +159,7 @@
                   :commentary-text="item.commentaryText"
                   :user-status="problemInformation.userStatus"
                   :loading="deleteCommentaryLoading"
-                  :user-i-d="userID"
+                  :show-delete-button="userID === item.authorID"
                   @deleted="deleteCommentary"
                 />
               </template>
@@ -227,7 +238,7 @@
                       :commentary-i-d="item.commentaryID"
                       :commentary-text="item.commentaryText"
                       :user-status="problemInformation.userStatus"
-                      :user-i-d="userID"
+                      :show-delete-button="userID === item.authorID"
                     />
                   </template>
                 </q-virtual-scroll>
@@ -768,10 +779,11 @@ export default {
       await this.getProblem()
       switch (this.problemInformation.userStatus) {
         case 'Учитель':
-          await this.updateSessionTable('random string')
           if (this.currentSessionID) {
             await this.getSession()
+            this.filterValue = this.studentInfo.fullName
           }
+          await this.updateSessionTable('random string')
           break
         case 'Ученик':
           await this.getSession()
@@ -816,7 +828,7 @@ export default {
   beforeRouteEnter (to, from, next) {
     next(vm => {
       if (from.params.session_id) {
-        vm.currentSessionID = from.params.session_id
+        vm.currentSessionID = Number(from.params.session_id)
       }
     })
   }

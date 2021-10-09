@@ -189,63 +189,6 @@ export default {
         this.submitting = false
       }
     }
-    /* onEnter () {
-      const correctTitleEnter = this.$refs.taskName.validate()
-      const correctDisciplinesChoose = this.$refs.discipline.validate()
-      const correctFileChoose = this.$refs.file.validate()
-      if (this.dateRange.to === '' || this.dateRange.from === '') {
-        this.errorMessage = 'Пожалуйста, выберите интервал приема решений.'
-        this.errorDialogShow = true
-        return
-      }
-      if (correctDisciplinesChoose && correctTitleEnter && correctFileChoose) {
-        this.submitting = true
-        toBase64(
-          this.file
-        ).then(file => {
-          const data = {
-            csrfToken: window.localStorage.getItem('csrfToken'),
-            file: file.substring(file.indexOf(',') + 1),
-            fileMIMEType: this.file.type,
-            userID: this.$store.getters['userDataStore/userInformationGetter'].id,
-            title: this.taskName,
-            discipline: this.selectedTaskDiscipline,
-            authorCommentary: this.authorCommentary,
-            startDate: date.extractDate(this.dateRange.from, 'YYYY/MM/DD'),
-            endDate: date.extractDate(this.dateRange.to, 'YYYY/MM/DD')
-          }
-          fetch(Constants.SERVER_URL + '/api/add-problem', {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: Constants.HEADERS,
-            body: JSON.stringify(data)
-          }).then(
-            response => response.json()
-          ).then(
-            data => {
-              if (data.message === 'success') {
-                localStorage.setItem('csrfToken', data.csrfToken)
-                this.$router.go(-1)
-              } else {
-                this.errorMessage = Constants.ERROR_MESSAGES[data.message]
-                this.errorDialogShow = true
-              }
-              this.submitting = false
-            }
-          ).catch(
-            () => {
-              this.errorMessage = 'Нет соединения.'
-              this.errorDialogShow = true
-              this.submitting = false
-            }
-          )
-        }).catch(() => {
-          this.errorMessage = 'Не удалось подготовить файл к передаче на сервер.'
-          this.errorDialogShow = true
-          this.submitting = false
-        })
-      }
-    } */
   },
   async created () {
     this.onEnter = exceptionHandlerDecorator.call(this, [this.onEnter], 'submitting')

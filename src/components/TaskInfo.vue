@@ -14,7 +14,7 @@
       </div>
       <div>
         <q-btn
-          v-if="problemStatus === 'Открыта' && userStatus === 'Учитель'"
+          v-if="problemStatus === 'Открыта' && userStatus === 'Учитель' || userStatus === 'Администратор'"
           flat
           dense
           icon="bi-gear"

@@ -177,38 +177,6 @@ export default {
       window.localStorage.setItem('csrfToken', responseData.csrfToken)
       await this.$router.push(`/task/${this.$route.params.task_id}`)
     },
-    /* async onReturn (resultImages) {
-      try {
-        this.submitting = true
-        this.returnImagesFlag = false
-        const sessionID = this.$route.params.session_id
-        const requestData = {
-          pages: resultImages,
-          teacherCommentary: this.teacherCommentary,
-          solutionDegree: this.decisionStage,
-          csrfToken: window.localStorage.getItem('csrfToken')
-        }
-        const response = await fetch(Constants.SERVER_URL + '/api/check-attempt/' + sessionID, {
-          method: 'POST',
-          headers: Constants.HEADERS,
-          credentials: 'same-origin',
-          body: JSON.stringify(requestData)
-        })
-        const responseData = await response.json()
-        if (responseData.message !== 'success') {
-          this.errorMessage = Constants.ERROR_MESSAGES[responseData.message]
-          this.errorDialogShow = true
-          this.submitting = false
-        } else {
-          window.localStorage.setItem('csrfToken', responseData.csrfToken)
-          await this.$router.push(`/task/${this.$route.params.task_id}`)
-        }
-      } catch (e) {
-        this.errorMessage = 'Нет соединения.'
-        this.errorDialogShow = true
-        this.submitting = false
-      }
-    }, */
     async initPage () {
       this.pageLoading = true
       const sessionID = this.$route.params.session_id
@@ -222,39 +190,6 @@ export default {
       this.imagePaths = responseData.imagePaths
       this.pageLoading = false
     },
-    /* async initPage () {
-      try {
-        this.pageLoading = true
-        const sessionID = this.$route.params.session_id
-        const response = await fetch(Constants.SERVER_URL + '/api/check-attempt/' + sessionID, Constants.GET_INIT)
-        const responseData = await response.json()
-        if (responseData.message !== 'success') {
-          switch (responseData.message) {
-            case 'session not found':
-              await this.$router.push(Constants.AT_404)
-              break
-            case 'attempt already checked':
-              this.attemptAlreadyChecked = true
-              break
-            case 'permission denied':
-              await this.$router.push('/permission-error')
-              break
-            case 'database error':
-              await this.$router.push('/server-error')
-              break
-            default:
-              await this.$router.push('/server-error')
-          }
-        } else {
-          this.informationAboutAuthor = responseData.authorInf
-          this.problemPath = responseData.problemPath
-          this.imagePaths = responseData.imagePaths
-        }
-        this.pageLoading = false
-      } catch (e) {
-        await this.$router.push('/connection-error')
-      }
-    }, */
     async onBack () {
       await this.$router.push(`/task/${this.$route.params.task_id}`)
     },

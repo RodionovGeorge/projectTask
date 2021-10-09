@@ -171,37 +171,6 @@ export default {
         }
       }
     },
-    /* codeSubmit () {
-      const correctSecretCodeInput = this.$refs.userSecretCode.validate()
-      if (correctSecretCodeInput) {
-        // Отправка данных на сервер
-        this.secondStepSubmitting = true
-        const data = {
-          email: this.$store.state.userDataStore.userData.email,
-          code: this.userSecretCode
-        }
-        fetch(Constants.SERVER_URL + '/api/account-activation', {
-          method: 'PUT',
-          headers: Constants.HEADERS,
-          body: JSON.stringify(data)
-        }).then(
-          response => response.json()
-        ).then(
-          data => {
-            if (data.message === 'success') {
-              this.$store.dispatch('userDataStore/setAccountActivatedStatus', true)
-              this.$router.push('/')
-            } else {
-              this.errorMessage = 'intervalLength' in data
-                ? Constants.ERROR_MESSAGES[data.message](data.intervalLength)
-                : Constants.ERROR_MESSAGES[data.message]
-              this.errorDialogShow = true
-            }
-            this.secondStepSubmitting = false
-          }
-        )
-      }
-    }, */
     async newCodeRequest () {
       this.newCodeRequestSubmitting = true
       const response = await fetch(Constants.SERVER_URL + '/api/account-activation', {
@@ -225,30 +194,6 @@ export default {
         this.newCodeRequestSubmitting = false
       }
     }
-    /* newCodeRequest () {
-      this.newCodeRequestSubmitting = true
-      fetch(Constants.SERVER_URL + '/api/account-activation', {
-        method: 'POST',
-        headers: Constants.HEADERS,
-        body: JSON.stringify({
-          email: this.$store.state.userDataStore.userData.email
-        })
-      }).then(
-        response => response.json()
-      ).then(
-        data => {
-          if (data.message === 'success') {
-            this.newCodeSuccessDialogShow = true
-          } else {
-            this.errorMessage = 'intervalLength' in data
-              ? Constants.ERROR_MESSAGES[data.message](data.intervalLength)
-              : Constants.ERROR_MESSAGES[data.message]
-            this.errorDialogShow = true
-          }
-          this.newCodeRequestSubmitting = false
-        }
-      )
-    } */
   },
   created () {
     this.newCodeRequest = exceptionHandlerDecorator.call(this, [this.newCodeRequest], 'newCodeRequestSubmitting')

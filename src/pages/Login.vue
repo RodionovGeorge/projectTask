@@ -150,44 +150,6 @@ export default {
         this.enterSubmitting = false
       }
     }
-    /* onEnter () {
-      const correctLoginEnter = this.$refs.login.validate()
-      const correctPasswordEnter = this.$refs.password.validate()
-      if (correctLoginEnter && correctPasswordEnter) {
-        this.enterSubmitting = true
-        const data = {
-          login: this.login,
-          password: this.password
-        }
-        fetch(Constants.SERVER_URL + '/api/login', {
-          method: 'POST',
-          headers: Constants.HEADERS,
-          body: JSON.stringify(data)
-        }).then(
-          response => response.json()
-        ).then(
-          data => {
-            if (data.message === 'success') {
-              localStorage.setItem('csrfToken', data.csrfToken)
-              this.$store.dispatch('userDataStore/setUserInformation', data.userData)
-              if (data.userData.accountActivated) {
-                this.$router.push('/')
-              } else {
-                this.$router.push('/account-activating')
-              }
-            } else {
-              this.errorMessage = Constants.ERROR_MESSAGES[data.message]
-              this.errorDialogShow = true
-            }
-            this.enterSubmitting = false
-          }
-        ).catch(
-          () => {
-            this.$router.push('/connection-error')
-          }
-        )
-      }
-    } */
   },
   created () {
     this.onEnter = exceptionHandlerDecorator.call(this, [this.onEnter], 'enterSubmitting')

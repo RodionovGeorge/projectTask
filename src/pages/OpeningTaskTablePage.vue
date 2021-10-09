@@ -248,57 +248,6 @@ export default {
       this.pagination.descending = descending
       this.tableLoading = false
     },
-    /* fetchData (props) {
-      const { page, rowsPerPage, sortBy, descending } =
-        !Object.prototype.hasOwnProperty.call(props, 'label') && typeof props !== 'string'
-          ? props.pagination
-          : this.pagination
-      this.tableLoading = true
-      if (this.currentColumnForSearch.value === 'authorGroup' && this.filter === '-') {
-        this.filter = '-1'
-      }
-      const data = {
-        currentPage: page,
-        pageSize: rowsPerPage,
-        filterField: this.currentColumnForSearch.value || 'problemTitle',
-        filterValue: this.filter,
-        sortField: sortBy,
-        sortDirection: descending ? 'desc' : 'asc'
-      }
-      fetch(Constants.SERVER_URL + '/api/admitting-problem/-1',
-        {
-          method: 'POST',
-          credentials: 'same-origin',
-          headers: Constants.HEADERS,
-          body: JSON.stringify(data)
-        }
-      ).then(
-        response => response.json()
-      ).then(
-        data => {
-          if (data.message === 'success') {
-            this.pagination.rowsNumber = data.problemCount
-            this.data = data.problems
-            this.timeToLocal()
-            this.tableLoading = false
-            this.pagination.page = page
-            this.pagination.rowsPerPage = rowsPerPage
-            this.pagination.sortBy = sortBy
-            this.pagination.descending = descending
-          } else {
-            this.errorMessage = Constants.ERROR_MESSAGES[data.message]
-            this.errorDialogShow = true
-            this.tableLoading = false
-          }
-        }
-      ).catch(
-        () => {
-          this.errorMessage = 'Нет соединения!'
-          this.errorDialogShow = true
-          this.tableLoading = false
-        }
-      )
-    } */
     async init () {
       this.loading = true
       const requestData = {
@@ -334,51 +283,6 @@ export default {
     this.fetchData = exceptionHandlerDecorator.call(this, [this.fetchData], 'tableLoading')
     await exceptionHandlerDecorator.call(this, [this.init, true], 'loading')()
   }
-  /* async created () {
-    try {
-      this.data = null
-      this.loading = true
-      const requestData = {
-        currentPage: this.pagination.page,
-        pageSize: this.pagination.rowsPerPage,
-        filterField: 'problemTitle',
-        filterValue: this.filter,
-        sortField: this.pagination.sortBy,
-        sortDirection: this.pagination.descending ? 'desc' : 'asc'
-      }
-      while (this.$store.getters['userDataStore/userInformationGetter'] === null) {
-        await new Promise((resolve, reject) => setTimeout(resolve, 200))
-      }
-      const response = await fetch(Constants.SERVER_URL + '/api/admitting-problem/-1',
-        {
-          method: 'POST',
-          credentials: 'same-origin',
-          headers: Constants.HEADERS,
-          body: JSON.stringify(requestData)
-        }
-      )
-      const data = await response.json()
-      switch (data.message) {
-        case 'success':
-          this.pagination.rowsNumber = data.problemCount
-          this.data = data.problems
-          this.timeToLocal()
-          this.loading = false
-          break
-        case 'permission denied':
-          await this.$router.push('/permission error')
-          break
-        case 'need authentication':
-          await this.$router.push('/login')
-          break
-        default:
-          await this.$router.push('/server-error')
-          break
-      }
-    } catch {
-      await this.$router.push('/connection-error')
-    }
-  } */
 }
 </script>
 

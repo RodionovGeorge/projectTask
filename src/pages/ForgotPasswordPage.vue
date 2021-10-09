@@ -277,33 +277,6 @@ export default {
         }
       }
     },
-    /* onFirstStepClick () {
-      const correctUserEmailInput = this.$refs.userEmail.validate()
-      if (correctUserEmailInput) {
-        this.firstStepSubmitted = true
-        fetch(Constants.SERVER_URL + '/api/recall-password', {
-          method: 'POST',
-          headers: Constants.HEADERS,
-          body: JSON.stringify({
-            email: this.userEmail
-          })
-        }).then(
-          response => response.json()
-        ).then(
-          data => {
-            if (data.message === 'success' || data.message === 'time interval has not passed') {
-              this.step++
-            } else {
-              this.errorMessage = 'intervalLength' in data
-                ? Constants.ERROR_MESSAGES[data.message](data.intervalLength)
-                : Constants.ERROR_MESSAGES[data.message]
-              this.errorDialogShow = true
-            }
-            this.firstStepSubmitted = false
-          }
-        )
-      }
-    }, */
     async onSecondStepClick () {
       const correctUserCodeInput = this.$refs.userCode.validate()
       if (correctUserCodeInput) {
@@ -331,34 +304,6 @@ export default {
         }
       }
     },
-    /* onSecondStepClick () {
-      const correctUserCodeInput = this.$refs.userCode.validate()
-      if (correctUserCodeInput) {
-        this.secondStepSubmitted = true
-        fetch(Constants.SERVER_URL + '/api/recall-password', {
-          method: 'PUT',
-          headers: Constants.HEADERS,
-          body: JSON.stringify({
-            email: this.userEmail,
-            code: this.userCode
-          })
-        }).then(
-          response => response.json()
-        ).then(
-          data => {
-            if (data.message === 'success') {
-              this.step++
-            } else {
-              this.errorMessage = 'intervalLength' in data
-                ? Constants.ERROR_MESSAGES[data.message](data.intervalLength)
-                : Constants.ERROR_MESSAGES[data.message]
-              this.errorDialogShow = true
-            }
-            this.secondStepSubmitted = false
-          }
-        )
-      }
-    }, */
     async onThirdStepClick () {
       const correctUserNewPasswordInput = this.$refs.userNewPassword.validate()
       if (correctUserNewPasswordInput) {
@@ -387,35 +332,6 @@ export default {
         }
       }
     },
-    /* onThirdStepClick () {
-      const correctUserNewPasswordInput = this.$refs.userNewPassword.validate()
-      if (correctUserNewPasswordInput) {
-        this.thirdStepSubmitted = true
-        fetch(Constants.SERVER_URL + '/api/change-password', {
-          method: 'PUT',
-          headers: Constants.HEADERS,
-          body: JSON.stringify({
-            email: this.userEmail,
-            code: this.userCode,
-            password: this.userNewPassword
-          })
-        }).then(
-          response => response.json()
-        ).then(
-          data => {
-            if (data.message === 'success') {
-              this.step++
-            } else {
-              this.errorMessage = 'intervalLength' in data
-                ? Constants.ERROR_MESSAGES[data.message](data.intervalLength)
-                : Constants.ERROR_MESSAGES[data.message]
-              this.errorDialogShow = true
-            }
-            this.thirdStepSubmitted = false
-          }
-        )
-      }
-    }, */
     async newCodeRequest () {
       this.newCodeRequestSubmitted = true
       const response = await fetch(Constants.SERVER_URL + '/api/recall-password', {
@@ -439,30 +355,6 @@ export default {
         this.newCodeRequestSubmitted = false
       }
     }
-    /* newCodeRequest () {
-      this.newCodeRequestSubmitted = true
-      fetch(Constants.SERVER_URL + '/api/recall-password', {
-        method: 'POST',
-        headers: Constants.HEADERS,
-        body: JSON.stringify({
-          email: this.userEmail
-        })
-      }).then(
-        response => response.json()
-      ).then(
-        data => {
-          if (data.message === 'success') {
-            this.newCodeSuccessDialogShow = true
-          } else {
-            this.errorMessage = 'intervalLength' in data
-              ? Constants.ERROR_MESSAGES[data.message](data.intervalLength)
-              : Constants.ERROR_MESSAGES[data.message]
-            this.errorDialogShow = true
-          }
-          this.newCodeRequestSubmitted = false
-        }
-      )
-    } */
   },
   created () {
     this.onFirstStepClick = exceptionHandlerDecorator.call(this, [this.onFirstStepClick], 'firstStepSubmitted')

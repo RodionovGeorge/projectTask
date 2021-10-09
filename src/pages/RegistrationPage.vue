@@ -264,42 +264,6 @@ export default {
         this.firstStepSubmitting = false
       }
     },
-    /* onFirstStepClick () {
-      const correctLastNameInput = this.$refs.userLastName.validate()
-      const correctMiddleNameInput = this.$refs.userMiddleName.validate()
-      const correctFirstNameInput = this.$refs.userFirstName.validate()
-      const correctEmailInput = this.$refs.userEmail.validate()
-      const correctPasswordInput = this.$refs.userPassword.validate()
-      if (correctLastNameInput && correctMiddleNameInput && correctFirstNameInput && correctEmailInput && correctPasswordInput) {
-        this.firstStepSubmitting = true
-        const data = {
-          lastName: this.userLastName,
-          firstName: this.userFirstName,
-          middleName: this.userMiddleName,
-          email: this.userEmail,
-          group: this.userGroup,
-          password: this.userPassword
-        }
-        fetch(Constants.SERVER_URL + '/api/registration', {
-          method: 'POST',
-          headers: Constants.HEADERS,
-          body: JSON.stringify(data)
-        }).then(
-          response => response.json()
-        ).then(
-          data => {
-            if (data.message === 'success') {
-              // this.$store.dispatch('userDataStore/setUserInformation', data.userData)
-              this.step++
-            } else {
-              this.errorMessage = Constants.ERROR_MESSAGES[data.message]
-              this.errorDialogShow = true
-            }
-            this.firstStepSubmitting = false
-          }
-        )
-      }
-    }, */
     async onSecondStepClick () {
       const correctSecretCodeInput = this.$refs.userSecretCode.validate()
       if (correctSecretCodeInput) {
@@ -328,36 +292,6 @@ export default {
         }
       }
     },
-    /* onSecondStepClick () {
-      const correctSecretCodeInput = this.$refs.userSecretCode.validate()
-      if (correctSecretCodeInput) {
-        this.secondStepSubmitting = true
-        const data = {
-          email: this.userEmail,
-          code: this.userSecretCode
-        }
-        fetch(Constants.SERVER_URL + '/api/account-activation', {
-          method: 'PUT',
-          headers: Constants.HEADERS,
-          body: JSON.stringify(data)
-        }).then(
-          response => response.json()
-        ).then(
-          data => {
-            if (data.message === 'success') {
-              // this.$store.dispatch('userDataStore/setAccountActivatedStatus', true)
-              this.$router.push('/login')
-            } else {
-              this.errorMessage = 'intervalLength' in data
-                ? Constants.ERROR_MESSAGES[data.message](data.intervalLength)
-                : Constants.ERROR_MESSAGES[data.message]
-              this.errorDialogShow = true
-            }
-            this.secondStepSubmitting = false
-          }
-        )
-      }
-    }, */
     async newCodeRequest () {
       this.newCodeRequestSubmitting = true
       const response = await fetch(Constants.SERVER_URL + '/api/account-activation', {
@@ -381,30 +315,6 @@ export default {
         this.newCodeRequestSubmitting = false
       }
     }
-    /* newCodeRequest () {
-      this.newCodeRequestSubmitting = true
-      fetch(Constants.SERVER_URL + '/api/account-activation', {
-        method: 'POST',
-        headers: Constants.HEADERS,
-        body: JSON.stringify({
-          email: this.userEmail
-        })
-      }).then(
-        response => response.json()
-      ).then(
-        data => {
-          if (data.message === 'success') {
-            this.newCodeSuccessDialogShow = true
-          } else {
-            this.errorMessage = 'intervalLength' in data
-              ? Constants.ERROR_MESSAGES[data.message](data.intervalLength)
-              : Constants.ERROR_MESSAGES[data.message]
-            this.errorDialogShow = true
-          }
-          this.newCodeRequestSubmitting = false
-        }
-      )
-    } */
   },
   created () {
     this.onFirstStepClick = exceptionHandlerDecorator.call(this, [this.onFirstStepClick], 'firstStepSubmitting')
