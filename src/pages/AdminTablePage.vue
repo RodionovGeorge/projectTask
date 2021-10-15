@@ -41,6 +41,7 @@
           :readonly="currentMode.columnForSearch === ''"
           label="Поиск по столбцу"
           debounce="1000"
+          @input="getProblem"
           square
           outlined
           style="width:70%"
@@ -57,6 +58,7 @@
           v-model="currentMode.columnForSearch"
           square
           outlined
+          @input="getProblem"
           :options="currentMode.namesOfSearchColumns"
           label="Столбец"
           options-dense
@@ -70,11 +72,13 @@
         :visible-columns="currentMode.visibleColumns"
         :rows-per-page-options="[currentMode.pagination.rowsPerPage]"
         :loading="loadingData"
+        @request="getProblem"
+        @click="onRowClick"
         wrap-cells
         flat
         square
         bordered
-        no-data-label="Задачи не найдены."
+        no-data-label="Данные не найдены."
       >
         <template
           v-if="currentTab === 'users'"
@@ -87,35 +91,77 @@
             <q-btn
               label="Ученик"
               no-caps
+              @click="changeRole(props, 'Ученик', props.row.studentRole ? 'down' : 'up')"
+              :loading="props.row.loading"
               :color="props.row.studentRole ? 'green' : 'red'"
-            />
+            >
+              <template
+                v-slot:loading
+              >
+                <q-spinner
+                  :thickness="2"
+                />
+              </template>
+            </q-btn>
             <q-btn
               label="Учитель"
               no-caps
+              @click="changeRole(props, 'Учитель', props.row.teacherRole ? 'down' : 'up')"
+              :loading="props.row.loading"
               :color="props.row.teacherRole ? 'green' : 'red'"
-            />
+            >
+              <template
+                v-slot:loading
+              >
+                <q-spinner
+                  :thickness="2"
+                />
+              </template>
+            </q-btn>
             <q-btn
+              disable
               label="Администратор"
               no-caps
+              :loading="props.row.loading"
               :color="props.row.adminRole ? 'green' : 'red'"
-            />
+            >
+              <template
+                v-slot:loading
+              >
+                <q-spinner
+                  :thickness="2"
+                />
+              </template>
+            </q-btn>
             <q-btn
               label="Помощник администратора"
               no-caps
+              :disable="isSubAdmin"
+              @click="changeRole(props, 'Помощник администратора', props.row.subAdminRole ? 'down' : 'up')"
+              :loading="props.row.loading"
               :color="props.row.subAdminRole ? 'green' : 'red'"
-            />
+            >
+              <template
+                v-slot:loading
+              >
+                <q-spinner
+                  :thickness="2"
+                />
+              </template>
+            </q-btn>
           </q-td>
         </template>
         <template
-          v-slot:body-cell-statistics
+          v-slot:body-cell-statistics="props"
         >
           <q-td
             auto-width
+            :props="props"
           >
             <q-btn
               label="Показать"
               color="primary"
-              @click="currentMode.onStatisticClick"
+              @click="currentMode.onStatisticClick(props)"
               no-caps
             >
             </q-btn>
@@ -143,11 +189,13 @@
         style="justify-content: space-around; width: 100%"
       >
         <q-input
+          ref="startDateInput"
           outlined
           square
           readonly
           label="От"
           class="q-mr-xs"
+          :rules="[value=>value.length > 0 || 'Пожалуйста, выберите дату']"
           v-model="startStatisticDate"
         >
           <template
@@ -182,10 +230,12 @@
           </template>
         </q-input>
         <q-input
+          ref="endDateInput"
           outlined
           label="До"
           readonly
           square
+          :rules="[value=>value.length > 0 || 'Пожалуйста, выберите дату']"
           v-model="endStatisticDate"
         >
           <template
@@ -241,7 +291,7 @@
           :data="statisticTeacherTable.data"
           :columns="statisticTeacherTable.columns"
           class="q-mb-xs"
-          title="Как преподаватель"
+          :title="targetFullName + ' как учитель'"
           hide-pagination
           hide-selected-banner
           square
@@ -268,9 +318,9 @@
           </template>
         </q-table>
         <q-table
-          :data="statisticStudentData.data"
-          :columns="statisticStudentData.columns"
-          title="Как ученик"
+          :data="statisticStudentTable.data"
+          :columns="statisticStudentTable.columns"
+          :title="targetFullName + ' как ученик'"
           hide-pagination
           hide-selected-banner
           square
@@ -307,11 +357,21 @@
           no-caps
           unelevated
           style="width: 200px"
+          :loading="statisticLoading"
+          @click="currentMode.getStatisticClick"
         >
+          <template
+            v-slot:loading
+          >
+            <q-spinner
+              :thickness="2"
+            />
+          </template>
         </q-btn>
         <q-btn
           label="Закрыть"
           v-close-popup
+          @click="dropData"
           no-caps
           unelevated
           style="width: 200px"
@@ -322,14 +382,16 @@
   <error-dialog
     :p-error-message="errorMessage"
     :p-error-dialog-show="errorDialogShow"
+    @off="errorDialogShow = false"
   />
 </q-page>
 </template>
 
 <script>
 import LoadingSpinner from 'components/LoadingSpinner'
-import { Constants } from 'boot/Constants'
+import { Constants, exceptionHandlerDecorator } from 'boot/Constants'
 import ErrorDialog from 'components/ErrorDialog'
+import { date } from 'quasar'
 export default {
   name: 'AdminTablePage',
   components: { ErrorDialog, LoadingSpinner },
@@ -338,6 +400,7 @@ export default {
       errorDialogShow: false,
       pageLoading: false,
       loadingData: false,
+      statisticLoading: false,
       statisticDialogShow: false,
       errorMessage: '',
       currentTab: 'users',
@@ -346,20 +409,15 @@ export default {
           sortBy: '',
           descending: false,
           page: 1,
-          rowsPerPage: Constants.ROWS_PER_PAGE
-          // rowsNumber: null
+          rowsPerPage: Constants.ROWS_PER_PAGE,
+          rowsNumber: null
         },
         columnForSearch: '',
         filterValue: '',
         getData: null,
         onStatisticClick: null,
-        data: [{ problemTitle: '123', authorFullName: 'Родионов Г. В.', authorGroup: '8305', problemDiscipline: 'Анализ' },
-          { problemTitle: '123', authorFullName: 'Родионов Г. В.', authorGroup: '8305', problemDiscipline: 'Анализ' },
-          { problemTitle: '123', authorFullName: 'Родионов Г. В.', authorGroup: '8305', problemDiscipline: 'Анализ' },
-          { problemTitle: '123', authorFullName: 'Родионов Г. В.', authorGroup: '8305', problemDiscipline: 'Анализ' },
-          { problemTitle: '123', authorFullName: 'Родионов Г. В.', authorGroup: '8305', problemDiscipline: 'Анализ' },
-          { problemTitle: '123', authorFullName: 'Родионов Г. В.', authorGroup: '8305', problemDiscipline: 'Анализ' }
-        ],
+        getStatisticClick: null,
+        data: null,
         visibleColumns: ['problemTitle', 'authorGroup', 'authorFullName', 'problemDiscipline'],
         columns: [
           {
@@ -428,20 +486,16 @@ export default {
           sortBy: '',
           descending: false,
           page: 1,
-          rowsPerPage: Constants.ROWS_PER_PAGE
-          // rowsNumber: null
+          rowsPerPage: Constants.ROWS_PER_PAGE,
+          rowsNumber: null
         },
         columnForSearch: '',
         filterValue: '',
         getData: null,
         props: null,
         onStatisticClick: null,
-        data: [{ userFullName: 'Родионов Георгий Витальевич', userGroup: '8305', studentRole: false, teacherRole: true, adminRole: true, subAdminRole: true },
-          { userFullName: 'Родионов Георгий Витальевич', userGroup: '8305', studentRole: true, teacherRole: false, adminRole: true, subAdminRole: true },
-          { userFullName: 'Родионов Георгий Витальевич', userGroup: '8305', studentRole: true, teacherRole: true, adminRole: false, subAdminRole: true },
-          { userFullName: 'Родионов Георгий Витальевич', userGroup: '8305', studentRole: true, teacherRole: true, adminRole: true, subAdminRole: false },
-          { userFullName: 'Родионов Георгий Витальевич', userGroup: '8305', studentRole: true, teacherRole: true, adminRole: true, subAdminRole: true }
-        ],
+        getStatisticClick: null,
+        data: null,
         visibleColumns: ['userFullName', 'userGroup', 'studentRole', 'teacherRole', 'adminRole', 'subAdminRole'],
         columns: [
           {
@@ -492,10 +546,11 @@ export default {
         ]
       },
       currentStatisticIsProblem: false,
+      targetRow: null,
       startStatisticDate: '',
       endStatisticDate: '',
       statisticTeacherTable: {
-        data: [{ allProblemCount: 10, acceptedProblemCount: 2, averageDifficultOfProblems: 2.4, attemptCheckCount: 6, absolutelySolvedAttemptCount: 0 }],
+        data: [],
         columns: [
           {
             name: 'allProblemCount',
@@ -534,8 +589,8 @@ export default {
           }
         ]
       },
-      statisticStudentData: {
-        data: [{ absolutelySolvedAttemptCount: 2, almostSolvedAttemptCount: 3, haveRightIdeaAttemptCount: 4, averageDifficultOfProblems: 1.3 }],
+      statisticStudentTable: {
+        data: [],
         columns: [
           {
             name: 'absolutelySolvedAttemptCount',
@@ -568,7 +623,6 @@ export default {
         ]
       },
       statisticProblemTable: {
-        // data: [{ absolutelySolvedPeopleCount: 30, almostSolvedPeopleCount: 40, haveRightIdeaPeopleCount: 50, haveWrongIdeaPeopleCount: 60 }],
         data: [],
         columns: [
           {
@@ -604,29 +658,190 @@ export default {
     }
   },
   computed: {
+    targetFullName () {
+      return this.targetRow?.userFullName
+    },
     currentMode () {
       return this.currentTab === 'problems' ? this.problemMode : this.userMode
     },
-    isAdmin () {
-      return this.userInformation.roles.include
+    isSubAdmin () {
+      return this.$store.getters['userDataStore/userInformationGetter'].roles.includes('Помощник администратора')
     }
   },
   methods: {
-    onProblemStatisticClick () {
+    async onRowClick (evt, row) {
+      await this.$router.push(`/admin/user/${row.userID}`)
+    },
+    dropData () {
+      this.statisticProblemTable.data = []
+      this.statisticTeacherTable.data = []
+      this.statisticStudentTable.data = []
+    },
+    async getStatisticByUser () {
+      if (!this.$refs.startDateInput.validate() || !this.$refs.endDateInput.validate()) {
+        this.errorMessage = 'Пожалуйста, выберите даты для запроса.'
+        this.errorDialogShow = true
+        return
+      }
+      this.statisticLoading = true
+      const requestData = {
+        mode: 'user',
+        startDate: date.extractDate(this.startStatisticDate, 'DD/MM/YYYY').toISOString(),
+        endDate: date.extractDate(this.endStatisticDate, 'DD/MM/YYYY').toISOString(),
+        id: this.targetRow.userID
+      }
+      const response = await fetch(Constants.SERVER_URL + '/api/admin/get-statistic', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: Constants.HEADERS,
+        body: JSON.stringify(requestData)
+      })
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      }
+      this.statisticTeacherTable.data = [responseData.data.teacherStatistic]
+      this.statisticStudentTable.data = [responseData.data.studentStatistic]
+      this.statisticLoading = false
+    },
+    async getStatisticByProblem () {
+      if (!this.$refs.startDateInput.validate() || !this.$refs.endDateInput.validate()) {
+        this.errorMessage = 'Пожалуйста, выберите даты для запроса.'
+        this.errorDialogShow = true
+        return
+      }
+      this.statisticLoading = true
+      const requestData = {
+        mode: 'problem',
+        startDate: date.extractDate(this.startStatisticDate, 'DD/MM/YYYY').toISOString(),
+        endDate: date.extractDate(this.endStatisticDate, 'DD/MM/YYYY').toISOString(),
+        id: this.targetRow.problemID
+      }
+      const response = await fetch(Constants.SERVER_URL + '/api/admin/get-statistic', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: Constants.HEADERS,
+        body: JSON.stringify(requestData)
+      })
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      }
+      this.statisticProblemTable.data = [responseData.data]
+      this.statisticLoading = false
+    },
+    async asProblemGetData (requestData) {
+      const response = await fetch(Constants.SERVER_URL + '/api/admin/problems', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: Constants.HEADERS,
+        body: JSON.stringify(requestData)
+      })
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      }
+      return responseData
+    },
+    async changeRole (props, roleTitle, mode) {
+      props.row.loading = true
+      const requestData = {
+        targetID: props.row.userID,
+        roleTitle: roleTitle,
+        mode: mode
+      }
+      const response = await fetch(Constants.SERVER_URL + '/api/admin/change-role', {
+        method: 'PATCH',
+        credentials: 'same-origin',
+        headers: Constants.HEADERS,
+        body: JSON.stringify(requestData)
+      })
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        props.row.loading = false
+        throw new Error(responseData.message)
+      }
+      switch (roleTitle) {
+        case 'Ученик':
+          props.row.studentRole = !props.row.studentRole
+          break
+        case 'Учитель':
+          props.row.teacherRole = !props.row.teacherRole
+          break
+        case 'Помощник администратора':
+          props.row.subAdminRole = !props.row.subAdminRole
+          break
+        // По идее не используется
+        case 'Администратор':
+          props.row.adminRole = !props.row.adminRole
+          break
+      }
+      props.row.loading = false
+    },
+    async asUserGetData (requestData) {
+      const response = await fetch(Constants.SERVER_URL + '/api/admin/users', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: Constants.HEADERS,
+        body: JSON.stringify(requestData)
+      })
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      }
+      return responseData
+    },
+    async getProblem (props) {
+      const { page, rowsPerPage } =
+        !Object.prototype.hasOwnProperty.call(props, 'label') && typeof props !== 'string'
+          ? props.pagination
+          : this.currentMode.pagination
+      this.loadingData = true
+      const requestData = {
+        currentPage: page,
+        pageSize: rowsPerPage,
+        filterField: this.currentMode.columnForSearch.value || 'problemTitle',
+        filterValue: this.currentMode.filterValue
+      }
+      const responseData = await this.currentMode.getData(requestData)
+      this.currentMode.data = responseData.data
+      this.currentMode.pagination.rowsNumber = responseData.count
+      this.currentMode.pagination.page = page
+      this.loadingData = false
+    },
+    onProblemStatisticClick (props) {
       this.currentStatisticIsProblem = true
       this.statisticDialogShow = true
+      this.targetRow = props.row
     },
-    onUserStatisticClick () {
+    onUserStatisticClick (props) {
       this.currentStatisticIsProblem = false
       this.statisticDialogShow = true
+      this.targetRow = props.row
     },
-    a (props) {
-      console.log(props)
+    async initPage () {
+      await this.getProblem('rand string')
+      this.currentTab = 'problems'
+      await this.$nextTick()
+      await this.getProblem('rand string')
+      this.currentTab = 'users'
     }
   },
-  created () {
+  async created () {
+    this.pageLoading = true
+    this.userMode.getData = this.asUserGetData
+    this.problemMode.getData = this.asProblemGetData
+    this.changeRole = exceptionHandlerDecorator.call(this, [this.changeRole])
+    this.userMode.getStatisticClick = exceptionHandlerDecorator.call(this, [this.getStatisticByUser], 'statisticLoading')
+    this.problemMode.getStatisticClick = exceptionHandlerDecorator.call(this, [this.getStatisticByProblem], 'statisticLoading')
     this.userMode.onStatisticClick = this.onUserStatisticClick
     this.problemMode.onStatisticClick = this.onProblemStatisticClick
+    while (this.$store.getters['userDataStore/userInformationGetter'] === null) {
+      await new Promise((resolve, reject) => setTimeout(resolve, 200))
+    }
+    await exceptionHandlerDecorator.call(this, [this.initPage, true])()
+    this.getProblem = exceptionHandlerDecorator.call(this, [this.getProblem], 'loadingData')
+    this.pageLoading = false
   }
 }
 </script>

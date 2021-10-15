@@ -11,13 +11,13 @@
       class="q-pa-xs"
     >
       <div
-        class="row q-pa-sm q-mt-sm content-shadow content-background"
+        class="row q-pa-sm q-mb-sm content-shadow content-background"
       >
         <div
           class="text-h6"
-          style="width:250px; display:flex; align-items: center;"
+          style="width:200px; display:flex; align-items: center;"
         >
-          Информация о пользователе
+          Пользователь
         </div>
         <q-item
           class="q-pa-none"
@@ -25,17 +25,15 @@
           <q-item-section
             side
           >
-            <q-avatar
-              rounded
-            >
+            <q-avatar>
               <img
-                :src="informationAboutUser.authorAvatarPath"
+                :src="informationAboutUser.avatarPath"
                 alt=""
               />
             </q-avatar>
           </q-item-section>
           <q-item-section>
-            {{ informationAboutUser.authorFullName }} ({{informationAboutUser.authorGroup === '-1' ? '-' : informationAboutUser.authorGroup}})
+            {{ informationAboutUser.fullName }} ({{informationAboutUser.group === '-1' ? '-' : informationAboutUser.group}})
           </q-item-section>
         </q-item>
       </div>
@@ -70,6 +68,7 @@
             label="Поиск по столбцу"
             debounce="1000"
             :readonly="currentMode.columnForSearch === ''"
+            @input="getProblem"
             square
             outlined
             style="width:70%"
@@ -87,6 +86,7 @@
             outlined
             :options="currentMode.namesOfSearchColumns"
             label="Столбец"
+            @input="getProblem"
             options-dense
             style="width:30%"
             v-model="currentMode.columnForSearch"
@@ -99,6 +99,7 @@
           :visible-columns="currentMode.visibleColumns"
           :rows-per-page-options="[currentMode.pagination.rowsPerPage]"
           :loading="loadingData"
+          @request="getProblem"
           wrap-cells
           flat
           square
@@ -117,9 +118,8 @@
 
 <script>
 import LoadingSpinner from 'components/LoadingSpinner'
-// import { Constants, exceptionHandlerDecorator, toLocalDate } from 'boot/Constants'
+import { Constants, exceptionHandlerDecorator, toLocalDate } from 'boot/Constants'
 import ErrorDialog from 'components/ErrorDialog'
-import { Constants } from 'boot/Constants'
 export default {
   name: 'AdminUserProblemTable',
   components: { ErrorDialog, LoadingSpinner },
@@ -257,9 +257,91 @@ export default {
       }
     }
   },
+  methods: {
+    async asTeacherGetData (requestData, userID) {
+      const response = await fetch(Constants.SERVER_URL + `/api/admin/get-problems/${userID}`, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: Constants.HEADERS,
+        body: JSON.stringify(requestData)
+      })
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      }
+      for (const problem of responseData.data) {
+        problem.startDate = toLocalDate(problem.startDate)
+        problem.endDate = toLocalDate(problem.endDate)
+      }
+      return responseData
+    },
+    async asStudentGetData (requestData, userID) {
+      const response = await fetch(Constants.SERVER_URL + `/api/admin/get-sessions/${userID}`, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: Constants.HEADERS,
+        body: JSON.stringify(requestData)
+      })
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      }
+      return responseData
+    },
+    async getProblem (props) {
+      const { page, rowsPerPage } =
+        !Object.prototype.hasOwnProperty.call(props, 'label') && typeof props !== 'string'
+          ? props.pagination
+          : this.currentMode.pagination
+      this.loadingData = true
+      const userID = this.$route.params.user_id
+      const requestData = {
+        currentPage: page,
+        pageSize: rowsPerPage,
+        filterField: this.currentMode.columnForSearch.value || 'problemTitle',
+        filterValue: this.currentMode.filterValue
+      }
+      const responseData = await this.currentMode.getData(requestData, userID)
+      this.currentMode.data = responseData.data
+      this.currentMode.pagination.rowsNumber = responseData.count
+      this.currentMode.pagination.page = page
+      this.loadingData = false
+    },
+    async initPage () {
+      this.loadingPage = true
+      await this.getProblem('rand string')
+      this.currentTab = 'student'
+      await this.$nextTick()
+      await this.getProblem('rand string')
+      this.currentTab = 'teacher'
+      const response = await fetch(Constants.SERVER_URL + `/api/admin/get-sessions/${this.$route.params.user_id}`, Constants.GET_INIT)
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      }
+      this.informationAboutUser = responseData.data
+      this.loadingPage = false
+    }
+  },
+  async created () {
+    this.loadingPage = true
+    this.asStudent.getData = this.asStudentGetData
+    this.asTeacher.getData = this.asTeacherGetData
+    while (this.$store.getters['userDataStore/userInformationGetter'] === null) {
+      await new Promise((resolve, reject) => setTimeout(resolve, 200))
+    }
+    await exceptionHandlerDecorator.call(this, [this.initPage, true])()
+    this.getProblem = exceptionHandlerDecorator.call(this, [this.getProblem], 'loadingData')
+    this.loadingPage = false
+  },
   computed: {
     currentMode () {
       return this.currentTab === 'teacher' ? this.asTeacher : this.asStudent
+    }
+  },
+  watch: {
+    $route: function () {
+      exceptionHandlerDecorator.call(this, [this.initPage, true], 'pageLoading')()
     }
   }
 }

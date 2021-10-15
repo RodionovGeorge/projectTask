@@ -43,6 +43,9 @@
         >
           <q-item
             to="/"
+            active-class="bg-primary text-white"
+            :active="currentPath === '/'"
+            exact
             clickable
             v-ripple
           >
@@ -57,9 +60,11 @@
               Главная
             </q-item-section>
           </q-item>
-
+          <q-separator/>
           <q-item
             to="/new-task"
+            active-class="bg-primary text-white"
+            :active="currentPath === '/new-task'"
             clickable
             v-ripple
             v-if="isTeacher"
@@ -75,9 +80,48 @@
               Предложить задачу
             </q-item-section>
           </q-item>
-
+          <q-item
+            to="/my/tasks"
+            active-class="bg-primary text-white"
+            :active="currentPath === '/my/tasks'"
+            clickable
+            v-ripple
+          >
+            <q-item-section
+              avatar
+            >
+              <q-icon
+                name="bi-book"
+              />
+            </q-item-section>
+            <q-item-section>
+              Мои задачи
+            </q-item-section>
+          </q-item>
+          <q-separator/>
+          <q-item
+            to="/admin"
+            active-class="bg-primary text-white"
+            :active="currentPath === '/admin'"
+            clickable
+            v-ripple
+            v-if="isAdmin"
+          >
+            <q-item-section
+              avatar
+            >
+              <q-icon
+                name="bi-shield"
+              />
+            </q-item-section>
+            <q-item-section>
+              Контроль
+            </q-item-section>
+          </q-item>
           <q-item
             to="/task-opening"
+            active-class="bg-primary text-white"
+            :active="currentPath === '/task-opening'"
             clickable
             v-ripple
             v-if="isAdmin"
@@ -93,41 +137,7 @@
               Допуск задач
             </q-item-section>
           </q-item>
-
-          <!-- <q-item
-            active
-            clickable
-            v-ripple
-          >
-            <q-item-section
-              avatar
-            >
-              <q-icon
-                name="bi-person-square"
-              />
-            </q-item-section>
-            <q-item-section>
-              Профиль
-            </q-item-section>
-          </q-item> -->
-
-          <q-item
-            to="/my/tasks"
-            clickable
-            v-ripple
-          >
-            <q-item-section
-              avatar
-            >
-              <q-icon
-                name="bi-book"
-              />
-            </q-item-section>
-            <q-item-section>
-              Задачи
-            </q-item-section>
-          </q-item>
-
+          <q-separator/>
           <q-item
             clickable
             v-ripple
@@ -193,15 +203,6 @@
         </q-item-section>
       </q-item>
     </q-drawer>
-
-    <!-- <q-footer>
-      <q-toolbar>
-        <q-toolbar-title>
-          some title
-        </q-toolbar-title>
-      </q-toolbar>
-    </q-footer> -->
-
     <q-page-container>
       <router-view />
     </q-page-container>
@@ -246,6 +247,9 @@ export default {
     }
   },
   computed: {
+    currentPath () {
+      return this.$route.path
+    },
     userInformation () {
       return this.$store.getters['userDataStore/userInformationGetter']
     },

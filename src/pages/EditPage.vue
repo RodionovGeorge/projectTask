@@ -40,9 +40,7 @@
         <q-item-section
           side
         >
-          <q-avatar
-            rounded
-          >
+          <q-avatar>
             <img
               :src="informationAboutAuthor.authorAvatarPath"
               alt=""

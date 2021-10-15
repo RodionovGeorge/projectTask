@@ -73,7 +73,9 @@ const Constants = {
     'attempt already checked': { message: 'Попытка уже была проверена.', path: '/error-400' },
     'pdf creating failed': { message: 'Не удалось обработать проверенное решение.', path: '/server-error' },
     'Failed to fetch': { message: 'Нет соединения.', path: '/connection-error' },
-    'session not found': { message: 'Ученик не найден. Возможно попытка была удалена.', path: AT_404 }
+    'session not found': { message: 'Ученик не найден. Возможно попытка была удалена.', path: AT_404 },
+    'user not found': { message: 'Пользователь не найден.', path: AT_404 },
+    'user already admin': { message: 'У пользователя может быть или администратором, или его помощником.', path: '/error-400' }
   },
   PATHS_WITHOUT_AUTHENTICATION: [
     '/login',
@@ -178,10 +180,10 @@ function roleCheckDecorator (...roles) {
           if (data.roleCheck) {
             next()
           } else {
-            next(false)
+            next('/permission-error')
           }
         } else {
-          next(false)
+          next('/server-error')
         }
       } catch (e) {
         next('/connection-error')

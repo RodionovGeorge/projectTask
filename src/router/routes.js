@@ -20,14 +20,23 @@ const routes = [
       },
       { path: '/my/tasks', component: () => import('pages/AllUserTasks') },
       { path: '/task/:task_id', component: () => import('pages/TaskT') },
-      { path: '/my/profile', component: () => import('pages/UserProfilePage') },
+      /* { path: '/my/profile', component: () => import('pages/UserProfilePage') }, */
       { path: '/registration', component: () => import('pages/RegistrationPage') },
       { path: '/account-recovery', component: () => import('pages/ForgotPasswordPage') },
       { path: '/account-activating', component: () => import('pages/AccountActivatingPage') },
-      { path: '/new-task', component: () => import('pages/NewTaskPage') },
+      {
+        path: '/new-task',
+        component: () => import('pages/NewTaskPage'),
+        beforeEnter: roleCheckDecorator('Учитель')
+      },
       {
         path: '/admin',
         component: () => import('pages/AdminTablePage'),
+        beforeEnter: roleCheckDecorator('Администратор', 'Помощник администратора')
+      },
+      {
+        path: '/admin/user/:user_id',
+        component: () => import('pages/AdminUserProblemTable'),
         beforeEnter: roleCheckDecorator('Администратор', 'Помощник администратора')
       },
       { path: '/connection-error', component: () => import('pages/ConnectionErrorPage') },
