@@ -13,15 +13,17 @@
         Описание задачи
       </div>
       <div>
+        <!-- v-if="problemStatus === 'Открыта' && userStatus === 'Учитель' || userStatus === 'Администратор'" -->
         <q-btn
-          v-if="problemStatus === 'Открыта' && userStatus === 'Учитель' || userStatus === 'Администратор'"
+          v-if="editButtonShow"
           flat
           dense
           icon="bi-gear"
           @click="onEditTaskClick"
         />
+        <!-- v-if="problemStatus === 'Скрыта' && userStatus === 'Учитель'" -->
         <q-btn
-          v-if="problemStatus === 'Скрыта' && userStatus === 'Учитель'"
+          v-if="sunriseButtonShow"
           flat
           dense
           icon="bi-sunrise"
@@ -36,8 +38,9 @@
             />
           </template>
         </q-btn>
+        <!-- v-if="problemStatus === 'Принята' && userStatus === 'Учитель'" -->
         <q-btn
-          v-if="problemStatus === 'Принята' && userStatus === 'Учитель'"
+          v-if="sunsetButtonShow"
           flat
           dense
           icon="bi-sunset"
@@ -52,8 +55,9 @@
             />
           </template>
         </q-btn>
+        <!-- v-if="userStatus === 'Учитель'" -->
         <q-btn
-          v-if="userStatus === 'Учитель'"
+          v-if="deleteButtonShow"
           icon="bi-trash"
           @click="onDelete"
           :loading="deleting"
@@ -131,8 +135,9 @@
           {{problemStatus}}
         </td>
       </tr>
+      <!-- v-if="userStatus === 'Учитель' && problemStatus === 'Отклонена'" -->
       <tr
-        v-if="userStatus === 'Учитель' && problemStatus === 'Отклонена'"
+        v-if="adminCommentaryShow"
       >
         <td>
           Комментарий администратора
@@ -141,14 +146,15 @@
           {{problemRejectionReason}}
         </td>
       </tr>
+      <!-- v-if="problemStatus !== 'Отклонена' && problemStatus !== 'Проверяется'" -->
       <tr
-        v-if="problemStatus !== 'Отклонена' && problemStatus !== 'Проверяется'"
+        v-if="complexityShow"
       >
         <td>
           Сложность
         </td>
         <td>
-          {{ problemStatus === 'Проверяется' ? '-' : problemComplexity }}
+          {{ problemComplexity }}
         </td>
       </tr>
       <tr>
@@ -210,9 +216,33 @@ export default {
     }
   },
   props: {
-    userStatus: {
+    /* userStatus: {
       type: String,
       required: true
+    }, */
+    editButtonShow: {
+      type: Boolean,
+      default: false
+    },
+    complexityShow: {
+      type: Boolean,
+      default: false
+    },
+    adminCommentaryShow: {
+      type: Boolean,
+      default: false
+    },
+    deleteButtonShow: {
+      type: Boolean,
+      default: false
+    },
+    sunsetButtonShow: {
+      type: Boolean,
+      default: false
+    },
+    sunriseButtonShow: {
+      type: Boolean,
+      default: false
     },
     problemID: {
       type: String

@@ -83,6 +83,7 @@
         type="textarea"
         outlined
         label="Комментарий к решению"
+        :maxlength="commentaryToSolutionLength"
         square
         borderless
         autogrow
@@ -141,6 +142,7 @@ export default {
       submitting: false,
       attemptAlreadyChecked: false,
       pageLoading: true,
+      commentaryToSolutionLength: Constants.LENGTHS.commentaryToTeacherFeedback,
       errorMessage: '',
       teacherCommentary: '',
       decisionStage: '',

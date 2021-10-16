@@ -55,6 +55,7 @@
         v-model="userCode"
         ref="userCode"
         label="Код из письма"
+        maxlength="10"
         :rules="[val => !!val.length || 'Пожалуйста, введите код из письма']"
         class="account-recovery-field"
         outlined
@@ -109,6 +110,7 @@
         ref="userNewPassword"
         type="password"
         label="Новый пароль"
+        maxlength="20"
         :rules="[val => !!val.length || 'Пожалуйста, введите новый пароль']"
         class="account-recovery-field"
         outlined

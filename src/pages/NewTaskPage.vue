@@ -21,6 +21,7 @@
             outlined
             ref="taskName"
             label="Название задачи"
+            maxlength="30"
             :rules="[value=>value.length > 0 || 'Пожалуйста, введите название задачи']"
           />
           <q-file
@@ -46,6 +47,7 @@
             type="textarea"
             outlined
             label="Комментарий"
+            :maxlength="commentaryMaxLength"
             class="new-task-commentary"
           />
           <div
@@ -130,6 +132,7 @@ export default {
       errorDialogShow: false,
       errorMessage: '',
       submitting: false,
+      commentaryMaxLength: Constants.LENGTHS.commentaryToProblem,
       taskName: '',
       selectedTaskDiscipline: '',
       taskDisciplines: Constants.TASK_DISCIPLINES,

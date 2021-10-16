@@ -22,6 +22,7 @@
         label="Фамилия"
         outlined
         :rules="[val => !!val || 'Пожалуйста, введите вашу фамилию']"
+        maxlength="40"
         class="registration-field"
       />
       <q-input
@@ -30,6 +31,7 @@
         label="Имя"
         outlined
         :rules="[val => !!val || 'Пожалуйста, введите ваше имя']"
+        maxlength="40"
         class="registration-field"
       />
       <q-input
@@ -38,6 +40,7 @@
         label="Отчество"
         outlined
         :rules="[val => !!val || 'Пожалуйста, введите ваше отчество']"
+        maxlength="40"
         class="registration-field"
       />
       <q-input
@@ -55,6 +58,7 @@
         outlined
         type="password"
         :rules="[val => !!val || 'Пожалуйста, введите пароль']"
+        maxlength="20"
         class="registration-field"
       />
       <q-input
@@ -96,6 +100,7 @@
         outlined
         :rules="[val => !!val || 'Пожалуйста, введите проверочный код']"
         label="Код из письма"
+        maxlength="10"
         class="registration-field"
       />
       <div

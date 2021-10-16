@@ -7,12 +7,18 @@
   />
   <div
     class="column items-center q-py-sm q-gutter-y-sm"
-    v-if="!pageLoading"
+    v-if="!pageLoading && !problemIsBanned"
   >
     <TaskInfo
       v-bind="problemInformation"
       :loading="statusChangeLoading"
       :deleting="deleteProblemLoading"
+      :delete-button-show="isTeacher"
+      :edit-button-show="isTeacher && (problemInformation.problemStatus === 'Принята' || problemInformation.problemStatus === 'Скрыта')"
+      :sunset-button-show="isTeacher && problemInformation.problemStatus === 'Принята'"
+      :sunrise-button-show="isTeacher && problemInformation.problemStatus === 'Скрыта'"
+      :admin-commentary-show="isTeacher && problemInformation.problemStatus === 'Отклонена'"
+      :complexity-show="problemInformation.problemStatus !== 'Отклонена' && problemInformation.problemStatus !== 'Проверяется'"
       class="content-background content-shadow"
       @status-change="statusChange"
       @delete="deleteProblem"
@@ -78,15 +84,29 @@
       </q-table>
     </div>
     <q-btn
-      v-if="problemInformation.userStatus === 'Нет'"
+      v-if="problemInformation.userStatus === 'Нет' && userHaveStudentRole"
       class="content-background"
       label="Добавить попытку"
       @click="newAttemptDialogShow = true"
       no-caps
     />
+    <q-banner
+      class="content-shadow q-mt-sm text-center"
+      style="width: 100%"
+      v-if="!isTeacher && currentSessionStatus === 'Закрыта'"
+    >
+      Преподаватель закончил решение этой задачи с вами.
+    </q-banner>
+    <q-banner
+      class="content-shadow q-my-xs"
+      style="width: 100%"
+      v-if="currentSessionStatus === 'Заблокирована'"
+    >
+      Ход решения был заблокирован администратором.
+    </q-banner>
     <div
       class="column no-wrap q-gutter-x-sm"
-      v-if="problemInformation.userStatus === 'Ученик' || (isTeacher && currentSessionID)"
+      v-else-if="problemInformation.userStatus === 'Ученик' || (isTeacher && currentSessionID)"
     >
       <div
         class="column q-gutter-y-sm items-center"
@@ -118,14 +138,41 @@
           @click="onEdit"
         />
         <q-btn
-          v-if="isTeacher && currentAttempt.studentAttempt.checkStatus === 'Проверена'"
-          label="Редактировать отзыв"
+          v-if="isTeacher && currentAttempt.studentAttempt.checkStatus === 'Проверена' && currentSessionStatus === 'Открыта'"
+          label="Закончить общение"
           style="width: 25%"
           class="content-background"
+          :loading="sessionStatusChangeLoading"
+          @click="changeSessionStatus('Закрыта')"
           no-caps
-        />
+        >
+          <template
+            v-slot:loading
+          >
+            <q-spinner
+              :thickness="2"
+            />
+          </template>
+        </q-btn>
         <q-btn
-          v-if="problemInformation.userStatus === 'Ученик' && currentAttempt.studentAttempt.checkStatus === 'Проверена'"
+          v-if="isTeacher && currentAttempt.studentAttempt.checkStatus === 'Проверена' && currentSessionStatus === 'Закрыта'"
+          label="Возобновить общение"
+          style="width: 25%"
+          class="content-background"
+          :loading="sessionStatusChangeLoading"
+          @click="changeSessionStatus('Открыта')"
+          no-caps
+        >
+          <template
+            v-slot:loading
+          >
+            <q-spinner
+              :thickness="2"
+            />
+          </template>
+        </q-btn>
+        <q-btn
+          v-if="problemInformation.userStatus === 'Ученик' && currentAttempt.studentAttempt.checkStatus === 'Проверена' && currentSessionStatus === 'Открыта'"
           label="Добавить попытку"
           style="width: 25%"
           class="content-background"
@@ -171,6 +218,7 @@
               <q-input
                 v-model="currentCommentary"
                 autogrow
+                :disable="currentSessionStatus === 'Закрыта'"
                 v-on:keydown.enter.prevent="addNewCommentary"
                 :loading="newCommentaryLoading"
                 outlined
@@ -238,7 +286,7 @@
                       :commentary-i-d="item.commentaryID"
                       :commentary-text="item.commentaryText"
                       :user-status="problemInformation.userStatus"
-                      :show-delete-button="userID === item.authorID"
+                      :show-delete-button="false"
                     />
                   </template>
                 </q-virtual-scroll>
@@ -258,11 +306,78 @@
       </div>
     </div>
   </div>
+  <q-banner
+    inline-actions
+    class="content-shadow q-my-xs"
+    v-if="!pageLoading && problemIsBanned"
+  >
+    Задача была заблокирована администратором.
+    <template v-slot:action>
+      <q-btn
+        no-caps
+        color="white"
+        text-color="black"
+        label="На главную"
+        @click="onMainPage"
+      />
+    </template>
+  </q-banner>
   <ErrorDialog
     :p-error-dialog-show="errorDialogShow"
     :p-error-message="errorMessage"
     @off="errorDialogShow = false"
   />
+  <q-dialog
+    v-model="editTaskDialogShow"
+    square
+  >
+    <div
+      class="column content-background no-wrap items-center q-pa-xs"
+    >
+      <div
+        class="text-h6"
+      >
+        Редактирование
+      </div>
+      <div
+        class="column no-wrap q-mb-xs"
+      >
+        <q-input
+          v-model="newAuthorCommentary"
+          type="textarea"
+          style="height: 100%"
+          outlined
+          square
+          label="Комментарий"
+          :maxlength="commentaryToProblemLength"
+          class="new-task-commentary q-mb-xs"
+        />
+        <q-date
+          v-model="dateRange"
+          range
+          square
+          mask="DD.MM.YYYY"
+          title="Срок приема решений"
+          :options="dateRestriction"
+        />
+      </div>
+      <q-btn
+        label="Готово"
+        outline
+        no-caps
+        color="primary"
+        style="width: 25%"
+      >
+        <template
+          v-slot:loading
+        >
+          <q-spinner
+            :thickness="2"
+          />
+        </template>
+      </q-btn>
+    </div>
+  </q-dialog>
   <q-dialog
     v-model="infoDialogShow"
   >
@@ -354,6 +469,7 @@ import Commentary from 'components/Commentary'
 import LoadingSpinner from 'components/LoadingSpinner'
 import { Constants, exceptionHandlerDecorator, toBase64, toLocalDate } from 'boot/Constants'
 import ErrorDialog from 'components/ErrorDialog'
+import { date } from 'quasar'
 export default {
   name: 'TaskT',
   components: { ErrorDialog, LoadingSpinner, TaskInfo, AttemptForStudent, TeacherFeedback, Commentary },
@@ -366,12 +482,15 @@ export default {
       deleteStudentAttemptLoading: false,
       deleteProblemLoading: false,
       statusChangeLoading: false,
+      editTaskDialogShow: false,
+      sessionStatusChangeLoading: false,
       newCommentaryLoading: false,
       newAttemptLoading: false,
       newAttemptDialogShow: false,
       infoDialogShow: false,
       attemptLoading: false,
       errorDialogShow: false,
+      commentaryToProblemLength: Constants.LENGTHS.commentaryToProblem,
       errorMessage: '',
       pagination: {
         sortBy: '',
@@ -385,6 +504,8 @@ export default {
       currentCommentary: '',
       sessionData: null,
       problemInformation: null,
+      dateRange: { to: '', from: '' },
+      newAuthorCommentary: '',
       visibleColumns: ['studentFullName', 'studentGroup', 'haveNewContent'],
       columns: [
         {
@@ -415,7 +536,9 @@ export default {
       // Из-за механизма обработки ошибок это поле может принимать
       // либо значение false, когда преподаватель ничего не выбрал или при выборе произошла ошибка
       // либо числовое значние, когда все в порядке
+      // (Когда при выборе ученика происходит ошибка, то нужно сбросить выбранную сессию)
       currentSessionID: false,
+      currentSessionStatus: null,
       userID: null,
       teacherInfo: {
         avatarPath: null,
@@ -462,6 +585,24 @@ export default {
     }
   },
   methods: {
+    dateRestriction (dateForCheck) {
+      if (date.isSameDate(date.extractDate(dateForCheck, 'YYYY/MM/DD'), date.extractDate(this.problemInformation.problemStartLine, 'DD.MM.YYYY'))) {
+        return true
+      }
+      if (date.isSameDate(date.extractDate(dateForCheck, 'YYYY/MM/DD'), date.extractDate(this.problemInformation.problemDeadline, 'DD.MM.YYYY'))) {
+        return true
+      }
+      const dateNow = new Date()
+      const maxDate = new Date(8640000000000000)
+      return date.isBetweenDates(dateForCheck, dateNow, maxDate, {
+        inclusiveFrom: true,
+        inclusiveTo: false,
+        onlyDate: true
+      })
+    },
+    async onMainPage () {
+      await this.$router.push('/')
+    },
     async statusChange (...args) {
       this.statusChangeLoading = true
       const requestData = {
@@ -680,6 +821,27 @@ export default {
         this.newAttemptLoading = false
       }
     },
+    async changeSessionStatus (newStatus) {
+      this.sessionStatusChangeLoading = true
+      const requestData = {
+        csrfToken: window.localStorage.getItem('csrfToken'),
+        newStatus: newStatus,
+        sessionID: this.currentSessionID
+      }
+      const response = await fetch(Constants.SERVER_URL + '/api/session-for-problem/' + this.currentSessionID, {
+        method: 'PATCH',
+        headers: Constants.HEADERS,
+        credentials: 'same-origin',
+        body: JSON.stringify(requestData)
+      })
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      }
+      this.currentSessionStatus = newStatus
+      window.localStorage.setItem('csrfToken', responseData.csrfToken)
+      this.sessionStatusChangeLoading = false
+    },
     async onRowClick (...args) {
       this.listLoading = true
       const r = args[1]
@@ -699,6 +861,9 @@ export default {
       }
       data.data.problemStartLine = toLocalDate(data.data.problemStartLine)
       data.data.problemDeadline = toLocalDate(data.data.problemDeadline)
+      this.dateRange.to = data.data.problemDeadline
+      this.dateRange.from = data.data.problemStartLine
+      this.newAuthorCommentary = data.data.authorCommentary
       this.problemInformation = data.data
     },
     async updateSessionTable (...args) {
@@ -741,6 +906,7 @@ export default {
         throw new Error(responseData.message)
       } else {
         this.attemptMaxNumber = responseData.attemptNumber
+        this.currentSessionStatus = responseData.sessionStatus
       }
     },
     async onPaginationClick (attemptNumber) {
@@ -754,6 +920,9 @@ export default {
     },
     async getSession () {
       await this.getAttemptNumber()
+      if (this.currentSessionStatus === 'Заблокирована') {
+        return
+      }
       const currentAttempt = await this.getAttempt(this.attemptMaxNumber)
       this.teacherInfo = currentAttempt.commentariesInfo.teacherInfo
       this.studentInfo = currentAttempt.commentariesInfo.studentInfo
@@ -777,17 +946,19 @@ export default {
       }
       this.userID = this.$store.getters['userDataStore/userInformationGetter'].id
       await this.getProblem()
-      switch (this.problemInformation.userStatus) {
-        case 'Учитель':
-          if (this.currentSessionID) {
+      if (this.problemInformation.problemStatus !== 'Заблокирована') {
+        switch (this.problemInformation.userStatus) {
+          case 'Учитель':
+            if (this.currentSessionID) {
+              await this.getSession()
+              this.filterValue = this.studentInfo.fullName
+            }
+            await this.updateSessionTable('random string')
+            break
+          case 'Ученик':
             await this.getSession()
-            this.filterValue = this.studentInfo.fullName
-          }
-          await this.updateSessionTable('random string')
-          break
-        case 'Ученик':
-          await this.getSession()
-          break
+            break
+        }
       }
       this.pageLoading = false
     },
@@ -801,6 +972,7 @@ export default {
     this.onPaginationClick = exceptionHandlerDecorator.call(this, [this.onPaginationClick], 'attemptLoading')
     this.updateSessionTable = exceptionHandlerDecorator.call(this, [this.updateSessionTable], 'listLoading')
     this.addNewCommentary = exceptionHandlerDecorator.call(this, [this.addNewCommentary], 'newCommentaryLoading')
+    this.changeSessionStatus = exceptionHandlerDecorator.call(this, [this.changeSessionStatus], 'sessionStatusChangeLoading')
     this.deleteTeacherFeedback = exceptionHandlerDecorator.call(this, [this.deleteTeacherFeedback], 'deleteTeacherFeedbackLoading')
     this.addNewAttempt = exceptionHandlerDecorator.call(this, [this.addNewAttempt], 'newAttemptLoading')
     this.onRowClick = exceptionHandlerDecorator.call(this, [this.onRowClick], 'listLoading', 'currentSessionID')
@@ -820,9 +992,15 @@ export default {
     isTeacher () {
       return this.problemInformation.userStatus === 'Учитель'
     },
+    problemIsBanned () {
+      return this.problemInformation.problemStatus === 'Заблокирована'
+    },
     sdbForStudentAttempt () {
       return this.problemInformation.userStatus === 'Ученик' &&
         this.currentAttempt.studentAttempt.checkStatus === 'Проверяется'
+    },
+    userHaveStudentRole () {
+      return this.$store.getters['userDataStore/userInformationGetter'].roles.includes('Ученик')
     }
   },
   beforeRouteEnter (to, from, next) {

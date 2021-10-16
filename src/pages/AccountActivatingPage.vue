@@ -17,6 +17,7 @@
       label="Код из письма"
       :rules="[val => !!val.length || 'Пожалуйста, введите код из письма']"
       class="account-activating-field"
+      maxlength="10"
       outlined
     />
     <div

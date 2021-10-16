@@ -19,7 +19,7 @@ const routes = [
         beforeEnter: roleCheckDecorator('Учитель')
       },
       { path: '/my/tasks', component: () => import('pages/AllUserTasks') },
-      { path: '/task/:task_id', component: () => import('pages/TaskT') },
+      { path: '/task/:task_id', component: () => import('pages/UserTaskPage') },
       /* { path: '/my/profile', component: () => import('pages/UserProfilePage') }, */
       { path: '/registration', component: () => import('pages/RegistrationPage') },
       { path: '/account-recovery', component: () => import('pages/ForgotPasswordPage') },

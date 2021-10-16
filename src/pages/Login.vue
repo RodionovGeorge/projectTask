@@ -29,6 +29,7 @@
             outlined
             type="password"
             label="Пароль"
+            maxlength="20"
             v-on:keydown.enter.prevent="onEnter"
             :rules="[value=>value.length > 0 || 'Пожалуйста, введите пароль']"
           />

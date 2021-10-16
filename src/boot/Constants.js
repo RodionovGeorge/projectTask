@@ -20,6 +20,10 @@ const Constants = {
     'Математический анализ',
     'Математическая логика и теория алгоритмов'
   ],
+  LENGTHS: {
+    commentaryToProblem: 400,
+    commentaryToTeacherFeedback: 400
+  },
   SOLUTION_DEGREES: [
     {
       label: 'Пока не решена',
