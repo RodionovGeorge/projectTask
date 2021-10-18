@@ -238,7 +238,7 @@ export default {
   },
   async created () {
     this.fetchData = exceptionHandlerDecorator.call(this, [this.fetchData], 'tableLoading')
-    await exceptionHandlerDecorator.call(this, [this.init, true], 'pageLoading')()
+    await exceptionHandlerDecorator.call(this, [this.init, true])()
   }
 }
 </script>

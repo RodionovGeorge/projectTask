@@ -158,7 +158,7 @@ export default {
       const correctTitleEnter = this.$refs.taskName.validate()
       const correctDisciplinesChoose = this.$refs.discipline.validate()
       const correctFileChoose = this.$refs.file.validate()
-      if (this.dateRange.to === '' || this.dateRange.from === '') {
+      if (this.dateRange === null || this.dateRange.to === '' || this.dateRange.from === '') {
         this.errorMessage = 'Пожалуйста, выберите интервал приема решений.'
         this.errorDialogShow = true
         return

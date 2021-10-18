@@ -199,7 +199,7 @@ export default {
   },
   watch: {
     $route: function () {
-      exceptionHandlerDecorator.call(this, [this.initPage], 'pageLoading')()
+      exceptionHandlerDecorator.call(this, [this.initPage])()
     }
   },
   async created () {
@@ -207,7 +207,7 @@ export default {
     while (this.$store.getters['userDataStore/userInformationGetter'] === null) {
       await new Promise((resolve, reject) => setTimeout(resolve, 200))
     }
-    await exceptionHandlerDecorator.call(this, [this.initPage, true], 'pageLoading')()
+    await exceptionHandlerDecorator.call(this, [this.initPage, true])()
   }
 }
 </script>

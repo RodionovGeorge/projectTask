@@ -39,6 +39,11 @@ const routes = [
         component: () => import('pages/AdminUserProblemTable'),
         beforeEnter: roleCheckDecorator('Администратор', 'Помощник администратора')
       },
+      {
+        path: '/admin/task/:task_id/:session_id',
+        component: () => import('pages/AdminTaskPage'),
+        beforeEnter: roleCheckDecorator('Администратор', 'Помощник администратора')
+      },
       { path: '/connection-error', component: () => import('pages/ConnectionErrorPage') },
       { path: '/server-error', component: () => import('pages/Error500') },
       { path: '/permission-error', component: () => import('pages/Error403') },

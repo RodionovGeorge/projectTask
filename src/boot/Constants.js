@@ -79,7 +79,8 @@ const Constants = {
     'Failed to fetch': { message: 'Нет соединения.', path: '/connection-error' },
     'session not found': { message: 'Ученик не найден. Возможно попытка была удалена.', path: AT_404 },
     'user not found': { message: 'Пользователь не найден.', path: AT_404 },
-    'user already admin': { message: 'У пользователя может быть или администратором, или его помощником.', path: '/error-400' }
+    'user already admin': { message: 'У пользователя может быть или администратором, или его помощником.', path: '/error-400' },
+    'session status not found': { message: 'Такой статус не найден', path: AT_404 }
   },
   PATHS_WITHOUT_AUTHENTICATION: [
     '/login',

@@ -335,16 +335,14 @@ export default {
     }
     await exceptionHandlerDecorator.call(
       this,
-      [this.fetchData, true, { 'problem already admitted': e => { this.problemAlreadyAdmitted = true } }],
-      'pageLoading'
+      [this.fetchData, true, { 'problem already admitted': e => { this.problemAlreadyAdmitted = true } }]
     )()
   },
   watch: {
     $route: function () {
       exceptionHandlerDecorator.call(
         this,
-        [this.fetchData, true, { 'problem already admitted': e => { this.problemAlreadyAdmitted = true } }],
-        'pageLoading'
+        [this.fetchData, true, { 'problem already admitted': e => { this.problemAlreadyAdmitted = true } }]
       )()
     }
   }

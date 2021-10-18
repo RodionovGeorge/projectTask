@@ -54,7 +54,7 @@
         Комментарий
       </td>
       <td>
-        {{teacherCommentary}}
+        <pre>{{teacherCommentary}}</pre>
       </td>
     </tr>
     <tr>

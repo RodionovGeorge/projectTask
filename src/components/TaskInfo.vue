@@ -170,7 +170,7 @@
           Комментарий к задаче
         </td>
         <td>
-          {{ authorCommentary }}
+          <pre>{{ authorCommentary }}</pre>
         </td>
       </tr>
       <tr>

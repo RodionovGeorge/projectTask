@@ -7,7 +7,7 @@
   />
   <div
     v-if="!pageLoading"
-    style="width: 1100px;"
+    style="width: 1200px;"
     class="q-pa-xs"
   >
     <q-tabs
@@ -73,7 +73,6 @@
         :rows-per-page-options="[currentMode.pagination.rowsPerPage]"
         :loading="loadingData"
         @request="getProblem"
-        @click="onRowClick"
         wrap-cells
         flat
         square
@@ -162,6 +161,22 @@
               label="Показать"
               color="primary"
               @click="currentMode.onStatisticClick(props)"
+              no-caps
+            >
+            </q-btn>
+          </q-td>
+        </template>
+        <template
+          v-slot:body-cell-linkToData="props"
+        >
+          <q-td
+            auto-width
+            :props="props"
+          >
+            <q-btn
+              icon="bi-forward"
+              flat
+              @click="currentMode.onLinkClick(props)"
               no-caps
             >
             </q-btn>
@@ -417,6 +432,7 @@ export default {
         getData: null,
         onStatisticClick: null,
         getStatisticClick: null,
+        onLinkClick: null,
         data: null,
         visibleColumns: ['problemTitle', 'authorGroup', 'authorFullName', 'problemDiscipline'],
         columns: [
@@ -460,6 +476,11 @@ export default {
             align: 'center',
             field: 'problemTitle',
             required: true
+          },
+          {
+            name: 'linkToData',
+            label: '',
+            required: true
           }
         ],
         namesOfSearchColumns: [
@@ -495,6 +516,7 @@ export default {
         props: null,
         onStatisticClick: null,
         getStatisticClick: null,
+        onLinkClick: null,
         data: null,
         visibleColumns: ['userFullName', 'userGroup', 'studentRole', 'teacherRole', 'adminRole', 'subAdminRole'],
         columns: [
@@ -531,6 +553,11 @@ export default {
             label: 'Статистика',
             align: 'center',
             style: 'max-width: 120px;',
+            required: true
+          },
+          {
+            name: 'linkToData',
+            label: '',
             required: true
           }
         ],
@@ -669,8 +696,11 @@ export default {
     }
   },
   methods: {
-    async onRowClick (evt, row) {
-      await this.$router.push(`/admin/user/${row.userID}`)
+    async onUserRowClick (props) {
+      await this.$router.push(`/admin/user/${props.row.userID}`)
+    },
+    async onProblemRowClick (props) {
+      await this.$router.push(`/admin/task/${props.row.problemID}/${-1}`)
     },
     dropData () {
       this.statisticProblemTable.data = []
@@ -836,6 +866,8 @@ export default {
     this.problemMode.getStatisticClick = exceptionHandlerDecorator.call(this, [this.getStatisticByProblem], 'statisticLoading')
     this.userMode.onStatisticClick = this.onUserStatisticClick
     this.problemMode.onStatisticClick = this.onProblemStatisticClick
+    this.userMode.onLinkClick = this.onUserRowClick
+    this.problemMode.onLinkClick = this.onProblemRowClick
     while (this.$store.getters['userDataStore/userInformationGetter'] === null) {
       await new Promise((resolve, reject) => setTimeout(resolve, 200))
     }

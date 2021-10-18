@@ -12,6 +12,12 @@
       <TaskInfo
         v-bind="problemInformation"
         :deleting="deleteProblemLoading"
+        :edit-button-show="false"
+        :sunrise-button-show="false"
+        :sunset-button-show="false"
+        :delete-button-show="true"
+        :complexity-show="complexityShow"
+        :admin-commentary-show="rejectionReasonShow"
         class="content-background content-shadow"
       />
       <div
@@ -28,6 +34,7 @@
             style="width: 90%; margin-right: 5px"
             debounce="1000"
             label="Поиск"
+            @input="updateSessionTableWithDecorator"
           >
             <template
               v-slot:append
@@ -52,9 +59,11 @@
           :visible-columns="visibleColumns"
           :pagination.sync="pagination"
           :loading="listLoading"
-          :rows-per-page-options="pagination.rowsPerPage"
+          :rows-per-page-options="[pagination.rowsPerPage]"
           row-key="sessionID"
           binary-state-sort
+          @request="updateSessionTableWithDecorator"
+          @row-click="onRowClick"
           :data="sessionData"
           no-data-label="Ученики не найдены."
         >
@@ -143,6 +152,7 @@
                 class="flex flex-center"
                 v-model="currentPreviousAttemptNumber"
                 :max="attemptMaxNumber - 1"
+                @input="onPaginationClick"
                 boundary-numbers
               />
               <div
@@ -285,11 +295,13 @@ import TeacherFeedback from 'components/TeacherFeedback'
 import Commentary from 'components/Commentary'
 import ErrorDialog from 'components/ErrorDialog'
 import LoadingSpinner from 'components/LoadingSpinner'
+import { Constants, exceptionHandlerDecorator, toLocalDate } from 'boot/Constants'
 export default {
   components: { TaskInfo, AttemptForStudent, TeacherFeedback, Commentary, ErrorDialog, LoadingSpinner },
   name: 'Task',
   data () {
     return {
+      errorDialogShow: false,
       pageLoading: false,
       confirmDialogShow: false,
       attemptLoading: false,
@@ -299,9 +311,10 @@ export default {
       deleteTeacherFeedbackLoading: false,
       deleteCommentaryLoading: false,
       problemInformation: null,
+      errorMessage: '',
       filterValue: '',
       sessionData: null,
-      visibleColumns: ['studentFullName', 'studentGroup', 'haveNewContent'],
+      visibleColumns: ['studentFullName', 'studentGroup'],
       columns: [
         {
           name: 'sessionID',
@@ -328,7 +341,7 @@ export default {
         descending: false,
         page: 1,
         rowsPerPage: 5,
-        rowsNumber: 1
+        rowsNumber: null
       },
       currentSessionID: false,
       teacherInfo: {
@@ -380,6 +393,155 @@ export default {
   computed: {
     paCommentaryNotEmpty () {
       return this.previousAttempt.commentaries?.length
+    },
+    rejectionReasonShow () {
+      return this.problemInformation.problemStatus === 'Отклонена'
+    },
+    complexityShow () {
+      return this.problemInformation.problemStatus !== 'Отклонена' && this.problemInformation.problemStatus !== 'Проверяется'
+    },
+    updateSessionTableWithDecorator () {
+      return exceptionHandlerDecorator.call(this, [this.updateSessionTable], 'listLoading')
+    }
+  },
+  methods: {
+    async getProblem () {
+      const currentProblemID = this.$route.params.task_id
+      const response = await fetch(
+        Constants.SERVER_URL + '/api/admin/get-problem-information/' + currentProblemID,
+        Constants.GET_INIT
+      )
+      const data = await response.json()
+      if (data.message !== 'success') {
+        throw new Error(data.message)
+      }
+      data.data.problemStartLine = toLocalDate(data.data.problemStartLine)
+      data.data.problemDeadline = toLocalDate(data.data.problemDeadline)
+      this.problemInformation = data.data
+    },
+    async onRowClick (...args) {
+      this.listLoading = true
+      const r = args[1]
+      this.currentSessionID = r.sessionID
+      await this.getSession()
+      this.listLoading = false
+    },
+    async onPaginationClick (attemptNumber) {
+      this.attemptLoading = true
+      const attempt = await this.getAttempt(attemptNumber)
+      this.previousAttempt.attemptID = attempt.attemptID
+      this.previousAttempt.studentAttempt = attempt.studentAttempt
+      this.previousAttempt.teacherFeedback = attempt.teacherFeedback
+      this.previousAttempt.commentaries = attempt.commentariesInfo.commentaries || []
+      this.attemptLoading = false
+    },
+    async getAttemptNumber () {
+      const getParameters = new URLSearchParams()
+      getParameters.append('sessionID', this.currentSessionID)
+      const response = await fetch(
+        Constants.SERVER_URL + '/api/admin/get-session?' + getParameters.toString(),
+        Constants.GET_INIT
+      )
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      } else {
+        this.attemptMaxNumber = responseData.attemptNumber
+      }
+    },
+    async getAttempt (attemptNumber) {
+      const requestData = {
+        sessionID: this.currentSessionID,
+        requestAttemptNumber: attemptNumber
+      }
+      const response = await fetch(
+        Constants.SERVER_URL + '/api/admin/get-session',
+        {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: Constants.HEADERS,
+          body: JSON.stringify(requestData)
+        }
+      )
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      } else {
+        return responseData.attempt
+      }
+    },
+    async getSession () {
+      await this.getAttemptNumber()
+      const currentAttempt = await this.getAttempt(this.attemptMaxNumber)
+      this.teacherInfo = currentAttempt.commentariesInfo.teacherInfo
+      this.studentInfo = currentAttempt.commentariesInfo.studentInfo
+      if (this.attemptMaxNumber > 1) {
+        const lastPreviousAttempt = await this.getAttempt(this.attemptMaxNumber - 1)
+        this.previousAttempt.attemptID = lastPreviousAttempt.attemptID
+        this.previousAttempt.studentAttempt = lastPreviousAttempt.studentAttempt
+        this.previousAttempt.teacherFeedback = lastPreviousAttempt.teacherFeedback
+        this.previousAttempt.commentaries = lastPreviousAttempt.commentariesInfo.commentaries || []
+        this.currentPreviousAttemptNumber = this.attemptMaxNumber - 1
+      }
+      this.currentAttempt.attemptID = currentAttempt.attemptID
+      this.currentAttempt.studentAttempt = currentAttempt.studentAttempt
+      this.currentAttempt.teacherFeedback = currentAttempt.teacherFeedback
+      this.currentAttempt.commentaries = currentAttempt.commentariesInfo.commentaries || []
+    },
+    async updateSessionTable (...args) {
+      this.listLoading = true
+      const props = args[0].props
+      console.log(args)
+      const { page, rowsPerPage, sortBy, descending } =
+        typeof props === 'string'
+          ? this.pagination
+          : props
+      const currentProblemID = this.$route.params.task_id
+      const getParameters = new URLSearchParams()
+      getParameters.append('filterValue', this.filterValue)
+      getParameters.append('currentPage', page)
+      getParameters.append('pageSize', rowsPerPage)
+      getParameters.append('sortField', sortBy || 'studentFullName')
+      getParameters.append('sortDir', descending ? 'desc' : 'asc')
+      const response = await fetch(
+        Constants.SERVER_URL + '/api/admin/get-sessions-by-problem/' + currentProblemID + '?' + getParameters.toString(),
+        Constants.GET_INIT
+      )
+      const data = await response.json()
+      if (data.message !== 'success') {
+        throw new Error(data.message)
+      }
+      this.sessionData = data.sessionInfo
+      this.pagination.rowsNumber = data.sessionCount
+      this.pagination.rowsPerPage = rowsPerPage
+      this.pagination.page = page
+      this.listLoading = false
+    },
+    async initPage () {
+      this.pageLoading = true
+      while (this.$store.getters['userDataStore/userInformationGetter'] === null) {
+        await new Promise((resolve, reject) => setTimeout(resolve, 200))
+      }
+      await this.getProblem()
+      if (this.$route.params.session_id !== '-1') {
+        this.currentSessionID = Number(this.$route.params.session_id)
+      }
+      if (this.currentSessionID) {
+        await this.getSession()
+        this.filterValue = this.studentInfo.fullName
+      }
+      await this.updateSessionTable('random string')
+      this.pageLoading = false
+    }
+  },
+  async created () {
+    this.onRowClick = exceptionHandlerDecorator.call(this, [this.onRowClick], 'listLoading', 'currentSessionID')
+    this.onPaginationClick = exceptionHandlerDecorator.call(this, [this.onPaginationClick], 'attemptLoading')
+    await exceptionHandlerDecorator.call(this, [this.initPage, true])()
+  },
+  watch: {
+    $route: function () {
+      exceptionHandlerDecorator.call(this, [this.initPage, true])()
     }
   }
 }

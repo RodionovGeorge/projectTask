@@ -22,7 +22,7 @@
       class="content-background content-shadow"
       @status-change="statusChange"
       @delete="deleteProblem"
-      @edit="editTaskDialogShow = true"
+      @edit="onProblemEditClick"
     />
     <div
       class="column student-table content-shadow content-background"
@@ -37,7 +37,7 @@
           outlined
           square
           style="width: 90%; margin-right: 5px"
-          @input="updateSessionTable"
+          @input="updateSessionTableWithDecorator"
           debounce="1000"
           label="Поиск"
         >
@@ -60,13 +60,13 @@
         square
         flat
         bordered
-        @request="updateSessionTable"
+        @request="updateSessionTableWithDecorator"
         @row-click="onRowClick"
         :columns="columns"
         :visible-columns="visibleColumns"
         :pagination.sync="pagination"
         :loading="listLoading"
-        :rows-per-page-options="pagination.rowsPerPage"
+        :rows-per-page-options="[pagination.rowsPerPage]"
         row-key="sessionID"
         :data="sessionData"
         no-data-label="Ученики не найдены."
@@ -330,6 +330,7 @@
   <q-dialog
     v-model="editTaskDialogShow"
     square
+    persistent
   >
     <div
       class="column content-background no-wrap items-center q-pa-xs"
@@ -361,21 +362,34 @@
           :options="dateRestriction"
         />
       </div>
-      <q-btn
-        label="Готово"
-        outline
-        no-caps
-        color="primary"
-        style="width: 25%"
+      <div
+        class="row"
       >
-        <template
-          v-slot:loading
+        <q-btn
+          label="Отмена"
+          outline
+          no-caps
+          color="primary"
+          v-close-popup
+        />
+        <q-btn
+          label="Готово"
+          class="q-ml-xs"
+          outline
+          no-caps
+          color="primary"
+          :loading="editingLoading"
+          @click="onEditingProblem"
         >
-          <q-spinner
-            :thickness="2"
-          />
-        </template>
-      </q-btn>
+          <template
+            v-slot:loading
+          >
+            <q-spinner
+              :thickness="2"
+            />
+          </template>
+        </q-btn>
+      </div>
     </div>
   </q-dialog>
   <q-dialog
@@ -490,6 +504,7 @@ export default {
       infoDialogShow: false,
       attemptLoading: false,
       errorDialogShow: false,
+      editingLoading: false,
       commentaryToProblemLength: Constants.LENGTHS.commentaryToProblem,
       errorMessage: '',
       pagination: {
@@ -497,7 +512,7 @@ export default {
         descending: false,
         page: 1,
         rowsPerPage: 5,
-        rowsNumber: 1
+        rowsNumber: null
       },
       filterValue: '',
       newAttemptFile: null,
@@ -585,6 +600,12 @@ export default {
     }
   },
   methods: {
+    onProblemEditClick () {
+      this.dateRange.to = this.problemInformation.problemDeadline
+      this.dateRange.from = this.problemInformation.problemStartLine
+      this.newAuthorCommentary = this.problemInformation.authorCommentary
+      this.editTaskDialogShow = true
+    },
     dateRestriction (dateForCheck) {
       if (date.isSameDate(date.extractDate(dateForCheck, 'YYYY/MM/DD'), date.extractDate(this.problemInformation.problemStartLine, 'DD.MM.YYYY'))) {
         return true
@@ -599,6 +620,37 @@ export default {
         inclusiveTo: false,
         onlyDate: true
       })
+    },
+    async onEditingProblem () {
+      if (this.dateRange === null || this.dateRange.to === '' || this.dateRange.from === '') {
+        this.errorMessage = 'Пожалуйста, выберите интервал приема решений.'
+        this.errorDialogShow = true
+        return
+      }
+      this.editingLoading = true
+      const requestData = {
+        csrfToken: window.localStorage.getItem('csrfToken'),
+        newStartDate: date.extractDate(this.dateRange.from, 'DD.MM.YYYY'),
+        newEndDate: date.extractDate(this.dateRange.to, 'DD.MM.YYYY'),
+        newCommentary: this.newAuthorCommentary,
+        problemID: this.$route.params.task_id
+      }
+      const response = await fetch(Constants.SERVER_URL + '/api/problem-editing', {
+        method: 'PATCH',
+        credentials: 'same-origin',
+        headers: Constants.HEADERS,
+        body: JSON.stringify(requestData)
+      })
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      }
+      this.problemInformation.authorCommentary = this.newAuthorCommentary
+      this.problemInformation.problemStartLine = this.dateRange.from
+      this.problemInformation.problemDeadline = this.dateRange.to
+      window.localStorage.setItem('csrfToken', responseData.csrfToken)
+      this.editTaskDialogShow = false
+      this.editingLoading = false
     },
     async onMainPage () {
       await this.$router.push('/')
@@ -861,9 +913,6 @@ export default {
       }
       data.data.problemStartLine = toLocalDate(data.data.problemStartLine)
       data.data.problemDeadline = toLocalDate(data.data.problemDeadline)
-      this.dateRange.to = data.data.problemDeadline
-      this.dateRange.from = data.data.problemStartLine
-      this.newAuthorCommentary = data.data.authorCommentary
       this.problemInformation = data.data
     },
     async updateSessionTable (...args) {
@@ -970,7 +1019,7 @@ export default {
     this.deleteProblem = exceptionHandlerDecorator.call(this, [this.deleteProblem])
     this.deleteStudentAttempt = exceptionHandlerDecorator.call(this, [this.deleteStudentAttempt], 'deleteStudentAttemptLoading')
     this.onPaginationClick = exceptionHandlerDecorator.call(this, [this.onPaginationClick], 'attemptLoading')
-    this.updateSessionTable = exceptionHandlerDecorator.call(this, [this.updateSessionTable], 'listLoading')
+    this.onEditingProblem = exceptionHandlerDecorator.call(this, [this.onEditingProblem], 'editingLoading')
     this.addNewCommentary = exceptionHandlerDecorator.call(this, [this.addNewCommentary], 'newCommentaryLoading')
     this.changeSessionStatus = exceptionHandlerDecorator.call(this, [this.changeSessionStatus], 'sessionStatusChangeLoading')
     this.deleteTeacherFeedback = exceptionHandlerDecorator.call(this, [this.deleteTeacherFeedback], 'deleteTeacherFeedbackLoading')
@@ -978,16 +1027,19 @@ export default {
     this.onRowClick = exceptionHandlerDecorator.call(this, [this.onRowClick], 'listLoading', 'currentSessionID')
     this.deleteCommentary = exceptionHandlerDecorator.call(this, [this.deleteCommentary], 'deleteCommentaryLoading')
     this.statusChange = exceptionHandlerDecorator.call(this, [this.statusChange], 'statusChangeLoading')
-    await exceptionHandlerDecorator.call(this, [this.initPage, true], 'pageLoading')()
+    await exceptionHandlerDecorator.call(this, [this.initPage, true])()
   },
   watch: {
     $route: function () {
-      exceptionHandlerDecorator.call(this, [this.initPage, true], 'pageLoading')()
+      exceptionHandlerDecorator.call(this, [this.initPage, true])()
     }
   },
   computed: {
     paCommentaryNotEmpty () {
       return this.previousAttempt.commentaries?.length
+    },
+    updateSessionTableWithDecorator () {
+      return exceptionHandlerDecorator.call(this, [this.updateSessionTable], 'listLoading')
     },
     isTeacher () {
       return this.problemInformation.userStatus === 'Учитель'

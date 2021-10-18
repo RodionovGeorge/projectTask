@@ -100,6 +100,7 @@
           :rows-per-page-options="[currentMode.pagination.rowsPerPage]"
           :loading="loadingData"
           @request="getProblem"
+          @row-click="currentMode.onRowClick"
           wrap-cells
           flat
           square
@@ -142,12 +143,17 @@ export default {
         columnForSearch: '',
         filterValue: '',
         getData: null,
+        onRowClick: async (evt, row) => { await this.$router.push(`/admin/task/${row.problemID}/${row.sessionID}`) },
         data: null,
         visibleColumns: ['problemTitle', 'authorGroup', 'authorFullName', 'problemDiscipline'],
         columns: [
           {
+            name: 'sessionID',
+            field: 'sessionID'
+          },
+          {
             name: 'problemID',
-            field: 'id'
+            field: 'problemID'
           },
           {
             name: 'problemTitle',
@@ -206,6 +212,7 @@ export default {
           rowsNumber: null
         },
         getData: null,
+        onRowClick: async (evt, row) => { await this.$router.push(`/admin/task/${row.problemID}/${-1}`) },
         columnForSearch: '',
         filterValue: '',
         data: null,
@@ -341,7 +348,7 @@ export default {
   },
   watch: {
     $route: function () {
-      exceptionHandlerDecorator.call(this, [this.initPage, true], 'pageLoading')()
+      exceptionHandlerDecorator.call(this, [this.initPage, true])()
     }
   }
 }
