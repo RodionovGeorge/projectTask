@@ -18,6 +18,7 @@
         :delete-button-show="true"
         :complexity-show="complexityShow"
         :admin-commentary-show="rejectionReasonShow"
+        @delete="onProblemDeleting"
         class="content-background content-shadow"
       />
       <div
@@ -94,14 +95,14 @@
               :show-delete-button="true"
               :deleting="deleteStudentAttemptLoading"
               class="content-background content-shadow full-attempt-student"
-              @delete="confirmDialogShow = true"
+              @delete="onAttemptDeleting"
             />
             <TeacherFeedback
               v-bind="currentAttempt.teacherFeedback"
               :deleting="deleteTeacherFeedbackLoading"
               :show-delete-button="currentAttempt.studentAttempt.checkStatus === 'Проверена'"
               class="content-background content-shadow full-attempt-teacher"
-              @delete="confirmDialogShow = true"
+              @delete="onTeacherFeedbackDeleting"
             />
           </div>
           <div
@@ -116,6 +117,7 @@
               class="q-gutter-y-sm"
             >
               <q-virtual-scroll
+                v-if="caCommentaryNotEmpty"
                 style="max-height: 400px"
                 :items="currentAttempt.commentaries"
               >
@@ -132,10 +134,15 @@
                     :user-status="problemInformation.userStatus"
                     :loading="deleteCommentaryLoading"
                     :show-delete-button="true"
-                    @delete="confirmDialogShow = true"
+                    @delete="onCommentaryDeleting"
                   />
                 </template>
               </q-virtual-scroll>
+              <div
+                v-else
+              >
+                Комментариев нет.
+              </div>
             </div>
           </div>
           <div
@@ -162,17 +169,15 @@
                   v-bind="previousAttempt.studentAttempt"
                   :show-delete-button="false"
                   class="content-shadow-for-white full-attempt-student"
-                  @delete="confirmDialogShow = true"
                 />
                 <TeacherFeedback
                   v-bind="previousAttempt.teacherFeedback"
                   :show-delete-button="false"
                   class="content-shadow-for-white full-attempt-teacher"
-                  @delete="confirmDialogShow = true"
                 />
               </div>
               <div
-                class="attempt-discussion content-shadow-for-white"
+                class="commentary-list content-shadow-for-white"
               >
                 <div
                   class="text-h6"
@@ -199,7 +204,7 @@
                         :commentary-text="item.commentaryText"
                         :user-status="problemInformation.userStatus"
                         :show-delete-button="true"
-                        @delete="confirmDialogShow = true"
+                        @delete="onCommentaryDeleting"
                       />
                     </template>
                   </q-virtual-scroll>
@@ -241,7 +246,7 @@
             class="q-ml-sm text-center"
             style="width: calc(100% - 70px)"
           >
-            Вы уверены? Это действие отменить нельзя. <br> Удаление влечет блокировку соответствующей роли пользователя.
+            Вы уверены? Это действие отменить нельзя. <br> Удаление влечет блокировку соответствующей роли у пользователя.
           </p>
         </q-card-section>
 
@@ -258,6 +263,7 @@
             flat
             label="Да"
             color="primary"
+            @click="deleteTarget"
             v-close-popup
           />
         </q-card-actions>
@@ -313,6 +319,14 @@ export default {
       problemInformation: null,
       errorMessage: '',
       filterValue: '',
+      target: {
+        id: null,
+        mode: null,
+        successFunction: null,
+        deletingFlag: null
+      },
+      targetID: null,
+      targetMode: null,
       sessionData: null,
       visibleColumns: ['studentFullName', 'studentGroup'],
       columns: [
@@ -394,6 +408,9 @@ export default {
     paCommentaryNotEmpty () {
       return this.previousAttempt.commentaries?.length
     },
+    caCommentaryNotEmpty () {
+      return this.currentAttempt.commentaries?.length
+    },
     rejectionReasonShow () {
       return this.problemInformation.problemStatus === 'Отклонена'
     },
@@ -405,6 +422,92 @@ export default {
     }
   },
   methods: {
+    onProblemDeleting () {
+      this.target.id = this.problemInformation.problemID
+      this.target.mode = 'problem'
+      this.target.successFunction = this.problemSuccessFunction
+      this.target.deletingFlag = 'deleteProblemLoading'
+      this.confirmDialogShow = true
+    },
+    onAttemptDeleting () {
+      this.target.id = this.currentAttempt.attemptID
+      this.target.mode = 'student attempt'
+      this.target.successFunction = this.attemptSuccessFunction
+      this.target.deletingFlag = 'deleteStudentAttemptLoading'
+      this.confirmDialogShow = true
+    },
+    onTeacherFeedbackDeleting () {
+      this.target.id = this.currentAttempt.attemptID
+      this.target.mode = 'teacher feedback'
+      this.target.successFunction = this.teacherFeedbackSuccessFunction
+      this.target.deletingFlag = 'deleteTeacherFeedbackLoading'
+      this.confirmDialogShow = true
+    },
+    onCommentaryDeleting (commentaryID) {
+      this.target.id = commentaryID
+      this.target.mode = 'commentary'
+      this.target.successFunction = this.commentarySuccessFunction
+      this.target.deletingFlag = 'deleteCommentaryLoading'
+      this.confirmDialogShow = true
+    },
+    commentarySuccessFunction () {
+      let index = this.currentAttempt.commentaries.findIndex((e, i, a) => e.commentaryID === this.target.id)
+      if (~index) {
+        this.currentAttempt.commentaries.splice(index, 1)
+      } else {
+        index = this.previousAttempt.commentaries.findIndex((e, i, a) => e.commentaryID === this.target.id)
+        this.previousAttempt.commentaries.splice(index, 1)
+      }
+    },
+    problemSuccessFunction () {
+      this.$router.go(-1)
+    },
+    teacherFeedbackSuccessFunction () {
+      this.currentAttempt.studentAttempt.checkStatus = 'Проверяется'
+      for (const field of Object.keys(this.currentAttempt.teacherFeedback)) {
+        this.currentAttempt.teacherFeedback[field] = null
+      }
+    },
+    async attemptSuccessFunction () {
+      this.attemptMaxNumber--
+      if (this.attemptMaxNumber === 0) {
+        this.$router.go(-1)
+      } else {
+        const newCurrentAttempt = await this.getAttempt(this.attemptMaxNumber)
+        this.currentAttempt.attemptID = newCurrentAttempt.attemptID
+        this.currentAttempt.studentAttempt = newCurrentAttempt.studentAttempt
+        this.currentAttempt.teacherFeedback = newCurrentAttempt.teacherFeedback
+        this.currentAttempt.commentaries = newCurrentAttempt.commentariesInfo.commentaries || []
+        if (this.attemptMaxNumber > 1) {
+          const lastPreviousAttempt = await this.getAttempt(this.attemptMaxNumber - 1)
+          this.previousAttempt.attemptID = lastPreviousAttempt.attemptID
+          this.previousAttempt.studentAttempt = lastPreviousAttempt.studentAttempt
+          this.previousAttempt.teacherFeedback = lastPreviousAttempt.teacherFeedback
+          this.previousAttempt.commentaries = lastPreviousAttempt.commentariesInfo.commentaries || []
+        }
+      }
+    },
+    async deleteTarget () {
+      this[this.target.deletingFlag] = true
+      const requestData = {
+        targetID: this.target.id,
+        targetMode: this.target.mode,
+        csrfToken: window.localStorage.getItem('csrfToken')
+      }
+      const response = await fetch(Constants.SERVER_URL + '/api/admin/delete-target', {
+        method: 'PUT',
+        credentials: 'same-origin',
+        headers: Constants.HEADERS,
+        body: JSON.stringify(requestData)
+      })
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      }
+      await this.target.successFunction()
+      window.localStorage.setItem('csrfToken', responseData.csrfToken)
+      this[this.target.deletingFlag] = false
+    },
     async getProblem () {
       const currentProblemID = this.$route.params.task_id
       const response = await fetch(
@@ -490,12 +593,12 @@ export default {
     },
     async updateSessionTable (...args) {
       this.listLoading = true
-      const props = args[0].props
-      console.log(args)
+      const props = args[0]
       const { page, rowsPerPage, sortBy, descending } =
         typeof props === 'string'
           ? this.pagination
-          : props
+          : props.pagination
+      console.log(props.pagination)
       const currentProblemID = this.$route.params.task_id
       const getParameters = new URLSearchParams()
       getParameters.append('filterValue', this.filterValue)
@@ -515,6 +618,8 @@ export default {
       this.pagination.rowsNumber = data.sessionCount
       this.pagination.rowsPerPage = rowsPerPage
       this.pagination.page = page
+      this.pagination.sortBy = sortBy
+      this.pagination.descending = descending
       this.listLoading = false
     },
     async initPage () {

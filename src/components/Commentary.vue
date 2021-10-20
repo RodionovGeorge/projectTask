@@ -1,5 +1,7 @@
 <template>
-  <q-item>
+  <q-item
+    style="padding: 0 0 0 0"
+  >
     <q-item-section
       avatar
     >

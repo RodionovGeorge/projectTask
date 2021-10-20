@@ -260,7 +260,7 @@
               />
             </div>
             <div
-              class="attempt-discussion content-shadow-for-white"
+              class="commentary-list content-shadow-for-white"
             >
               <div
                 class="text-h6"
@@ -921,7 +921,7 @@ export default {
       const { page, rowsPerPage } =
         typeof props === 'string'
           ? this.pagination
-          : props
+          : props.pagination
       const currentProblemID = this.$route.params.task_id
       const getParameters = new URLSearchParams()
       getParameters.append('filterValue', this.filterValue)
