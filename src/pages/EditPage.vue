@@ -8,7 +8,7 @@
   <q-banner
     inline-actions
     class="content-shadow q-my-xs"
-    v-if="attemptAlreadyChecked"
+    v-if="!pageLoading && attemptAlreadyChecked"
   >
     Эта попытка уже была проверена.
     <template v-slot:action>
@@ -58,6 +58,7 @@
       :image-paths="imagePaths"
       :problem-path="problemPath"
       @returndata="onReturn"
+      @loadingOn="submitting = true"
     />
     <div
       class="content-background content-shadow column items-center q-px-sm q-pb-sm q-gutter-y-sm"
@@ -199,7 +200,12 @@ export default {
   },
   watch: {
     $route: function () {
-      exceptionHandlerDecorator.call(this, [this.initPage])()
+      exceptionHandlerDecorator.call(this, [this.initPage, true, {
+        'attempt already checked': () => {
+          this.pageLoading = false
+          this.attemptAlreadyChecked = true
+        }
+      }])()
     }
   },
   async created () {
@@ -207,7 +213,12 @@ export default {
     while (this.$store.getters['userDataStore/userInformationGetter'] === null) {
       await new Promise((resolve, reject) => setTimeout(resolve, 200))
     }
-    await exceptionHandlerDecorator.call(this, [this.initPage, true])()
+    await exceptionHandlerDecorator.call(this, [this.initPage, true, {
+      'attempt already checked': () => {
+        this.pageLoading = false
+        this.attemptAlreadyChecked = true
+      }
+    }])()
   }
 }
 </script>

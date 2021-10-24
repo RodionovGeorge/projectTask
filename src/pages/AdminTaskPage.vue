@@ -35,6 +35,7 @@
             style="width: 90%; margin-right: 5px"
             debounce="1000"
             label="Поиск"
+            maxlength="60"
             @input="updateSessionTableWithDecorator"
           >
             <template
@@ -203,6 +204,7 @@
                         :commentary-i-d="item.commentaryID"
                         :commentary-text="item.commentaryText"
                         :user-status="problemInformation.userStatus"
+                        :loading="deleteCommentaryLoading"
                         :show-delete-button="true"
                         @delete="onCommentaryDeleting"
                       />
@@ -598,7 +600,6 @@ export default {
         typeof props === 'string'
           ? this.pagination
           : props.pagination
-      console.log(props.pagination)
       const currentProblemID = this.$route.params.task_id
       const getParameters = new URLSearchParams()
       getParameters.append('filterValue', this.filterValue)
@@ -642,6 +643,7 @@ export default {
   async created () {
     this.onRowClick = exceptionHandlerDecorator.call(this, [this.onRowClick], 'listLoading', 'currentSessionID')
     this.onPaginationClick = exceptionHandlerDecorator.call(this, [this.onPaginationClick], 'attemptLoading')
+    this.deleteTarget = exceptionHandlerDecorator.call(this, [this.deleteTarget], this.target.deletingFlag)
     await exceptionHandlerDecorator.call(this, [this.initPage, true])()
   },
   watch: {

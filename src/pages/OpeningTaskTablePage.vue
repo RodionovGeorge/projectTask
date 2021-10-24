@@ -18,6 +18,7 @@
           placeholder="Поиск по столбцу"
           square
           debounce="1000"
+          maxlength="60"
           outlined
           :readonly="this.currentColumnForSearch === ''"
           style="width:80%"
@@ -212,17 +213,17 @@ export default {
     },
     async fetchData (props) {
       const { page, rowsPerPage, sortBy, descending } =
-        !Object.prototype.hasOwnProperty.call(props, 'label') && typeof props !== 'string'
+        props && Object.prototype.hasOwnProperty.call(props, 'pagination')
           ? props.pagination
           : this.pagination
       this.tableLoading = true
-      if (this.currentColumnForSearch.value === 'authorGroup' && this.filter === '-') {
+      if (this.currentColumnForSearch?.value === 'authorGroup' && this.filter === '-') {
         this.filter = '-1'
       }
       const requestData = {
         currentPage: page,
         pageSize: rowsPerPage,
-        filterField: this.currentColumnForSearch.value || 'problemTitle',
+        filterField: this.currentColumnForSearch?.value || 'problemTitle',
         filterValue: this.filter,
         sortField: sortBy || 'problemTitle',
         sortDirection: descending ? 'desc' : 'asc'

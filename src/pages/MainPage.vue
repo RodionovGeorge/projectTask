@@ -17,6 +17,7 @@
           v-model="filter"
           label="Поиск по столбцу"
           debounce="1000"
+          maxlength="60"
           :readonly="this.currentColumnForSearch === ''"
           square
           outlined
@@ -83,7 +84,7 @@ export default {
       tableLoading: false,
       errorDialogShow: false,
       errorMessage: '',
-      currentColumnForSearch: '',
+      currentColumnForSearch: { label: 'Название', value: 'problemTitle' },
       visibleColumns: ['problemName', 'authorFullName', 'authorGroup', 'problemDiscipline', 'problemComplexity'],
       namesOfSearchColumns: [
         {
@@ -171,17 +172,17 @@ export default {
     async fetchData (props) {
       // Надо что-то придумать с тем, что q-select очищается клавиатурой
       const { page, rowsPerPage, sortBy, descending } =
-        !Object.prototype.hasOwnProperty.call(props, 'label') && typeof props !== 'string'
+        props && Object.prototype.hasOwnProperty.call(props, 'pagination')
           ? props.pagination
           : this.pagination
       this.tableLoading = true
-      if (this.currentColumnForSearch.value === 'authorGroup' && this.filter === '-') {
+      if (this.currentColumnForSearch?.value === 'authorGroup' && this.filter === '-') {
         this.filter = '-1'
       }
       const requestData = {
         currentPage: page,
         pageSize: rowsPerPage,
-        filterField: this.currentColumnForSearch.value || 'problemTitle',
+        filterField: this.currentColumnForSearch?.value || 'problemTitle',
         filterValue: this.filter,
         sortField: sortBy || 'problemTitle',
         sortDirection: descending ? 'desc' : 'asc'

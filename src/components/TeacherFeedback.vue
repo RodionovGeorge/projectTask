@@ -36,7 +36,7 @@
         Степень решенности
       </td>
       <td>
-        {{decisionStage}}
+        {{decisionStage ? decisionStage : '-'}}
       </td>
     </tr>
     <tr>
@@ -44,7 +44,7 @@
         Время проверки:
       </td>
       <td>
-        {{checkDate !== '-' ? localeCheckDate : ' '}}
+        {{checkDate !== '-' ? localeCheckDate : '-'}}
       </td>
     </tr>
     <tr
@@ -54,7 +54,7 @@
         Комментарий
       </td>
       <td>
-        <pre>{{teacherCommentary}}</pre>
+        <pre>{{teacherCommentary ? teacherCommentary : '-'}}</pre>
       </td>
     </tr>
     <tr>
@@ -119,8 +119,7 @@ export default {
   },
   props: {
     decisionStage: {
-      type: String,
-      default: '-'
+      type: String
     },
     checkDate: {
       type: String
@@ -130,8 +129,7 @@ export default {
       default: ''
     },
     teacherCommentary: {
-      type: String,
-      default: '-'
+      type: String
     },
     showDeleteButton: {
       type: Boolean

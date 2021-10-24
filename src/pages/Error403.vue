@@ -1,21 +1,27 @@
 <template>
-  <div class="fullscreen bg-primary text-white text-center q-pa-md flex flex-center">
+  <div
+    class="fullscreen bg-primary text-white text-center q-pa-md flex flex-center"
+  >
     <div>
-      <div style="font-size: 30vh">
+      <div
+        style="font-size: 30vh"
+      >
         403
       </div>
 
-      <div class="text-h2" style="opacity:.4">
-        Forbidden!
+      <div
+        class="text-h2"
+      >
+        Forbidden
       </div>
 
       <q-btn
         class="q-mt-xl"
         color="white"
-        text-color="blue"
+        text-color="primary"
         unelevated
         to="/"
-        label="Go Home"
+        label="На главную"
         no-caps
       />
     </div>

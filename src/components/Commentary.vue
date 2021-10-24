@@ -77,7 +77,7 @@ export default {
   },
   methods: {
     deleted () {
-      this.$emit('deleted', this.commentaryID)
+      this.$emit('delete', this.commentaryID)
     }
   },
   computed: {

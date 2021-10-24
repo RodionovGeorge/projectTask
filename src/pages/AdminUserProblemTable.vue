@@ -66,6 +66,7 @@
           <q-input
             v-model="currentMode.filterValue"
             label="Поиск по столбцу"
+            maxlength="60"
             debounce="1000"
             :readonly="currentMode.columnForSearch === ''"
             @input="getProblem"
@@ -297,7 +298,7 @@ export default {
     },
     async getProblem (props) {
       const { page, rowsPerPage } =
-        !Object.prototype.hasOwnProperty.call(props, 'label') && typeof props !== 'string'
+        props && Object.prototype.hasOwnProperty.call(props, 'pagination')
           ? props.pagination
           : this.currentMode.pagination
       this.loadingData = true
@@ -305,7 +306,7 @@ export default {
       const requestData = {
         currentPage: page,
         pageSize: rowsPerPage,
-        filterField: this.currentMode.columnForSearch.value || 'problemTitle',
+        filterField: this.currentMode.columnForSearch?.value || 'problemTitle',
         filterValue: this.currentMode.filterValue
       }
       const responseData = await this.currentMode.getData(requestData, userID)

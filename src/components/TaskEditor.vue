@@ -131,6 +131,8 @@ export default {
     returnImagesFlag: {
       handler: async function (val, oldVal) {
         if (val) {
+          this.$emit('loadingOn')
+          this.$nextTick()
           const resultB64Array = []
           for (let i = 0; i < this.imagePaths.length; i++) {
             this.currentPage = i

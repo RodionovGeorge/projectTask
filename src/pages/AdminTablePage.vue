@@ -42,6 +42,7 @@
           label="Поиск по столбцу"
           debounce="1000"
           @input="getProblem"
+          maxlength="60"
           square
           outlined
           style="width:70%"
@@ -135,7 +136,7 @@
             <q-btn
               label="Помощник администратора"
               no-caps
-              :disable="isSubAdmin"
+              :disable="isSubAdmin || props.row.adminRole"
               @click="changeRole(props, 'Помощник администратора', props.row.subAdminRole ? 'down' : 'up')"
               :loading="props.row.loading"
               :color="props.row.subAdminRole ? 'green' : 'red'"
@@ -429,6 +430,7 @@ export default {
         },
         columnForSearch: '',
         filterValue: '',
+        defaultField: 'authorFullName',
         getData: null,
         onStatisticClick: null,
         getStatisticClick: null,
@@ -512,6 +514,7 @@ export default {
         },
         columnForSearch: '',
         filterValue: '',
+        defaultField: 'userFullName',
         getData: null,
         props: null,
         onStatisticClick: null,
@@ -823,14 +826,14 @@ export default {
     },
     async getProblem (props) {
       const { page, rowsPerPage } =
-        !Object.prototype.hasOwnProperty.call(props, 'label') && typeof props !== 'string'
+        props && Object.prototype.hasOwnProperty.call(props, 'pagination')
           ? props.pagination
           : this.currentMode.pagination
       this.loadingData = true
       const requestData = {
         currentPage: page,
         pageSize: rowsPerPage,
-        filterField: this.currentMode.columnForSearch.value || 'problemTitle',
+        filterField: this.currentMode.columnForSearch?.value || this.currentMode.defaultField,
         filterValue: this.currentMode.filterValue
       }
       const responseData = await this.currentMode.getData(requestData)

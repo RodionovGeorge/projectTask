@@ -39,6 +39,7 @@
           style="width: 90%; margin-right: 5px"
           @input="updateSessionTableWithDecorator"
           debounce="1000"
+          maxlength="60"
           label="Поиск"
         >
           <template
@@ -207,7 +208,7 @@
                   :user-status="problemInformation.userStatus"
                   :loading="deleteCommentaryLoading"
                   :show-delete-button="userID === item.authorID"
-                  @deleted="deleteCommentary"
+                  @delete="deleteCommentary"
                 />
               </template>
             </q-virtual-scroll>
@@ -367,7 +368,7 @@
       >
         <q-btn
           label="Отмена"
-          outline
+          flat
           no-caps
           color="primary"
           v-close-popup
@@ -375,7 +376,7 @@
         <q-btn
           label="Готово"
           class="q-ml-xs"
-          outline
+          flat
           no-caps
           color="primary"
           :loading="editingLoading"

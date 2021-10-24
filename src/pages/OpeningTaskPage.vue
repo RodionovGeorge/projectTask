@@ -8,7 +8,7 @@
   <q-banner
     inline-actions
     class="content-shadow q-my-xs"
-    v-if="problemAlreadyAdmitted"
+    v-if="!pageLoading && problemAlreadyAdmitted"
   >
     Эта задача уже была проверена администратором.
     <template v-slot:action>
@@ -335,14 +335,14 @@ export default {
     }
     await exceptionHandlerDecorator.call(
       this,
-      [this.fetchData, true, { 'problem already admitted': e => { this.problemAlreadyAdmitted = true } }]
+      [this.fetchData, true, { 'problem already admitted': e => { this.pageLoading = false; this.problemAlreadyAdmitted = true } }]
     )()
   },
   watch: {
     $route: function () {
       exceptionHandlerDecorator.call(
         this,
-        [this.fetchData, true, { 'problem already admitted': e => { this.problemAlreadyAdmitted = true } }]
+        [this.fetchData, true, { 'problem already admitted': e => { this.pageLoading = false; this.problemAlreadyAdmitted = true } }]
       )()
     }
   }
