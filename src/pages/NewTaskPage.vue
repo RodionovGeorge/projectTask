@@ -28,6 +28,7 @@
             v-model="file"
             ref="file"
             outlined
+            max-file-size="5000000"
             max-files="1"
             error-message="Пожалуйста, добавьте файл с условием"
             accept=".pdf, .tex"
@@ -169,7 +170,7 @@ export default {
         const requestData = {
           csrfToken: window.localStorage.getItem('csrfToken'),
           file: file.substring(file.indexOf(',') + 1),
-          fileMIMEType: this.file.type,
+          fileMIMEType: this.file.name.includes('.tex', this.file.name.length - 4) ? 'application/x-tex' : 'application/pdf',
           userID: this.$store.getters['userDataStore/userInformationGetter'].id,
           title: this.taskName,
           discipline: this.selectedTaskDiscipline,

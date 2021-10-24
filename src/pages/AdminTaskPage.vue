@@ -643,7 +643,7 @@ export default {
   async created () {
     this.onRowClick = exceptionHandlerDecorator.call(this, [this.onRowClick], 'listLoading', 'currentSessionID')
     this.onPaginationClick = exceptionHandlerDecorator.call(this, [this.onPaginationClick], 'attemptLoading')
-    this.deleteTarget = exceptionHandlerDecorator.call(this, [this.deleteTarget], this.target.deletingFlag)
+    this.deleteTarget = exceptionHandlerDecorator.call(this, [this.deleteTarget], 'deleteProblemLoading', 'deleteStudentAttemptLoading', 'deleteTeacherFeedbackLoading', 'deleteCommentaryLoading')
     await exceptionHandlerDecorator.call(this, [this.initPage, true])()
   },
   watch: {

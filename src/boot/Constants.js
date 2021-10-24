@@ -13,7 +13,7 @@
 const AT_404 = '/error-404'
 
 const Constants = {
-  SERVER_URL: 'http://192.168.100.5',
+  SERVER_URL: 'http://78.81.147.165',
   TASK_DISCIPLINES: [
     'Дискретная математика',
     'Алгебра и геометрия',
@@ -91,7 +91,7 @@ const Constants = {
     '/server-error',
     '/connection-error'
   ],
-  ROWS_PER_PAGE: 3,
+  ROWS_PER_PAGE: 10,
   GET_INIT: {
     method: 'GET',
     credentials: 'same-origin',
@@ -133,7 +133,7 @@ function exceptionHandlerDecorator ([f, redirectingMode = false, customHandlers 
       // console.log(f)
       await f.call(this, ...args)
     } catch (e) {
-      console.log(e)
+      // console.log(e)
       for (const flag of flags) {
         this[flag] = false
       }

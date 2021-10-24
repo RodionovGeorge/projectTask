@@ -439,6 +439,7 @@
           ref="filePicker"
           label="Файл с решением"
           max-files="1"
+          max-file-size="5000000"
           error-message="Пожалуйста, добавьте файл с условием"
           accept=".pdf, .tex"
           :rules="[() => this.newAttemptFile !== null || 'Пожалуйста, выберите файл с условием']"
@@ -842,7 +843,7 @@ export default {
         const data = {
           csrfToken: window.localStorage.getItem('csrfToken'),
           file: fileForTransmitting.substring(fileForTransmitting.indexOf(',') + 1),
-          fileMIMEType: this.newAttemptFile.type,
+          fileMIMEType: this.newAttemptFile.name.includes('.tex', this.file.name.length - 4) ? 'application/x-tex' : 'application/pdf',
           problemID: this.$route.params.task_id
         }
         const response = await fetch(Constants.SERVER_URL + '/api/attempt-editing', {

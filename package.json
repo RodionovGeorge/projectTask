@@ -2,7 +2,7 @@
   "name": "site",
   "version": "0.0.1",
   "description": "A Quasar Framework app",
-  "productName": "Quasar App",
+  "productName": "Project \"Task\"",
   "author": "RodionovGeorge <palochki@inbox.ru>",
   "private": true,
   "scripts": {
