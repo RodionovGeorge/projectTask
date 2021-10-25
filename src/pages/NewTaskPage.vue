@@ -30,9 +30,9 @@
             outlined
             max-file-size="5000000"
             max-files="1"
-            error-message="Пожалуйста, добавьте файл с условием"
+            error-message="Пожалуйста, добавьте файл с условием (<5мБ, .pdf, .tex)"
             accept=".pdf, .tex"
-            :rules="[() => this.file !== null || 'Пожалуйста, выберите файл с условием']"
+            :rules="[() => this.file !== null || 'Пожалуйста, выберите файл с условием (<5мБ, .pdf, .tex)']"
             label="Файл с условием"
           />
           <q-select

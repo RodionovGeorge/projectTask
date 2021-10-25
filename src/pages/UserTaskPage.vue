@@ -440,9 +440,9 @@
           label="Файл с решением"
           max-files="1"
           max-file-size="5000000"
-          error-message="Пожалуйста, добавьте файл с условием"
+          error-message="Пожалуйста, добавьте файл с условием (<5мБ, .pdf, .tex)"
           accept=".pdf, .tex"
-          :rules="[() => this.newAttemptFile !== null || 'Пожалуйста, выберите файл с условием']"
+          :rules="[() => this.newAttemptFile !== null || 'Пожалуйста, выберите файл с условием (<5мБ, .pdf, .tex)']"
           outlined
         />
       </q-card-section>

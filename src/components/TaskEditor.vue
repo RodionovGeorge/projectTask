@@ -9,12 +9,14 @@
       class="row q-gutter-x-md"
     >
       <q-btn
-        label="Prev page"
+        label="Назад"
+        no-caps
         :disable="disablePrevPageBtn"
         @click="prevPage"
       />
       <q-btn
-        label="Next page"
+        label="Вперед"
+        no-caps
         :disable="disableNextPageBtn"
         @click="nextPage"
       />
@@ -23,11 +25,13 @@
       class="row q-gutter-x-md"
     >
       <q-btn
-        label="Color"
+        label="Цвет"
+        no-caps
         @click="showColorPicker = true"
       />
       <q-btn
-        label="Undo"
+        label="Отмена"
+        no-caps
         @click="undo"
       />
       <div
@@ -43,7 +47,8 @@
       />
     </div>
     <q-btn
-      label="Show task"
+      label="Условия"
+      no-caps
       @click="showProblem = true"
     />
     <q-dialog

@@ -72,6 +72,43 @@
       </q-card-section>
     </q-card>
     <q-dialog
+      v-model="enterDialogShow"
+      persistent
+      position="top"
+    >
+      <q-card
+        class="bg-primary text-white"
+        style="width: 400px"
+      >
+        <q-card-section>
+          <div
+            class="text-h6"
+          >
+            Предупреждение
+          </div>
+        </q-card-section>
+
+        <q-card-section
+          class="q-pt-none"
+        >
+          Некоторые функции сайта могут не работать в следующих браузерах:<br>
+          Mozilla Firefox<br>
+          Яндекс.Браузер
+        </q-card-section>
+
+        <q-card-actions
+          align="right"
+          class="bg-white text-primary"
+        >
+          <q-btn
+            flat
+            label="OK"
+            v-close-popup
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+    <q-dialog
       v-model="errorDialogShow"
       persistent
       transition-show="scale"
@@ -117,6 +154,7 @@ export default {
   name: 'pageLogin',
   data () {
     return {
+      enterDialogShow: true,
       enterSubmitting: false,
       errorDialogShow: false,
       errorMessage: '',
