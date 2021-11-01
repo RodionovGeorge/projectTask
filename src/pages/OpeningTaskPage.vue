@@ -142,7 +142,7 @@
           ref="difficultySelect"
           v-model="chosenDifficulty"
           :options="difficultyLevels"
-          :rules="[value=>value.length > 0 || 'Пожалуйста, выберите дисциплину']"
+          :rules="[value => !!value || 'Пожалуйста, выберите дисциплину']"
           label="Сложность задачи"
           outlined
         />
@@ -335,14 +335,28 @@ export default {
     }
     await exceptionHandlerDecorator.call(
       this,
-      [this.fetchData, true, { 'problem already admitted': e => { this.pageLoading = false; this.problemAlreadyAdmitted = true } }]
+      [
+        this.fetchData,
+        true,
+        {
+          'problem already admitted': e => { this.pageLoading = false; this.problemAlreadyAdmitted = true },
+          'problem is admitting now': e => { this.$router.go(-1) }
+        }
+      ]
     )()
   },
   watch: {
     $route: function () {
       exceptionHandlerDecorator.call(
         this,
-        [this.fetchData, true, { 'problem already admitted': e => { this.pageLoading = false; this.problemAlreadyAdmitted = true } }]
+        [
+          this.fetchData,
+          true,
+          {
+            'problem already admitted': e => { this.pageLoading = false; this.problemAlreadyAdmitted = true },
+            'problem is admitting now': e => { this.$router.go(-1) }
+          }
+        ]
       )()
     }
   }

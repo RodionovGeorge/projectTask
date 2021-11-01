@@ -695,7 +695,7 @@ export default {
       return this.currentTab === 'problems' ? this.problemMode : this.userMode
     },
     isSubAdmin () {
-      return this.$store.getters['userDataStore/userInformationGetter'].roles.includes('Помощник администратора')
+      return this.$store.getters['userDataStore/userInformationGetter']?.roles.includes('Помощник администратора')
     }
   },
   methods: {

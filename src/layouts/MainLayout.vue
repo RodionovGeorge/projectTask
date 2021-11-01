@@ -23,7 +23,7 @@
               src="~assets/header-logo.svg"
             >
           </q-avatar>
-          Some name
+          Проект "Задача"
         </q-toolbar-title>
       </q-toolbar>
     </q-header>
@@ -137,7 +137,46 @@
               Допуск задач
             </q-item-section>
           </q-item>
+          <q-item
+            to="/admin/help"
+            active-class="bg-primary text-white"
+            :active="currentPath === '/admin/help'"
+            exact
+            clickable
+            v-ripple
+            v-if="isAdmin"
+          >
+            <q-item-section
+              avatar
+            >
+              <q-icon
+                name="bi-info-circle"
+              />
+            </q-item-section>
+            <q-item-section>
+              Справка
+            </q-item-section>
+          </q-item>
           <q-separator/>
+          <q-item
+            to="/help"
+            active-class="bg-primary text-white"
+            :active="currentPath === '/help'"
+            exact
+            clickable
+            v-ripple
+          >
+            <q-item-section
+              avatar
+            >
+              <q-icon
+                name="bi-info-circle"
+              />
+            </q-item-section>
+            <q-item-section>
+              Помощь
+            </q-item-section>
+          </q-item>
           <q-item
             clickable
             v-ripple

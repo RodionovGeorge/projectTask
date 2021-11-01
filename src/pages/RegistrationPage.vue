@@ -253,7 +253,7 @@ export default {
           firstName: this.userFirstName,
           middleName: this.userMiddleName,
           email: this.userEmail,
-          group: this.userGroup,
+          group: this.userGroup ? this.userGroup : '-1',
           password: this.userPassword
         }
         const response = await fetch(Constants.SERVER_URL + '/api/registration', {

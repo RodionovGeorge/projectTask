@@ -22,7 +22,7 @@
             ref="taskName"
             label="Название задачи"
             maxlength="30"
-            :rules="[value=>value.length > 0 || 'Пожалуйста, введите название задачи']"
+            :rules="[value => !!value || 'Пожалуйста, введите название задачи']"
           />
           <q-file
             v-model="file"
@@ -38,10 +38,16 @@
           <q-select
             v-model="selectedTaskDiscipline"
             outlined
+            input-debounce="0"
             label="Дисциплина"
             ref="discipline"
+            use-input
+            hide-selected
+            fill-input
             :options="taskDisciplines"
-            :rules="[value=>value.length > 0 || 'Пожалуйста, выберите дисциплину']"
+            :rules="[value => !!value || 'Пожалуйста, выберите дисциплину']"
+            @filter="filter"
+            @input-value="setModel"
           />
           <q-input
             v-model="authorCommentary"
@@ -136,6 +142,7 @@ export default {
       commentaryMaxLength: Constants.LENGTHS.commentaryToProblem,
       taskName: '',
       selectedTaskDiscipline: '',
+      autoCompleteDisciplines: Constants.TASK_DISCIPLINES,
       taskDisciplines: Constants.TASK_DISCIPLINES,
       dateRange: {
         to: '',
@@ -154,6 +161,15 @@ export default {
         inclusiveTo: false,
         onlyDate: true
       })
+    },
+    filter (val, update, abort) {
+      update(() => {
+        const lowerCaseVal = val.toLowerCase()
+        this.taskDisciplines = this.autoCompleteDisciplines.filter(v => ~v.toLowerCase().indexOf(lowerCaseVal))
+      })
+    },
+    setModel (v) {
+      this.selectedTaskDiscipline = v
     },
     async onEnter () {
       const correctTitleEnter = this.$refs.taskName.validate()

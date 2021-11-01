@@ -13,7 +13,6 @@
         Описание задачи
       </div>
       <div>
-        <!-- v-if="problemStatus === 'Открыта' && userStatus === 'Учитель' || userStatus === 'Администратор'" -->
         <q-btn
           v-if="editButtonShow"
           flat
@@ -21,7 +20,6 @@
           icon="bi-gear"
           @click="onEditTaskClick"
         />
-        <!-- v-if="problemStatus === 'Скрыта' && userStatus === 'Учитель'" -->
         <q-btn
           v-if="sunriseButtonShow"
           flat
@@ -38,7 +36,6 @@
             />
           </template>
         </q-btn>
-        <!-- v-if="problemStatus === 'Принята' && userStatus === 'Учитель'" -->
         <q-btn
           v-if="sunsetButtonShow"
           flat
@@ -55,7 +52,6 @@
             />
           </template>
         </q-btn>
-        <!-- v-if="userStatus === 'Учитель'" -->
         <q-btn
           v-if="deleteButtonShow"
           icon="bi-trash"
@@ -216,10 +212,6 @@ export default {
     }
   },
   props: {
-    /* userStatus: {
-      type: String,
-      required: true
-    }, */
     editButtonShow: {
       type: Boolean,
       default: false

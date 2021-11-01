@@ -1,12 +1,12 @@
 <template>
   <div
-    class="fullscreen bg-blue text-white text-center q-pa-md flex flex-center"
+    class="fullscreen bg-primary text-white text-center q-pa-md flex flex-center"
   >
     <div>
       <div
         style="font-size: 5vh"
       >
-        Нет соединения!
+        Нет соединения
       </div>
 
       <q-btn

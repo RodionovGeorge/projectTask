@@ -21,7 +21,7 @@
       :complexity-show="problemInformation.problemStatus !== 'Отклонена' && problemInformation.problemStatus !== 'Проверяется'"
       class="content-background content-shadow"
       @status-change="statusChange"
-      @delete="deleteProblem"
+      @delete="confirmDialogShow = true"
       @edit="onProblemEditClick"
     />
     <div
@@ -329,6 +329,46 @@
     @off="errorDialogShow = false"
   />
   <q-dialog
+    v-model="confirmDialogShow"
+    persistent
+  >
+    <q-card>
+      <q-card-section
+        class="row items-center"
+      >
+        <q-avatar
+          icon="bi-exclamation-circle"
+          color="white"
+          size="50px"
+        />
+        <p
+          class="q-ml-sm text-center"
+          style="width: calc(100% - 70px)"
+        >
+          Вы уверены? Это действие отменить нельзя.
+        </p>
+      </q-card-section>
+
+      <q-card-actions
+        align="right"
+      >
+        <q-btn
+          flat
+          label="Отмена"
+          color="primary"
+          v-close-popup
+        />
+        <q-btn
+          flat
+          label="Да"
+          color="primary"
+          @click="deleteProblem"
+          v-close-popup
+        />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+  <q-dialog
     v-model="editTaskDialogShow"
     square
     persistent
@@ -460,7 +500,7 @@
           flat
           no-caps
           :loading="newAttemptLoading"
-          label="Добавить попытку"
+          label="Загрузить попытку"
           @click="addNewAttempt"
         >
           <template
@@ -499,6 +539,7 @@ export default {
       deleteProblemLoading: false,
       statusChangeLoading: false,
       editTaskDialogShow: false,
+      confirmDialogShow: false,
       sessionStatusChangeLoading: false,
       newCommentaryLoading: false,
       newAttemptLoading: false,
@@ -843,7 +884,7 @@ export default {
         const data = {
           csrfToken: window.localStorage.getItem('csrfToken'),
           file: fileForTransmitting.substring(fileForTransmitting.indexOf(',') + 1),
-          fileMIMEType: this.newAttemptFile.name.includes('.tex', this.file.name.length - 4) ? 'application/x-tex' : 'application/pdf',
+          fileMIMEType: this.newAttemptFile.name.includes('.tex', this.newAttemptFile.name.length - 4) ? 'application/x-tex' : 'application/pdf',
           problemID: this.$route.params.task_id
         }
         const response = await fetch(Constants.SERVER_URL + '/api/attempt-editing', {
