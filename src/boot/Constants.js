@@ -106,7 +106,7 @@ const Constants = {
     'Content-Type': 'application/json; charset=UTF-8',
     Accept: 'application/json; */*; q=0.01'
   },
-  DEV_MODE: true,
+  DEV_MODE: false,
   DIFFICULTY_LEVELS: [
     'Простая',
     'Средняя',

@@ -103,6 +103,7 @@
             to="/admin"
             active-class="bg-primary text-white"
             :active="currentPath === '/admin'"
+            exact
             clickable
             v-ripple
             v-if="isAdmin"
