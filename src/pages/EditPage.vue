@@ -1,6 +1,6 @@
 <template>
 <q-page
-  class="column items-center q-py-md"
+  class="column items-center q-py-xs"
 >
   <LoadingSpinner
     :loading="pageLoading"
@@ -22,11 +22,12 @@
     </template>
   </q-banner>
   <div
-    class="column q-gutter-y-sm"
+    class="column q-gutter-y-sm items-center"
     v-if="!pageLoading && !attemptAlreadyChecked"
   >
     <div
       class="row q-pa-sm content-shadow content-background"
+      style="max-width: 796px; width: 100%"
     >
       <div
         class="text-h6"
@@ -52,16 +53,30 @@
         </q-item-section>
       </q-item>
     </div>
-    <TaskEditor
-      class="content-background content-shadow"
-      :return-images-flag="returnImagesFlag"
-      :image-paths="imagePaths"
-      :problem-path="problemPath"
-      @returndata="onReturn"
-      @loadingOn="submitting = true"
-    />
+    <div
+      class="row no-wrap"
+      style="align-items: flex-start"
+    >
+      <TaskEditor
+        class="content-background content-shadow"
+        :return-images-flag="returnImagesFlag"
+        :image-paths="imagePaths"
+        :problem-path="problemPath"
+        @returndata="onReturn"
+        @showProblem="showProblemFlag = !showProblemFlag"
+        @loadingOn="submitting = true"
+      />
+      <q-pdfviewer
+        v-model="showProblemFlag"
+        :src="problemPath"
+        class="q-ml-xs"
+        style="position: sticky; top: 0"
+        content-style="width:600px; height:796px;"
+      />
+    </div>
     <div
       class="content-background content-shadow column items-center q-px-sm q-pb-sm q-gutter-y-sm"
+      style="max-width: 796px; width: 100%"
     >
       <div
         class="text-h6"
@@ -88,7 +103,7 @@
         square
         borderless
         autogrow
-        style="width: 850px;"
+        style="max-width: 850px; width: 100%"
       />
     </div>
     <div
@@ -140,6 +155,7 @@ export default {
   data () {
     return {
       errorDialogShow: false,
+      showProblemFlag: false,
       submitting: false,
       attemptAlreadyChecked: false,
       pageLoading: true,

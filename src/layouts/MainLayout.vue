@@ -44,10 +44,8 @@
           <q-item
             to="/"
             active-class="bg-primary text-white"
-            :active="currentPath === '/'"
             exact
             clickable
-            v-ripple
           >
             <q-item-section
               avatar
@@ -64,9 +62,7 @@
           <q-item
             to="/new-task"
             active-class="bg-primary text-white"
-            :active="currentPath === '/new-task'"
             clickable
-            v-ripple
             v-if="isTeacher"
           >
             <q-item-section
@@ -83,9 +79,7 @@
           <q-item
             to="/my/tasks"
             active-class="bg-primary text-white"
-            :active="currentPath === '/my/tasks'"
             clickable
-            v-ripple
           >
             <q-item-section
               avatar
@@ -102,10 +96,8 @@
           <q-item
             to="/admin"
             active-class="bg-primary text-white"
-            :active="currentPath === '/admin'"
             exact
             clickable
-            v-ripple
             v-if="isAdmin"
           >
             <q-item-section
@@ -122,9 +114,7 @@
           <q-item
             to="/task-opening"
             active-class="bg-primary text-white"
-            :active="currentPath === '/task-opening'"
             clickable
-            v-ripple
             v-if="isAdmin"
           >
             <q-item-section
@@ -139,12 +129,10 @@
             </q-item-section>
           </q-item>
           <q-item
-            to="/admin/help"
+            to="/admin/help/view"
             active-class="bg-primary text-white"
-            :active="currentPath === '/admin/help'"
             exact
             clickable
-            v-ripple
             v-if="isAdmin"
           >
             <q-item-section
@@ -157,15 +145,26 @@
             <q-item-section>
               Справка
             </q-item-section>
+            <q-item-section
+              side
+            >
+              <q-btn
+                to="/admin/help/editing"
+                :unelevated="currentPath === '/admin/help/editing'"
+                :flat="currentPath !== '/admin/help/editing'"
+                round
+                size="sm"
+                :color="currentPath === '/admin/help/editing' ? 'primary' : (currentPath === '/admin/help/view' ? 'white' : 'black')"
+                icon="bi-gear"
+              />
+            </q-item-section>
           </q-item>
           <q-separator/>
           <q-item
-            to="/help"
+            to="/help/view"
             active-class="bg-primary text-white"
-            :active="currentPath === '/help'"
             exact
             clickable
-            v-ripple
           >
             <q-item-section
               avatar
@@ -177,10 +176,23 @@
             <q-item-section>
               Помощь
             </q-item-section>
+            <q-item-section
+              side
+              v-if="isAdmin"
+            >
+              <q-btn
+                to="/help/editing"
+                :unelevated="currentPath === '/help/editing'"
+                :flat="currentPath !== '/help/editing'"
+                round
+                size="sm"
+                :color="currentPath === '/help/editing' ? 'primary' : (currentPath === '/help/view' ? 'white' : 'black')"
+                icon="bi-gear"
+              />
+            </q-item-section>
           </q-item>
           <q-item
             clickable
-            v-ripple
             @click="onLogout"
           >
             <q-item-section

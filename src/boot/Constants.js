@@ -81,7 +81,8 @@ const Constants = {
     'user not found': { message: 'Пользователь не найден.', path: AT_404 },
     'user already admin': { message: 'У пользователя может быть или администратором, или его помощником.', path: '/error-400' },
     'session status not found': { message: 'Такой статус не найден.', path: AT_404 },
-    'problem is admitting now': { message: 'Данная задача проверяется в данный момент.', path: '/error-403' }
+    'problem is admitting now': { message: 'Данная задача проверяется в данный момент.', path: '/error-403' },
+    'information not found': { message: 'Справка не найдена.', path: AT_404 }
   },
   PATHS_WITHOUT_AUTHENTICATION: [
     '/login',

@@ -24,7 +24,7 @@
           v-if="sunriseButtonShow"
           flat
           dense
-          icon="bi-sunrise"
+          icon="bi-sun"
           :loading="loading"
           @click="onSunriseClick"
         >
@@ -40,7 +40,7 @@
           v-if="sunsetButtonShow"
           flat
           dense
-          icon="bi-sunset"
+          icon="bi-cloudy"
           :loading="loading"
           @click="onSunsetClick"
         >
@@ -123,7 +123,9 @@
           {{ problemDiscipline }}
         </td>
       </tr>
-      <tr>
+      <tr
+        v-if="problemStatusShow"
+      >
         <td>
           Статус задачи
         </td>
@@ -131,7 +133,6 @@
           {{problemStatus}}
         </td>
       </tr>
-      <!-- v-if="userStatus === 'Учитель' && problemStatus === 'Отклонена'" -->
       <tr
         v-if="adminCommentaryShow"
       >
@@ -142,7 +143,6 @@
           {{problemRejectionReason}}
         </td>
       </tr>
-      <!-- v-if="problemStatus !== 'Отклонена' && problemStatus !== 'Проверяется'" -->
       <tr
         v-if="complexityShow"
       >
@@ -166,7 +166,7 @@
           Комментарий к задаче
         </td>
         <td>
-          <pre>{{ authorCommentary }}</pre>
+          <pre>{{ authorCommentary === '' ? '-' : authorCommentary }}</pre>
         </td>
       </tr>
       <tr>
@@ -235,6 +235,10 @@ export default {
     sunriseButtonShow: {
       type: Boolean,
       default: false
+    },
+    problemStatusShow: {
+      type: Boolean,
+      default: true
     },
     problemID: {
       type: String

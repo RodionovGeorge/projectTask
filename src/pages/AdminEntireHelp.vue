@@ -1,90 +1,127 @@
 <template>
 <q-page
-  class="bg-white text-black q-py-xs q-pl-sm"
+  class="bg-white text-black q-py-xs q-pl-sm items-center justify-center"
   style="font-size: 1rem;"
 >
+  <loading-spinner
+    :loading="pageLoading"
+  />
   <div
-    class="text-h5"
-  >
-    Справка для администраторов
-  </div>
+    v-if="!pageLoading && mode === 'view'"
+    v-html="text"
+  />
   <div
-    class="text-h6"
+    v-if="!pageLoading && mode === 'editing'"
+    class="column items-center"
   >
-    Общая информация
-  </div>
-  Если у вас в боковом меню находится дополнительный раздел, то это значит, что вы имеете одну из администраторских ролей.
-  <br/>На данный момент существует 2 администраторские роли: "Администратор" и "Помощник администратора".
-  <br/>Единственная разница между ними в том, что помощник администратора не может назначать других помощников,<br/>
-  а администратор - может. Роль "Администратор" можно получить только через прямой доступ к базе данных.
-  <div
-    class="text-h6"
-  >
-    Допуск задач
-  </div>
-  В обязанности администраторов входит проверка задач пользователей. Приступить к этому вы можете через раздел "Допуск задач" в боковом меню.
-  После перехода перед вами будет таблица с задачами, которые находятся на рассмотрении. При нажатии на выбранную задачу вы<br/>
-  перейдете на страницу допуска. Справа будет условие задачи. Слева будет информация о ней и интерфейс допуска.
-  <ul
-    class="q-pl-md q-mt-sm"
-  >
-    <li>
-      Если вы хотите допустить задачу, то нужно выбрать опцию "Принять". Затем нужно будет выбрать сложность этой задачи.
-    </li>
-    <li>
-      Если вы не хотите допускать задачу, то нужно выбрать опцию "Отклонить". Далее можно будет написать комментарий.
-      <br/>Он будет виден только автору задачи.
-    </li>
-  </ul>
-  Небольшое пояснение относительно таблицы задач на допуск: после того, как один администратор начал допуск задачи(нажал на нее в таблице),
-  <br/>она не будет отображаться в таблице некоторое время. Поэтому, если он по каким-то причинам не закончил допуск задачи,
-  <br/>то нужно будет подождать 10 минут перед тем, как ее можно будет начать допускать снова. При этом задача может быть уже загружена
-  <br/>в таблицу другого администратора. Тогда при попытке перейти к допуску он будет перенапрален назад.
-  <div
-    class="text-h6"
-  >
-    Контроль
-  </div>
-  На странице контроля вы можете видеть две вкладки: "Пользователи" и "Задачи".
-  <ul
-    class="q-pl-md q-mt-sm"
-  >
-    <li>
-      Пользователи. Таблица во вкладке "Пользователи" представляет собой список всех зарегистрированных пользователей.
-      <br/>Для каждого пользователя указаны состояния его ролей. Если кнопка подсвечена зеленым, то значит роль активна.
-      <br/>Красная кнопка означает блокировку. По нажатии на кнопку роль будет либо возвращена, либо заблокирована.
-      <ul
-        class="q-pl-md q-mt-sm"
+    <div
+      class="text-h6"
+    >
+      Редактирование раздела "Справка"
+    </div>
+    <q-input
+      v-model="text"
+      outlined
+      square
+      color="primary"
+      style="width: 80%"
+      input-style="height: 700px; resize:none; font-size: 1rem;"
+      class="q-my-xs"
+      type="textarea"
+    />
+    <q-btn
+      label="Изменить"
+      no-caps
+      :loading="loadingFlag"
+      style="width: 100px"
+      @click="onEdit"
+    >
+      <template
+        v-slot:loading
       >
-        <li>
-          Блокировка роли "Учитель" означает, что пользователь теряет возможность предлагать новые задачи.
-          <br/>Также при заходе на задачи пользователя будет виден только баннер, говорящий о блокировке.
-          <br/>Возврат роли "Учитель" вернет все задачи в их прежнее состояние.
-        </li>
-        <li>
-          Блокировка роли "Ученик" означает, что пользователь теряет возможность начинать и продолжать решать любые задачи.
-          <br/>При этом учителя вместо хода решения будут видеть баннер, говорящий о блокировке.
-        </li>
-      </ul>
-      Также на этой странице можно увидеть кнопку "Статистика", при нажатии на которую будет открыто окно со статистикой.
-      <br/>Выбрав две даты можно будет оценить работу пользователя как в роли учителя, так и в роли ученика.
-      <br/>Если нажать на стрелку вправо в последнем столбце таблицы, то вы перейдете на страницу, на которой представлены
-      <br/>все задачи, связанные с пользователем. Эта страница полностью повторяет вкладку "Мои задачи", только теперь целью
-      <br/>является другой пользователь. Выбрав задачу на этой странице можно посмотреть ход решения любого ученика для выбранной задачи.
-    </li>
-    <li>
-      Задачи. Таблица во вкладке "Задачи" представляет собой список всех задач на данный момент.
-      <br/>Выбрав задачу в этой таблице вы сразу попадете на страницу обзора решений учеников. Механизм выбора учеников совпадает
-      <br/>с тем, который присутствует на обычной странице задачи со стороны учителя.
-      <br/>Статистику по каждой задаче можно получить нажав на кнопку "Статистика".
-    </li>
-  </ul>
+        <q-spinner
+          :thickness="2"
+        />
+      </template>
+    </q-btn>
+  </div>
+  <error-dialog
+    :p-error-message="errorMessage"
+    :p-error-dialog-show="errorDialogShow"
+    @off="errorDialogShow = false"
+  />
 </q-page>
 </template>
 
 <script>
+import { Constants, exceptionHandlerDecorator } from 'boot/Constants'
+import LoadingSpinner from 'components/LoadingSpinner'
+import ErrorDialog from 'components/ErrorDialog'
+
 export default {
-  name: 'AdminEntireHelp'
+  name: 'AdminEntireHelp',
+  components: { LoadingSpinner, ErrorDialog },
+  data () {
+    return {
+      pageLoading: false,
+      errorDialogShow: false,
+      errorMessage: '',
+      loadingFlag: false,
+      text: '',
+      mode: ''
+    }
+  },
+  methods: {
+    async init () {
+      this.pageLoading = true
+      this.mode = this.$route.params.mode
+      const getParameters = new URLSearchParams()
+      getParameters.append('label', 'adminHelp')
+      const response = await fetch(Constants.SERVER_URL + '/api/admin/information?' + getParameters.toString(), Constants.GET_INIT)
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      }
+      this.text = responseData.information
+      this.pageLoading = false
+    },
+    async onEdit () {
+      this.loadingFlag = true
+      const requestData = {
+        csrfToken: window.localStorage.getItem('csrfToken'),
+        label: 'adminHelp',
+        text: this.text
+      }
+      const response = await fetch(Constants.SERVER_URL + '/api/admin/information', {
+        method: 'POST',
+        headers: Constants.HEADERS,
+        credentials: 'same-origin',
+        body: JSON.stringify(requestData)
+      })
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      }
+      window.localStorage.setItem('csrfToken', responseData.csrfToken)
+      this.loadingFlag = false
+      await this.$router.push('/admin/help/view')
+    }
+  },
+  async created () {
+    this.onEdit = exceptionHandlerDecorator.call(this, [this.onEdit], 'loadingFlag')
+    await exceptionHandlerDecorator.call(this, [this.init, true])()
+  },
+  watch: {
+    $route: function () {
+      exceptionHandlerDecorator.call(
+        this,
+        [
+          this.init,
+          true
+        ]
+      )()
+    }
+  }
 }
 </script>
 

@@ -19,8 +19,8 @@ const routes = [
         beforeEnter: roleCheckDecorator('Учитель')
       },
       { path: '/my/tasks', component: () => import('pages/AllUserTasks') },
-      { path: '/help', component: () => import('pages/EntireHelp') },
-      { path: '/admin/help', component: () => import('pages/AdminEntireHelp') },
+      { path: '/help/:mode', component: () => import('pages/EntireHelp') },
+      { path: '/admin/help/:mode', component: () => import('pages/AdminEntireHelp') },
       { path: '/task/:task_id', component: () => import('pages/UserTaskPage') },
       /* { path: '/my/profile', component: () => import('pages/UserProfilePage') }, */
       { path: '/registration', component: () => import('pages/RegistrationPage') },

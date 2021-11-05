@@ -49,7 +49,7 @@
     <q-btn
       label="Условия"
       no-caps
-      @click="showProblem = true"
+      @click="onShowProblemClick"
     />
     <q-dialog
       v-model="showColorPicker"
@@ -88,7 +88,7 @@
       :stroke-width="pointsForPolyline.width"
     />
   </svg>
-  <q-dialog
+  <!-- <q-dialog
     v-model="showProblem"
   >
     <q-pdfviewer
@@ -96,7 +96,7 @@
       :src="problemPath"
     >
     </q-pdfviewer>
-  </q-dialog>
+  </q-dialog> -->
 </div>
 </template>
 <script>
@@ -111,6 +111,10 @@ export default {
     imagePaths: {
       type: Array,
       required: true
+    },
+    problemShowFlag: {
+      type: Boolean,
+      default: false
     },
     returnImagesFlag: {
       type: Boolean,
@@ -175,6 +179,9 @@ export default {
     }
   },
   methods: {
+    onShowProblemClick () {
+      this.$emit('showProblem')
+    },
     nextPage () {
       this.currentPage = this.currentPage + 1
       this.disablePrevPageBtn = false

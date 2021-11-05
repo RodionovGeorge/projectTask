@@ -118,23 +118,18 @@
         style="padding: 0 5px 5px 5px"
       >
         <div
-          class="text-h6 text-center"
-        >
-          Решение по задаче
-        </div>
-        <div
           class="row q-gutter-x-sm"
           style="justify-content: space-around"
         >
           <q-radio
             v-model="adminDecision"
             val="Принята"
-            label="Принять"
+            label="Принять задачу"
           />
           <q-radio
             v-model="adminDecision"
             val="Отклонена"
-            label="Отклонить"
+            label="Отклонить задачу"
           />
         </div>
         <q-select

@@ -36,10 +36,8 @@
       />
       <q-input
         v-model="userMiddleName"
-        ref="userMiddleName"
         label="Отчество"
         outlined
-        :rules="[val => !!val || 'Пожалуйста, введите ваше отчество']"
         maxlength="40"
         class="registration-field"
       />
@@ -64,9 +62,7 @@
       <q-input
         v-model="userGroup"
         outlined
-        unmasked-value
-        mask="####"
-        :rules="[val => val.length === 4 || 'Номер группы состоит из 4 символов']"
+        maxlength="20"
         label="Учебная группа (если есть)"
         class="registration-field"
       />
@@ -242,11 +238,10 @@ export default {
   methods: {
     async onFirstStepClick () {
       const correctLastNameInput = this.$refs.userLastName.validate()
-      const correctMiddleNameInput = this.$refs.userMiddleName.validate()
       const correctFirstNameInput = this.$refs.userFirstName.validate()
       const correctEmailInput = this.$refs.userEmail.validate()
       const correctPasswordInput = this.$refs.userPassword.validate()
-      if (correctLastNameInput && correctMiddleNameInput && correctFirstNameInput && correctEmailInput && correctPasswordInput) {
+      if (correctLastNameInput && correctFirstNameInput && correctEmailInput && correctPasswordInput) {
         this.firstStepSubmitting = true
         const requestData = {
           lastName: this.userLastName,

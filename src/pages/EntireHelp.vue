@@ -1,105 +1,127 @@
 <template>
 <q-page
-  class="bg-white text-black q-py-xs q-pl-sm"
+  class="bg-white text-black q-py-xs q-pl-sm items-center justify-center"
   style="font-size: 1rem;"
 >
+  <loading-spinner
+    :loading="pageLoading"
+  />
   <div
-    class="text-h5"
-  >
-    Справка
-  </div>
-  Сервис предназначен для решения задач. <br/>После подтверждения аккаунта каждый пользователь может выступать как в качестве учителя,
-  так и в качестве ученика.
+    v-if="!pageLoading && mode === 'view'"
+    v-html="text"
+  />
   <div
-    class="text-h6"
+    v-if="!pageLoading && mode === 'editing'"
+    class="column items-center"
   >
-    Учителя
+    <div
+      class="text-h6"
+    >
+      Редактирование раздела "Помощь"
+    </div>
+    <q-input
+      v-model="text"
+      outlined
+      square
+      color="primary"
+      style="width: 80%"
+      input-style="height: 700px; resize:none;"
+      class="q-my-xs"
+      type="textarea"
+    />
+    <q-btn
+      label="Изменить"
+      no-caps
+      :loading="loadingFlag"
+      style="width: 100px"
+      @click="onEdit"
+    >
+      <template
+        v-slot:loading
+      >
+        <q-spinner
+          :thickness="2"
+        />
+      </template>
+    </q-btn>
   </div>
-  Учителя могут предлагать задачи для решения. Для того, чтобы предложить задачу, нужно
-  перейти на страницу "Предложить задачу" в левом боковом меню.<br/>Если такой кнопки нет, то это означает, что у пользователя
-  была заблокирована роль "Учитель". Описание задачи содержит следующие пункты:<br/>
-  <ul
-    class="q-pl-md q-mt-sm"
-  >
-    <li>
-      Название задачи
-    </li>
-    <li>
-      Файл с условием - файл в формате pdf или tex размером не больше 5 мБ.
-    </li>
-    <li>
-      Дисциплина - автор может выбрать дисциплину из предложенного списка или написать свою.
-    </li>
-    <li>
-      Комментарий - комментарий к задаче, который будет виден пользователям. В дальнейшем может быть изменен. Размер
-      комментария: 400 символов.
-    </li>
-    <li>
-      Срок приема решений - интервал времени, когда задача будет видна для пользователей. Левая граница включается, правая - нет.
-      <br/>То есть, чтобы задача, например, была видна 1 день (30 октября), нужно выбрать интервал: 30.10.2021 - 31.10.2021.
-      <br/>Вне этого интервала пользователи не смогут начать решать задачу.
-      <br/>При этом, если пользователь начал решать задачу, то он сможет продолжить это делать. Прекращение решения определяет учитель.
-      <br/>Интервал может быть изменен в дальнейшем.
-    </li>
-  </ul>
-  Задача проходить обязательную проверку администраторами. Администратор может принять или отклонить задачу.<br/>
-  Если администратор принял задачу, то он установит ее сложность и она станет видна пользователям. <br/>В противном случае
-  он может написать причину, по которой он отклоняет задачу. Задача будет видна только учителю.
-  <br/>После одобрения администратором, задача будет видна пользователям. Но учитель может скрыть ее при желании.
-  <br/>Для этого на странице задачи нужно нажать на <q-icon name="bi-sunset" style="font-size: 2rem"/><br/>
-  В этом случае, даже если сейчас идет интервал решения, задача будет скрыта от пользователей.
-  <br/>Для возврата задачи в видимое состояние нужно нажать на <q-icon name="bi-sunrise" style="font-size: 2rem"/>
-  <br/>Редактировать комментарий и интервал для решения можно нажав на <q-icon name="bi-gear" style="font-size: 2rem"/>
-  <br/>Удалить задачу можно нажав на <q-icon name="bi-trash" style="font-size: 2rem"/> Это действие необратимо.
-  <br/>Для просмотра условий задачи можно нажать на <q-icon name="bi-eye" style="font-size: 2rem"/>
-  <br/>Для загрузки файла с условием на компьютер можно нажать на <q-icon name="bi-box-arrow-in-down" style="font-size: 2rem"/>
-  <br/>Для учителя на странице задачи есть таблица всех учеников (пользователей, которые добавили на эту задачу хотя бы одну попытку).
-  <br/>При нажатии на строчку будет загружен ход решения выбранного ученика.
-  <br/>После того, как ученик добавит попытку, учитель сможет проверить ее. Для этого на сайте предусмотрен редактор.
-  <br/>Необходимо сказать, что из-за механизма подготовки попытки к проверке, все "живые" части pdf будут потеряны.
-  <br/>В некоторых браузерах все, что учитель будет рисовать на ответе ученика, не сохраняется.
-  <br/>Эти браузеры указаны ниже и при входе на сайт.
-  <ul
-    class="q-pl-md q-mt-sm"
-  >
-    <li>
-      Mozilla Firefox
-    </li>
-    <li>
-      Яндекс.Браузер
-    </li>
-  </ul>
-  При проверке учитель указывает степень решенности задачи и может написать комментарий к попытке.
-  <br/>Пока учитель не проверит текущую попытку, ученик не сможет добавить следующие.
-  <br/>Также текущую попытку можно обсуждать в разделе "Обсуждение попытки".
-  <br/>Для просмотра или загрузки на компьютер попытки ученика или отзыва учителя можно воспользоваться кнопками
-  <q-icon name="bi-eye" style="font-size: 2rem"/> и <q-icon name="bi-box-arrow-in-down" style="font-size: 2rem"/>
-  <br/>Закончить ход решения для выбранного ученика можно нажав на кнопку "Закончить общение".
-  <br/>После этого ученик больше не сможет добавлять новые попытки. Ход решения можно возобновить нажав на кнопку "Возобновить общение".
-  <div
-    class="text-h6"
-  >
-    Ученики
-  </div>
-  Ученики могут решать любые доступные на данный момент задачи. Все такие задачи находятся на главной странице в таблице.
-  <br/>Для того, чтобы начать решать, достаточно перейти на страницу задачи и нажать кнопку "Добавить попытку".
-  <br/>Попытка - это файл pdf или tex размером не больше 5 мБ.
-  <br/>Если такой кнопки нет, то у пользователя была заблокирована роль "Ученик".
-  <br/>После добавления нужно дождаться, когда учитель даст отзыв на попытку. После этого можно будет добавить новую.
-  <br/>Попытку можно обсуждать в разделе "Обсуждение попытки".
-  <div
-    class="text-h6"
-  >
-    Общая информация
-  </div>
-  Все задачи, к которым имеет отношение пользователь, можно найти на странице "Мои задачи" в боковом меню.
-  <br/>При обнаружении багов, неожиданных результатов и других ошибок можно написать письмо с описанием ошибки на адрес palochki@inbox.ru.
+  <error-dialog
+    :p-error-message="errorMessage"
+    :p-error-dialog-show="errorDialogShow"
+    @off="errorDialogShow = false"
+  />
 </q-page>
 </template>
 
 <script>
+import { Constants, exceptionHandlerDecorator } from 'boot/Constants'
+import LoadingSpinner from 'components/LoadingSpinner'
+import ErrorDialog from 'components/ErrorDialog'
+
 export default {
-  name: 'EntireHelp'
+  name: 'EntireHelp',
+  components: { ErrorDialog, LoadingSpinner },
+  data () {
+    return {
+      errorDialogShow: false,
+      errorMessage: '',
+      loadingFlag: false,
+      pageLoading: false,
+      text: '',
+      mode: ''
+    }
+  },
+  methods: {
+    async init () {
+      this.pageLoading = true
+      this.mode = this.$route.params.mode
+      const getParameters = new URLSearchParams()
+      getParameters.append('label', 'userHelp')
+      const response = await fetch(Constants.SERVER_URL + '/api/admin/information?' + getParameters.toString(), Constants.GET_INIT)
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      }
+      this.text = responseData.information
+      this.pageLoading = false
+    },
+    async onEdit () {
+      this.loadingFlag = true
+      const requestData = {
+        csrfToken: window.localStorage.getItem('csrfToken'),
+        label: 'userHelp',
+        text: this.text
+      }
+      const response = await fetch(Constants.SERVER_URL + '/api/admin/information', {
+        method: 'POST',
+        headers: Constants.HEADERS,
+        credentials: 'same-origin',
+        body: JSON.stringify(requestData)
+      })
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      }
+      window.localStorage.setItem('csrfToken', responseData.csrfToken)
+      this.loadingFlag = false
+      await this.$router.push('/help/view')
+    }
+  },
+  async created () {
+    this.onEdit = exceptionHandlerDecorator.call(this, [this.onEdit], 'loadingFlag')
+    await exceptionHandlerDecorator.call(this, [this.init, true])()
+  },
+  watch: {
+    $route: function () {
+      exceptionHandlerDecorator.call(
+        this,
+        [
+          this.init,
+          true
+        ]
+      )()
+    }
+  }
 }
 </script>
 

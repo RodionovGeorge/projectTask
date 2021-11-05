@@ -19,6 +19,7 @@
       :sunrise-button-show="isTeacher && problemInformation.problemStatus === 'Скрыта'"
       :admin-commentary-show="isTeacher && problemInformation.problemStatus === 'Отклонена'"
       :complexity-show="problemInformation.problemStatus !== 'Отклонена' && problemInformation.problemStatus !== 'Проверяется'"
+      :problem-status-show="isTeacher"
       class="content-background content-shadow"
       @status-change="statusChange"
       @delete="confirmDialogShow = true"
@@ -186,7 +187,7 @@
           <div
             class="text-h6"
           >
-            Обсуждение попытки
+            Комментарии к попытке
           </div>
           <div
             class="q-gutter-y-sm"
@@ -266,7 +267,7 @@
               <div
                 class="text-h6"
               >
-                Обсуждение попытки
+                Комментарии к попытке
               </div>
               <div
                 class="q-gutter-y-sm"
