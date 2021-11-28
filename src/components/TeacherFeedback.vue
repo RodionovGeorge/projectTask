@@ -105,7 +105,7 @@ export default {
     fileDownload () {
       const a = document.createElement('a')
       a.href = this.problemFileURL
-      a.download = '' + this.$route.params.task_id + '.pdf'
+      a.download = '' + this.$route.params.task_id + 'teacher.pdf'
       a.click()
     },
     onDelete () {

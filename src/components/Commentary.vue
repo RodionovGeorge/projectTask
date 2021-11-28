@@ -4,6 +4,7 @@
   >
     <q-item-section
       avatar
+      top
     >
       <q-avatar>
         <img
@@ -17,11 +18,12 @@
         {{ authorFullName }} - {{ commentaryDateString }}
       </q-item-label>
       <q-item-label>
-        {{ commentaryText }}
+        <pre>{{ commentaryText }}</pre>
       </q-item-label>
     </q-item-section>
     <q-item-section
       side
+      top
       v-if="showDeleteButton"
     >
       <q-btn

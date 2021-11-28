@@ -25,7 +25,7 @@
       square
       color="primary"
       style="width: 80%"
-      input-style="height: 700px; resize:none;"
+      input-style="height: 700px; resize:none; font-size: 1rem;"
       class="q-my-xs"
       type="textarea"
     />

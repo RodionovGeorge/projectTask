@@ -221,12 +221,25 @@
                 v-model="currentCommentary"
                 autogrow
                 :disable="currentSessionStatus === 'Закрыта'"
-                v-on:keydown.enter.prevent="addNewCommentary"
+                v-on:keydown.enter.prevent.exact="addNewCommentary"
+                v-on:keydown.shift.enter.prevent.exact="addLF"
                 :loading="newCommentaryLoading"
                 outlined
                 placeholder="Напишите комментарий"
                 style="width: 100%"
-              />
+              >
+                <template
+                  v-if="!newCommentaryLoading"
+                  v-slot:append
+                >
+                  <q-btn
+                    icon="bi-caret-right"
+                    flat
+                    round
+                    @click="addNewCommentary"
+                  />
+                </template>
+              </q-input>
             </div>
           </div>
         </div>
@@ -644,6 +657,9 @@ export default {
     }
   },
   methods: {
+    addLF () {
+      this.currentCommentary = this.currentCommentary + '\n'
+    },
     onProblemEditClick () {
       this.dateRange.to = this.problemInformation.problemDeadline
       this.dateRange.from = this.problemInformation.problemStartLine
@@ -852,6 +868,19 @@ export default {
     },
     async addNewCommentary (...args) {
       this.newCommentaryLoading = true
+
+      let flag = true
+      for (const c of this.currentCommentary) {
+        if (c !== '\n') {
+          flag = false
+          break
+        }
+      }
+      if (flag) {
+        this.newCommentaryLoading = false
+        return
+      }
+
       const requestData = {
         csrfToken: window.localStorage.getItem('csrfToken'),
         attemptID: this.currentAttempt.attemptID,

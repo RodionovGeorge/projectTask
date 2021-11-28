@@ -23,7 +23,7 @@
               src="~assets/header-logo.svg"
             >
           </q-avatar>
-          Проект "Задача"
+          Проект "Задачи"
         </q-toolbar-title>
       </q-toolbar>
     </q-header>
@@ -31,7 +31,7 @@
     <q-drawer
       v-model="left"
       overlay
-      :width="200"
+      :width="250"
       :breakpoint="400"
     >
       <q-scroll-area
@@ -216,10 +216,11 @@
         v-if="!!userInformation"
       >
         <div
-          class="absolute-bottom bg-transparent column items-center"
+          class="bg-transparent column items-center justify-center no-wrap"
+          style="width: 100%; height: 100%; padding: 8px 8px 8px 8px"
         >
           <q-avatar
-            size="56px"
+            size="62px"
             class="q-mb-sm">
             <img
               :src="userInformation.avatarURL"
@@ -228,13 +229,31 @@
           <div
             class="text-weight-bold"
           >
-            {{ userInformation.lastName + ' ' +
-          userInformation.firstName[0] + ' .' +
-          userInformation.middleName[0] + '.' }}
+            {{ userName }}
           </div>
-          <div>
+          <q-btn
+            icon="bi-envelope"
+            round
+            flat
+          >
+            <q-popup-proxy>
+              <q-banner
+                class="bg-white text-black"
+              >
+                <template
+                  v-slot:avatar
+                >
+                  <q-icon
+                    name="bi-envelope"
+                  />
+                </template>
+                {{ userInformation.email }}
+              </q-banner>
+            </q-popup-proxy>
+          </q-btn>
+          <!-- <div>
             {{ userInformation.email }}
-          </div>
+          </div> -->
         </div>
       </q-img>
       <q-item
@@ -307,6 +326,11 @@ export default {
     },
     isTeacher () {
       return this.userInformation.roles.includes('Учитель')
+    },
+    userName () {
+      return this.userInformation.middleName
+        ? this.userInformation.lastName + ' ' + this.userInformation.firstName[0] + '. ' + this.userInformation.middleName[0] + '.'
+        : this.userInformation.lastName + ' ' + this.userInformation.firstName[0] + '.'
     },
     isAdmin () {
       return this.userInformation.roles.includes('Администратор') ||
