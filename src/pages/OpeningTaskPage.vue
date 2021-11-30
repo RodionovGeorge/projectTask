@@ -102,12 +102,24 @@
                   flat
                   icon="bi-box-arrow-in-down"
                   @click="fileDownload"
-                />
+                >
+                  <q-tooltip
+                    delay="800"
+                  >
+                    Скачать условия задачи
+                  </q-tooltip>
+                </q-btn>
                 <q-btn
                   flat
                   icon="bi-eye"
                   @click="showProblem = true"
-                />
+                >
+                  <q-tooltip
+                    delay="800"
+                  >
+                    Просмотр условий задачи
+                  </q-tooltip>
+                </q-btn>
               </div>
             </td>
           </tr>
@@ -251,7 +263,7 @@ export default {
       adminDecision: null,
       difficultyLevels: Constants.DIFFICULTY_LEVELS,
       chosenDifficulty: null,
-      rejectedCommentary: null,
+      rejectedCommentary: '',
       authorFullName: null,
       authorGroup: null,
       problemFileURL: null,

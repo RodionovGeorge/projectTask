@@ -19,7 +19,13 @@
           dense
           icon="bi-gear"
           @click="onEditTaskClick"
-        />
+        >
+          <q-tooltip
+            delay="800"
+          >
+            {{editTooltip}}
+          </q-tooltip>
+        </q-btn>
         <q-btn
           v-if="sunriseButtonShow"
           flat
@@ -35,6 +41,11 @@
               :thickness="2"
             />
           </template>
+          <q-tooltip
+            delay="800"
+          >
+            {{sunTooltip}}
+          </q-tooltip>
         </q-btn>
         <q-btn
           v-if="sunsetButtonShow"
@@ -51,6 +62,11 @@
               :thickness="2"
             />
           </template>
+          <q-tooltip
+            delay="800"
+          >
+            {{cloudTooltip}}
+          </q-tooltip>
         </q-btn>
         <q-btn
           v-if="deleteButtonShow"
@@ -67,6 +83,11 @@
               :thickness="2"
             />
           </template>
+          <q-tooltip
+            delay="800"
+          >
+            {{deleteTooltip}}
+          </q-tooltip>
         </q-btn>
       </div>
     </div>
@@ -181,12 +202,24 @@
               flat
               icon="bi-box-arrow-in-down"
               @click="fileDownload"
-            />
+            >
+              <q-tooltip
+                delay="800"
+              >
+                Скачать условия задачи
+              </q-tooltip>
+            </q-btn>
             <q-btn
               flat
               icon="bi-eye"
               @click="showProblem = true"
-            />
+            >
+              <q-tooltip
+                delay="800"
+              >
+                Просмотр условия задачи
+              </q-tooltip>
+            </q-btn>
           </div>
         </td>
       </tr>
@@ -239,6 +272,22 @@ export default {
     problemStatusShow: {
       type: Boolean,
       default: true
+    },
+    editTooltip: {
+      type: String,
+      default: ''
+    },
+    cloudTooltip: {
+      type: String,
+      default: ''
+    },
+    sunTooltip: {
+      type: String,
+      default: ''
+    },
+    deleteTooltip: {
+      type: String,
+      default: ''
     },
     problemID: {
       type: String

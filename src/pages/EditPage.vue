@@ -57,21 +57,23 @@
       class="row no-wrap"
       style="align-items: flex-start"
     >
+      <q-pdfviewer
+        v-model="showProblemFlag"
+        :src="problemPath"
+        class="q-mr-xs"
+        style="position: sticky; top: 0"
+        content-style="width:600px; height:796px;"
+      />
       <TaskEditor
         class="content-background content-shadow"
         :return-images-flag="returnImagesFlag"
         :image-paths="imagePaths"
         :problem-path="problemPath"
+        :condition-show-flag="showProblemFlag"
         @returndata="onReturn"
-        @showProblem="showProblemFlag = !showProblemFlag"
+        @showProblem="showProblemFlag = true"
+        @hideProblem="showProblemFlag = false"
         @loadingOn="submitting = true"
-      />
-      <q-pdfviewer
-        v-model="showProblemFlag"
-        :src="problemPath"
-        class="q-ml-xs"
-        style="position: sticky; top: 0"
-        content-style="width:600px; height:796px;"
       />
     </div>
     <div
@@ -155,7 +157,7 @@ export default {
   data () {
     return {
       errorDialogShow: false,
-      showProblemFlag: false,
+      showProblemFlag: true,
       submitting: false,
       attemptAlreadyChecked: false,
       pageLoading: true,

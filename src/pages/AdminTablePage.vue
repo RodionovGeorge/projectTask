@@ -102,6 +102,11 @@
                   :thickness="2"
                 />
               </template>
+              <q-tooltip
+                delay="800"
+              >
+                {{props.row.studentRole ? 'Заблокировать роль "Ученик"' : 'Разблокировать роль "Ученик"'}}
+              </q-tooltip>
             </q-btn>
             <q-btn
               label="Учитель"
@@ -117,6 +122,11 @@
                   :thickness="2"
                 />
               </template>
+              <q-tooltip
+                delay="800"
+              >
+                {{props.row.teacherRole ? 'Заблокировать роль "Учитель"' : 'Разблокировать роль "Учитель"'}}
+              </q-tooltip>
             </q-btn>
             <q-btn
               disable
@@ -132,6 +142,11 @@
                   :thickness="2"
                 />
               </template>
+              <q-tooltip
+                delay="800"
+              >
+                {{props.row.adminRole ? 'Заблокировать роль "Администратор"' : 'Разблокировать роль "Администратор"'}}
+              </q-tooltip>
             </q-btn>
             <q-btn
               label="Помощник администратора"
@@ -148,6 +163,11 @@
                   :thickness="2"
                 />
               </template>
+              <q-tooltip
+                delay="800"
+              >
+                {{props.row.subAdminRole ? 'Заблокировать роль "Помощник администратора"' : 'Разблокировать роль "Помощник администратора"'}}
+              </q-tooltip>
             </q-btn>
           </q-td>
         </template>
@@ -164,6 +184,11 @@
               @click="currentMode.onStatisticClick(props)"
               no-caps
             >
+              <q-tooltip
+                delay="800"
+              >
+                Открыть окно статистики
+              </q-tooltip>
             </q-btn>
           </q-td>
         </template>
@@ -180,6 +205,11 @@
               @click="currentMode.onLinkClick(props)"
               no-caps
             >
+              <q-tooltip
+                delay="800"
+              >
+                К задачам пользователя
+              </q-tooltip>
             </q-btn>
           </q-td>
         </template>

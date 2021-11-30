@@ -46,6 +46,7 @@
       <q-table
         class="q-mt-xs"
         wrap-cells
+        title="Доступные задачи"
         style="width:1100px; border-radius: 0"
         flat
         bordered
@@ -54,7 +55,7 @@
         :pagination.sync="pagination"
         :data="data"
         :columns="columns"
-        :rows-per-page-options="[this.pagination.rowsPerPage]"
+        :rows-per-page-options="[3, 5, 7, 10, 15, 20, 25, 50]"
         :loading="tableLoading"
         row-key="problemID"
         :visible-columns="visibleColumns"

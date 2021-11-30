@@ -16,6 +16,7 @@
         :sunrise-button-show="false"
         :sunset-button-show="false"
         :delete-button-show="true"
+        delete-tooltip="Удалить задачу"
         :complexity-show="complexityShow"
         :admin-commentary-show="rejectionReasonShow"
         @delete="onProblemDeleting"

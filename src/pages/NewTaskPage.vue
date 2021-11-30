@@ -62,14 +62,26 @@
           >
           </div>
         </div>
-        <q-date
-          v-model="dateRange"
-          range
-          flat
-          title="Срок приема решений"
-          :options="dateRestriction"
-          class="q-ml-sm"
-        />
+        <div
+          class="column no-wrap q-ml-sm"
+        >
+          <q-btn
+            no-caps
+            label="Справка"
+            outline
+            color="primary"
+            class="q-mb-xs"
+            @click="infoDialogShow = true"
+          />
+          <q-date
+            v-model="dateRange"
+            range
+            flat
+            title="Срок приема решений"
+            class="q-pt-none"
+            :options="dateRestriction"
+          />
+        </div>
       </div>
       <q-btn
         label="Готово"
@@ -125,6 +137,32 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
+    <q-dialog
+      v-model="infoDialogShow"
+    >
+      <q-card>
+        <q-card-section>
+          <div
+            class="text-h6"
+          >
+            Справка
+          </div>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          Для установки интервала приема решений нужно выбрать две даты.<br>
+          Каждая из границ интервала выбирается отдельным кликом по нужной дате.<br>
+          Обращаем ваше внимание, что правая граница интервала не включается.<br>
+          Например, если задача должна быть видна 1 день (к примеру 7 ноября), то<br>
+          должен быть выбран следующий интервал: 07.11.2021 - 08.11.2021.<br>
+          Выбирать один и тот же день в качестве начала и конца интервала запрещено.
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn flat label="OK" color="primary" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
@@ -137,6 +175,7 @@ export default {
   data () {
     return {
       errorDialogShow: false,
+      infoDialogShow: false,
       errorMessage: '',
       submitting: false,
       commentaryMaxLength: Constants.LENGTHS.commentaryToProblem,

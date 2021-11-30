@@ -20,6 +20,10 @@
       :admin-commentary-show="isTeacher && problemInformation.problemStatus === 'Отклонена'"
       :complexity-show="problemInformation.problemStatus !== 'Отклонена' && problemInformation.problemStatus !== 'Проверяется'"
       :problem-status-show="isTeacher"
+      edit-tooltip="Редактировать задачу"
+      sun-tooltip="Отменить скрытие задачи"
+      cloud-tooltip="Скрыть задачу"
+      delete-tooltip="Удалить задачу"
       class="content-background content-shadow"
       @status-change="statusChange"
       @delete="confirmDialogShow = true"
@@ -408,6 +412,14 @@
           :maxlength="commentaryToProblemLength"
           class="new-task-commentary q-mb-xs"
         />
+        <q-btn
+          no-caps
+          label="Справка"
+          outline
+          color="primary"
+          class="q-mb-xs"
+          @click="helpDialogShow = true"
+        />
         <q-date
           v-model="dateRange"
           range
@@ -458,14 +470,21 @@
           Справка
         </div>
       </q-card-section>
-
-      <q-card-section class="q-pt-none">
+      <q-card-section
+        class="q-pt-none"
+      >
         Для фильтрации по имени нужно просто ввести необходимый запрос.<br>
         Для фильтрации по группе запрос нужно начать с '.g' (без кавычек).
       </q-card-section>
-
-      <q-card-actions align="right">
-        <q-btn flat label="OK" color="primary" v-close-popup />
+      <q-card-actions
+        align="right"
+      >
+        <q-btn
+          flat
+          label="OK"
+          color="primary"
+          v-close-popup
+        />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -528,6 +547,39 @@
       </q-card-actions>
     </q-card>
   </q-dialog>
+  <q-dialog
+    v-model="helpDialogShow"
+  >
+    <q-card>
+      <q-card-section>
+        <div
+          class="text-h6"
+        >
+          Справка
+        </div>
+      </q-card-section>
+      <q-card-section
+        class="q-pt-none"
+      >
+        Для установки интервала приема решений нужно выбрать две даты.<br>
+        Каждая из границ интервала выбирается отдельным кликом по нужной дате.<br>
+        Обращаем ваше внимание, что правая граница интервала не включается.<br>
+        Например, если задача должна быть видна 1 день (к примеру 7 ноября), то<br>
+        должен быть выбран следующий интервал: 07.11.2021 - 08.11.2021.<br>
+        Выбирать один и тот же день в качестве начала и конца интервала запрещено.
+      </q-card-section>
+      <q-card-actions
+        align="right"
+      >
+        <q-btn
+          flat
+          label="OK"
+          color="primary"
+          v-close-popup
+        />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
 </q-page>
 </template>
 
@@ -559,6 +611,7 @@ export default {
       newAttemptLoading: false,
       newAttemptDialogShow: false,
       infoDialogShow: false,
+      helpDialogShow: false,
       attemptLoading: false,
       errorDialogShow: false,
       editingLoading: false,

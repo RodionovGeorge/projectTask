@@ -26,6 +26,11 @@
           :thickness="2"
         />
       </template>
+      <q-tooltip
+        delay="800"
+      >
+        Удалить отзыв
+      </q-tooltip>
     </q-btn>
   </div>
   <table
@@ -71,12 +76,24 @@
             flat
             icon="bi-box-arrow-in-down"
             @click="fileDownload"
-          />
+          >
+            <q-tooltip
+              delay="800"
+            >
+              Скачать проверенное решение
+            </q-tooltip>
+          </q-btn>
           <q-btn
             flat
             icon="bi-eye"
             @click="showProblem = true"
-          />
+          >
+            <q-tooltip
+              delay="800"
+            >
+              Просмотр проверенного решения
+            </q-tooltip>
+          </q-btn>
         </div>
       </td>
       <td

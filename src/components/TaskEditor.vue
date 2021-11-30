@@ -13,13 +13,27 @@
         no-caps
         :disable="disablePrevPageBtn"
         @click="prevPage"
-      />
+      >
+        <q-tooltip
+          :delay="800"
+          v-if="!disablePrevPageBtn"
+        >
+          Предыдущая страница решения
+        </q-tooltip>
+      </q-btn>
       <q-btn
         label="Вперед"
         no-caps
         :disable="disableNextPageBtn"
         @click="nextPage"
-      />
+      >
+        <q-tooltip
+          :delay="800"
+          v-if="!disableNextPageBtn"
+        >
+          Следующая страница решения
+        </q-tooltip>
+      </q-btn>
     </div>
     <div
       class="row q-gutter-x-md"
@@ -28,12 +42,24 @@
         label="Цвет"
         no-caps
         @click="showColorPicker = true"
-      />
+      >
+        <q-tooltip
+          :delay="800"
+        >
+          Выбрать цвет для рисования
+        </q-tooltip>
+      </q-btn>
       <q-btn
         label="Отмена"
         no-caps
         @click="undo"
-      />
+      >
+        <q-tooltip
+          :delay="800"
+        >
+          Отменить последнее действие
+        </q-tooltip>
+      </q-btn>
       <div
         style="display:flex; align-items: center;"
       >
@@ -47,10 +73,28 @@
       />
     </div>
     <q-btn
+      v-if="!conditionShowFlag"
       label="Условия"
       no-caps
       @click="onShowProblemClick"
-    />
+    >
+      <q-tooltip
+        :delay="800"
+      >
+        Показать условия задачи
+      </q-tooltip>
+    </q-btn>
+    <q-btn
+      v-else
+      @click="onHideProblemClick"
+      icon="bi-x"
+    >
+      <q-tooltip
+        :delay="800"
+      >
+        Скрыть условия задачи
+      </q-tooltip>
+    </q-btn>
     <q-dialog
       v-model="showColorPicker"
     >
@@ -61,12 +105,6 @@
       />
     </q-dialog>
   </div>
-  <!-- Планировался спинер на загрузку страницы, но событие не работает
-  <q-spinner-tail
-    v-show="pageLoading"
-    size="2em"
-    color="primary"
-  /> -->
   <svg
     id="svg"
     @mouseup="onMouseUp"
@@ -76,6 +114,7 @@
   >
     <image
       :href="imagePaths[currentPage]"
+      class="cursor-style"
       height="1224px"
       width="794px"
     />
@@ -88,15 +127,6 @@
       :stroke-width="pointsForPolyline.width"
     />
   </svg>
-  <!-- <q-dialog
-    v-model="showProblem"
-  >
-    <q-pdfviewer
-      v-model="showProblem"
-      :src="problemPath"
-    >
-    </q-pdfviewer>
-  </q-dialog> -->
 </div>
 </template>
 <script>
@@ -112,7 +142,7 @@ export default {
       type: Array,
       required: true
     },
-    problemShowFlag: {
+    conditionShowFlag: {
       type: Boolean,
       default: false
     },
@@ -181,6 +211,9 @@ export default {
   methods: {
     onShowProblemClick () {
       this.$emit('showProblem')
+    },
+    onHideProblemClick () {
+      this.$emit('hideProblem')
     },
     nextPage () {
       this.currentPage = this.currentPage + 1

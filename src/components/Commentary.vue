@@ -40,6 +40,11 @@
             :thickness="2"
           />
         </template>
+        <q-tooltip
+          delay="800"
+        >
+          Удалить комментарий
+        </q-tooltip>
       </q-btn>
     </q-item-section>
   </q-item>
