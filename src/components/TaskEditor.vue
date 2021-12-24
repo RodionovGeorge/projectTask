@@ -11,7 +11,7 @@
       <q-btn
         icon="bi-arrow-left-short"
         flat
-        :disable="disablePrevPageBtn"
+        :disable="disablePrevPageBtn || imageLoading"
         @click="prevPage"
       >
         <q-tooltip
@@ -29,7 +29,7 @@
       <q-btn
         icon="bi-arrow-right-short"
         flat
-        :disable="disableNextPageBtn"
+        :disable="disableNextPageBtn || imageLoading"
         @click="nextPage"
       >
         <q-tooltip
@@ -45,6 +45,7 @@
     >
       <q-btn
         icon="bi-palette"
+        :disable="imageLoading"
         flat
         @click="showColorPicker = true"
       >
@@ -56,7 +57,10 @@
       </q-btn>
       <q-btn
         icon="bi-eraser"
-        flat
+        :flat="!eraserChosen"
+        :outline="eraserChosen"
+        :disable="imageLoading"
+        @click="eraserChosen = !eraserChosen"
       >
         <q-tooltip
           :delay="800"
@@ -66,13 +70,12 @@
       </q-btn>
       <q-btn
         icon="bi-arrow-90deg-left"
-        :disable="polylineHistoryOnPages[currentPage].length === 0"
+        :disable="imageLoading"
         flat
         no-caps
         @click="undo"
       >
         <q-tooltip
-          v-if="polylineHistoryOnPages[currentPage].length !== 0"
           :delay="800"
         >
           Отменить последнее действие
@@ -80,6 +83,7 @@
       </q-btn>
       <q-btn
         icon="bi-border-width"
+        :disable="imageLoading"
         flat
       >
         <q-tooltip
@@ -153,35 +157,43 @@
       />
     </q-dialog>
   </div>
-  <svg
-    id="svg"
-    @mouseup="onMouseUp"
-    @mousedown="onMouseDown"
-    @mousemove="onMouseMove"
-    @mouseout="mousePressed = false"
-    class="editor-page a4-size-with-border"
+  <div
+    v-show="imageLoading"
+    style="width: 794px; height: 1224px;"
+    class="column justify-center items-center"
   >
-    <image
-      :href="imagePaths[currentPage]"
+    <LoadingSpinner
+      :loading="imageLoading"
+    />
+  </div>
+  <div
+    class="stack"
+    v-show="!imageLoading"
+  >
+    <canvas
+      id="background-canvas"
+      width="794"
+      height="1224"
+    ></canvas>
+    <canvas
+      id="editor-canvas"
       class="cursor-style"
-      height="1224px"
-      width="794px"
-    />
-    <polyline
-      v-for="(pointsForPolyline, index) in polylineArrayOnPages[currentPage]"
-      :key="index"
-      :points="pointsForPolyline.points"
-      :stroke="pointsForPolyline.color"
-      fill="none"
-      :stroke-width="pointsForPolyline.width + 'px'"
-    />
-  </svg>
+      width="794"
+      height="1224"
+      @mousedown="onMouseDown"
+      @mousemove="onMouseMove"
+      @mouseout="onMouseOut"
+      @mouseup="onMouseUp"
+    >
+    </canvas>
+  </div>
 </div>
 </template>
 <script>
-import Vue from 'vue'
+import LoadingSpinner from 'components/LoadingSpinner'
 export default {
   name: 'TaskEditor',
+  components: { LoadingSpinner },
   props: {
     problemPath: {
       type: String,
@@ -204,12 +216,14 @@ export default {
   data () {
     return {
       mousePressed: false,
+      imageLoading: false,
+      eraserChosen: false,
       showColorPicker: false,
       currentColor: 'rgb(255,0,0)',
       currentWidthOfLine: 1,
       polylineArrayOnPages: [],
-      polylineHistoryOnPages: [],
       currentPage: 0,
+      editorCtx: null,
       disablePrevPageBtn: false,
       disableNextPageBtn: false,
       showProblem: false,
@@ -221,38 +235,31 @@ export default {
       handler: async function (val, oldVal) {
         if (val) {
           this.$emit('loadingOn')
+          this.imageLoading = true
           this.$nextTick()
-          const resultB64Array = []
+          const resultB64Array = new Array(this.imagePaths.length)
           for (let i = 0; i < this.imagePaths.length; i++) {
             this.currentPage = i
-            await this.$nextTick()
-            const el = document.getElementById('svg')
-            const svgElement = el.cloneNode(true)
-            const s = new XMLSerializer().serializeToString(svgElement)
-            const svgStyle = window.getComputedStyle(el)
-            const encodeSVG = 'data:image/svg+xml;base64, ' + window.btoa(s)
-            const canvas = document.createElement('canvas')
-            const height = parseInt(svgStyle.getPropertyValue('height')) - 2 // Исключая размер границы элемента
-            const width = parseInt(svgStyle.getPropertyValue('width')) - 2 // Исключая размер границы элемента
-            canvas.height = height
-            canvas.width = width
-            const context = canvas.getContext('2d')
-            const backgroundImage = new Image(width, height)
-            backgroundImage.onload = () => {
-              context.drawImage(backgroundImage, 0, 0)
-              const SVGImage = new Image(width, height)
-              SVGImage.onload = () => {
-                context.drawImage(SVGImage, 0, 0)
-                resultB64Array[i] = canvas.toDataURL('image/png')
-                resultB64Array[i] = resultB64Array[i].substring(resultB64Array[i].indexOf(',') + 1)
-                this.imageTransformationCounter++
-                if (this.imageTransformationCounter === this.imagePaths.length) {
-                  this.$emit('returndata', resultB64Array)
-                }
+            const b = document.createElement('canvas')
+            b.height = 1224
+            b.width = 794
+            const e = document.createElement('canvas')
+            e.height = 1224
+            e.width = 794
+            const bCtx = b.getContext('2d')
+            const eCtx = e.getContext('2d')
+            const img = new Image(794, 1224)
+            img.onload = () => {
+              bCtx.drawImage(img, 0, 0)
+              this.redraw(eCtx, i)
+              bCtx.drawImage(e, 0, 0)
+              resultB64Array[i] = b.toDataURL('image/png').replace('data:image/png;base64,', '')
+              this.imageTransformationCounter++
+              if (this.imageTransformationCounter === this.imagePaths.length) {
+                this.$emit('returndata', resultB64Array)
               }
-              SVGImage.src = encodeSVG
             }
-            backgroundImage.src = this.imagePaths[i]
+            img.src = this.imagePaths[i]
           }
         }
       }
@@ -266,59 +273,118 @@ export default {
       this.$emit('hideProblem')
     },
     nextPage () {
+      this.imageLoading = true
       this.currentPage = this.currentPage + 1
+      const ctx = document.getElementById('background-canvas').getContext('2d')
+      const img = new Image(794, 1224)
       this.disablePrevPageBtn = false
       if (this.currentPage === this.imagePaths.length - 1) {
         this.disableNextPageBtn = true
       }
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0)
+        this.redraw(this.editorCtx, this.currentPage)
+        this.imageLoading = false
+      }
+      img.src = this.imagePaths[this.currentPage]
     },
     prevPage () {
+      this.imageLoading = true
       this.currentPage = this.currentPage - 1
+      const ctx = document.getElementById('background-canvas').getContext('2d')
+      const img = new Image(794, 1224)
       this.disableNextPageBtn = false
       if (this.currentPage === 0) {
         this.disablePrevPageBtn = true
       }
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0)
+        this.redraw(this.editorCtx, this.currentPage)
+        this.imageLoading = false
+      }
+      img.src = this.imagePaths[this.currentPage]
+    },
+    redraw (ctx, pageNumber) {
+      let xc, yc, j
+      ctx.clearRect(0, 0, 794, 1224)
+      for (let i = 0; i < this.polylineArrayOnPages[pageNumber].length; i++) {
+        ctx.beginPath()
+        ctx.lineWidth = this.polylineArrayOnPages[pageNumber][i].width
+        ctx.strokeStyle = this.polylineArrayOnPages[pageNumber][i].color
+        ctx.globalCompositeOperation = this.polylineArrayOnPages[pageNumber][i].globalCompositeOperation
+        ctx.moveTo(this.polylineArrayOnPages[pageNumber][i].points[0].x, this.polylineArrayOnPages[pageNumber][i].points[0].y)
+        for (j = 1; j < this.polylineArrayOnPages[pageNumber][i].points.length - 2; j++) {
+          xc = (this.polylineArrayOnPages[pageNumber][i].points[j].x + this.polylineArrayOnPages[pageNumber][i].points[j + 1].x) / 2
+          yc = (this.polylineArrayOnPages[pageNumber][i].points[j].y + this.polylineArrayOnPages[pageNumber][i].points[j + 1].y) / 2
+          ctx.quadraticCurveTo(this.polylineArrayOnPages[pageNumber][i].points[j].x, this.polylineArrayOnPages[pageNumber][i].points[j].y, xc, yc)
+        }
+        if (this.polylineArrayOnPages[pageNumber][i].points.length >= 3) {
+          ctx.quadraticCurveTo(
+            this.polylineArrayOnPages[pageNumber][i].points[j].x,
+            this.polylineArrayOnPages[pageNumber][i].points[j].y,
+            this.polylineArrayOnPages[pageNumber][i].points[j + 1].x,
+            this.polylineArrayOnPages[pageNumber][i].points[j + 1].y
+          )
+        }
+        ctx.stroke()
+      }
     },
     onMouseDown (event) {
       if (!this.mousePressed) {
-        const offset = document.getElementById('svg').getBoundingClientRect()
+        const offset = document.getElementById('editor-canvas').getBoundingClientRect()
         this.mousePressed = true
-        this.polylineHistoryOnPages[this.currentPage].push([].concat(this.polylineArrayOnPages[this.currentPage]))
         this.polylineArrayOnPages[this.currentPage].push({
-          // Строка, которая содержит координаты точек
-          points: (event.x - offset.x).toString() + ', ' + (event.y - offset.y).toString(),
+          points: [{ x: event.x - offset.x, y: event.y - offset.y }],
           color: this.currentColor,
-          width: this.currentWidthOfLine
+          width: this.eraserChosen ? 10 : this.currentWidthOfLine,
+          globalCompositeOperation: this.eraserChosen ? 'destination-out' : 'source-over'
         })
+        this.redraw(this.editorCtx, this.currentPage)
       }
     },
     onMouseUp (event) {
       if (this.mousePressed) {
-        const offset = document.getElementById('svg').getBoundingClientRect()
+        const offset = document.getElementById('editor-canvas').getBoundingClientRect()
         this.mousePressed = false
-        Vue.set(this.polylineArrayOnPages[this.currentPage].at(-1), 'points',
-          this.polylineArrayOnPages[this.currentPage].at(-1).points + ' ' + (event.x - offset.x).toString() + ', ' + (event.y - offset.y).toString())
+        this.polylineArrayOnPages[this.currentPage].at(-1).points.push({
+          x: event.x - offset.x,
+          y: event.y - offset.y
+        })
+        this.redraw(this.editorCtx, this.currentPage)
       }
     },
     onMouseMove (event) {
       if (this.mousePressed) {
-        const offset = document.getElementById('svg').getBoundingClientRect()
-        // Добавление еще одной точки в строку
-        Vue.set(this.polylineArrayOnPages[this.currentPage].at(-1), 'points',
-          this.polylineArrayOnPages[this.currentPage].at(-1).points + ' ' + (event.x - offset.x).toString() + ', ' + (event.y - offset.y).toString())
+        const offset = document.getElementById('editor-canvas').getBoundingClientRect()
+        this.polylineArrayOnPages[this.currentPage].at(-1).points.push({
+          x: event.x - offset.x,
+          y: event.y - offset.y
+        })
+        this.redraw(this.editorCtx, this.currentPage)
       }
     },
+    onMouseOut (event) {
+      this.mousePressed = false
+    },
     undo () {
-      Vue.set(this.polylineArrayOnPages, this.currentPage, this.polylineHistoryOnPages[this.currentPage].at(-1))
-      this.polylineHistoryOnPages[this.currentPage].pop()
+      this.polylineArrayOnPages[this.currentPage].pop()
+      this.redraw(this.editorCtx, this.currentPage)
     }
   },
-  created () {
+  mounted () {
+    this.imageLoading = true
     this.disablePrevPageBtn = true
     this.disableNextPageBtn = this.imagePaths.length === 1
+    const ctx = document.getElementById('background-canvas').getContext('2d')
+    this.editorCtx = document.getElementById('editor-canvas').getContext('2d')
+    const img = new Image(794, 1224)
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0)
+      this.imageLoading = false
+    }
+    img.src = this.imagePaths[this.currentPage]
     for (let i = 0; i < this.imagePaths.length; i++) {
       this.polylineArrayOnPages.push([])
-      this.polylineHistoryOnPages.push([])
     }
   }
 }
