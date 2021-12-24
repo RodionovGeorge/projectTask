@@ -9,8 +9,8 @@
       class="row q-gutter-x-md"
     >
       <q-btn
-        label="Назад"
-        no-caps
+        icon="bi-arrow-left-short"
+        flat
         :disable="disablePrevPageBtn"
         @click="prevPage"
       >
@@ -21,9 +21,14 @@
           Предыдущая страница решения
         </q-tooltip>
       </q-btn>
+      <div
+        class="column justify-center justify-content"
+      >
+        {{ currentPage + 1 }} / {{ imagePaths.length }}
+      </div>
       <q-btn
-        label="Вперед"
-        no-caps
+        icon="bi-arrow-right-short"
+        flat
         :disable="disableNextPageBtn"
         @click="nextPage"
       >
@@ -39,8 +44,8 @@
       class="row q-gutter-x-md"
     >
       <q-btn
-        label="Цвет"
-        no-caps
+        icon="bi-palette"
+        flat
         @click="showColorPicker = true"
       >
         <q-tooltip
@@ -50,32 +55,74 @@
         </q-tooltip>
       </q-btn>
       <q-btn
-        label="Отмена"
+        icon="bi-eraser"
+        flat
+      >
+        <q-tooltip
+          :delay="800"
+        >
+          Ластик
+        </q-tooltip>
+      </q-btn>
+      <q-btn
+        icon="bi-arrow-90deg-left"
+        :disable="polylineHistoryOnPages[currentPage].length === 0"
+        flat
         no-caps
         @click="undo"
       >
         <q-tooltip
+          v-if="polylineHistoryOnPages[currentPage].length !== 0"
           :delay="800"
         >
           Отменить последнее действие
         </q-tooltip>
       </q-btn>
-      <div
-        style="display:flex; align-items: center;"
+      <q-btn
+        icon="bi-border-width"
+        flat
       >
-        Ширина линии
-      </div>
-      <q-slider
-        v-model="currentWidthOfLine"
-        :min="1"
-        :max="5"
-        style="width: 100px;margin-right: 10px"
-      />
+        <q-tooltip
+          :delay="800"
+        >
+          Ширина линии
+        </q-tooltip>
+        <q-menu
+          anchor="bottom middle"
+          self="top middle"
+        >
+          <q-list
+            style="width: 100px"
+          >
+            <q-item
+              v-for="i in 5"
+              :key="i"
+              clickable
+              v-close-popup
+              :class="currentWidthOfLine === i ? 'width-menu-active-element' : ''"
+              @click="currentWidthOfLine = i"
+              class="column justify-center content-center q-pa-sm"
+            >
+              <svg
+                :height="i + 'px'"
+                width="84px"
+              >
+                <polyline
+                  :points="'0,' + i / 2 + ' 79, ' + i / 2"
+                  fill="none"
+                  :stroke-width="i + 'px'"
+                  :stroke="currentColor"
+                />
+              </svg>
+            </q-item>
+          </q-list>
+        </q-menu>
+      </q-btn>
     </div>
     <q-btn
       v-if="!conditionShowFlag"
-      label="Условия"
-      no-caps
+      icon="bi-journal-text"
+      flat
       @click="onShowProblemClick"
     >
       <q-tooltip
@@ -88,6 +135,7 @@
       v-else
       @click="onHideProblemClick"
       icon="bi-x"
+      flat
     >
       <q-tooltip
         :delay="800"
@@ -110,6 +158,7 @@
     @mouseup="onMouseUp"
     @mousedown="onMouseDown"
     @mousemove="onMouseMove"
+    @mouseout="mousePressed = false"
     class="editor-page a4-size-with-border"
   >
     <image
@@ -124,7 +173,7 @@
       :points="pointsForPolyline.points"
       :stroke="pointsForPolyline.color"
       fill="none"
-      :stroke-width="pointsForPolyline.width"
+      :stroke-width="pointsForPolyline.width + 'px'"
     />
   </svg>
 </div>
@@ -159,6 +208,7 @@ export default {
       currentColor: 'rgb(255,0,0)',
       currentWidthOfLine: 1,
       polylineArrayOnPages: [],
+      polylineHistoryOnPages: [],
       currentPage: 0,
       disablePrevPageBtn: false,
       disableNextPageBtn: false,
@@ -233,7 +283,9 @@ export default {
       if (!this.mousePressed) {
         const offset = document.getElementById('svg').getBoundingClientRect()
         this.mousePressed = true
+        this.polylineHistoryOnPages[this.currentPage].push([].concat(this.polylineArrayOnPages[this.currentPage]))
         this.polylineArrayOnPages[this.currentPage].push({
+          // Строка, которая содержит координаты точек
           points: (event.x - offset.x).toString() + ', ' + (event.y - offset.y).toString(),
           color: this.currentColor,
           width: this.currentWidthOfLine
@@ -244,26 +296,29 @@ export default {
       if (this.mousePressed) {
         const offset = document.getElementById('svg').getBoundingClientRect()
         this.mousePressed = false
-        Vue.set(this.polylineArrayOnPages[this.currentPage][this.polylineArrayOnPages[this.currentPage].length - 1], 'points',
-          this.polylineArrayOnPages[this.currentPage][this.polylineArrayOnPages[this.currentPage].length - 1].points + ' ' + (event.x - offset.x).toString() + ', ' + (event.y - offset.y).toString())
+        Vue.set(this.polylineArrayOnPages[this.currentPage].at(-1), 'points',
+          this.polylineArrayOnPages[this.currentPage].at(-1).points + ' ' + (event.x - offset.x).toString() + ', ' + (event.y - offset.y).toString())
       }
     },
     onMouseMove (event) {
       if (this.mousePressed) {
         const offset = document.getElementById('svg').getBoundingClientRect()
-        Vue.set(this.polylineArrayOnPages[this.currentPage][this.polylineArrayOnPages[this.currentPage].length - 1], 'points',
-          this.polylineArrayOnPages[this.currentPage][this.polylineArrayOnPages[this.currentPage].length - 1].points + ' ' + (event.x - offset.x).toString() + ', ' + (event.y - offset.y).toString())
+        // Добавление еще одной точки в строку
+        Vue.set(this.polylineArrayOnPages[this.currentPage].at(-1), 'points',
+          this.polylineArrayOnPages[this.currentPage].at(-1).points + ' ' + (event.x - offset.x).toString() + ', ' + (event.y - offset.y).toString())
       }
     },
     undo () {
-      this.polylineArrayOnPages[this.currentPage].pop()
+      Vue.set(this.polylineArrayOnPages, this.currentPage, this.polylineHistoryOnPages[this.currentPage].at(-1))
+      this.polylineHistoryOnPages[this.currentPage].pop()
     }
   },
-  mounted () {
+  created () {
     this.disablePrevPageBtn = true
     this.disableNextPageBtn = this.imagePaths.length === 1
     for (let i = 0; i < this.imagePaths.length; i++) {
       this.polylineArrayOnPages.push([])
+      this.polylineHistoryOnPages.push([])
     }
   }
 }

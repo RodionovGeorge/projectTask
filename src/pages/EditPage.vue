@@ -159,6 +159,7 @@ export default {
       errorDialogShow: false,
       showProblemFlag: true,
       submitting: false,
+      saveLeavingPage: false,
       attemptAlreadyChecked: false,
       pageLoading: true,
       commentaryToSolutionLength: Constants.LENGTHS.commentaryToTeacherFeedback,
@@ -194,6 +195,7 @@ export default {
         throw new Error(responseData.message)
       }
       window.localStorage.setItem('csrfToken', responseData.csrfToken)
+      this.saveLeavingPage = true
       await this.$router.push(`/task/${this.$route.params.task_id}`)
     },
     async initPage () {
@@ -224,6 +226,18 @@ export default {
           this.attemptAlreadyChecked = true
         }
       }])()
+    }
+  },
+  beforeRouteLeave (to, from, next) {
+    if (!this.saveLeavingPage) {
+      const answer = window.confirm('Вы уверены, что хотите покинуть эту страницу?')
+      if (answer) {
+        next()
+      } else {
+        next(false)
+      }
+    } else {
+      next()
     }
   },
   async created () {

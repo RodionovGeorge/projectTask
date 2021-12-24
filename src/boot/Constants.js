@@ -13,8 +13,8 @@
 const AT_404 = '/error-404'
 
 const Constants = {
-  SERVER_URL: 'http://78.81.147.165',
-  // SERVER_URL: 'http://192.168.100.5',
+  // SERVER_URL: 'http://78.81.147.165',
+  SERVER_URL: 'http://192.168.100.6',
   TASK_DISCIPLINES: [
     'Дискретная математика',
     'Алгебра и геометрия',
