@@ -97,7 +97,7 @@ export default {
       const month = (x.getMonth() + 1) < 10 ? '' + 0 + (x.getMonth() + 1) : (x.getMonth() + 1)
       const hour = x.getHours() < 10 ? '' + 0 + x.getHours() : x.getHours()
       const minute = x.getMinutes() < 10 ? '' + 0 + x.getMinutes() : x.getMinutes()
-      return day + '/' + month + '/' + x.getFullYear() + ' ' + hour + ':' + minute
+      return day + '.' + month + '.' + x.getFullYear() + ', ' + hour + ':' + minute
     }
   }
 }

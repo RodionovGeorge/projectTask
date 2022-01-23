@@ -13,6 +13,7 @@ const routes = [
         component: () => import('pages/OpeningTaskPage'),
         beforeEnter: roleCheckDecorator('Администратор', 'Помощник администратора')
       },
+      // TODO need to change an id in path
       {
         path: '/check-attempt/:task_id/:session_id',
         component: () => import('pages/EditPage'),

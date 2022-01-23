@@ -228,7 +228,7 @@ export default {
           {
             name: 'haveNewContent',
             required: true,
-            label: 'Наличие обновлений',
+            label: 'Количество непроверенных попыток',
             align: 'center',
             field: 'haveNewContent'
           }

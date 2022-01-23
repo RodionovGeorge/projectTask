@@ -8,8 +8,9 @@
   >
     <div
       class="text-h6"
+      style="font-weight: 400"
     >
-      Отзыв
+      Отзыв к попытке от {{ attemptDate }}
     </div>
     <q-btn
       v-if="showDeleteButton"
@@ -40,15 +41,17 @@
       <td>
         Степень решенности
       </td>
-      <td>
+      <td
+        style="width: 25%"
+      >
         {{decisionStage ? decisionStage : '-'}}
       </td>
-    </tr>
-    <tr>
       <td>
         Время проверки:
       </td>
-      <td>
+      <td
+      style="width: 25%"
+      >
         {{checkDate !== '-' ? localeCheckDate : '-'}}
       </td>
     </tr>
@@ -141,6 +144,10 @@ export default {
     checkDate: {
       type: String
     },
+    attemptDate: {
+      type: String,
+      default: '-'
+    },
     problemFileURL: {
       type: String,
       default: ''
@@ -170,7 +177,7 @@ export default {
         minute = x.getMinutes() < 10 ? '' + 0 + x.getMinutes() : x.getMinutes()
       }
       return x
-        ? day + '/' + month + '/' + x.getFullYear() + ' ' + hour + ':' + minute
+        ? day + '.' + month + '.' + x.getFullYear() + ', ' + hour + ':' + minute
         : '-'
     }
   }

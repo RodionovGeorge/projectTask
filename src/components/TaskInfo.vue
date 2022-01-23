@@ -204,7 +204,7 @@
               @click="fileDownload"
             >
               <q-tooltip
-                delay="800"
+                :delay="800"
               >
                 Скачать условия задачи
               </q-tooltip>
@@ -215,7 +215,7 @@
               @click="showProblem = true"
             >
               <q-tooltip
-                delay="800"
+                :delay="800"
               >
                 Просмотр условия задачи
               </q-tooltip>

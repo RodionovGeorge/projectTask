@@ -54,14 +54,6 @@
     </tr>
     <tr>
       <td>
-        Последнее изменение
-      </td>
-      <td>
-        {{localeDateOfLastChange}}
-      </td>
-    </tr>
-    <tr>
-      <td>
         Файл с решеннием
       </td>
       <td>

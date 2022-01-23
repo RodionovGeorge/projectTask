@@ -294,6 +294,7 @@ export default {
     // Восстановление данных после перезагрузки страницы
     // Если пришла ошибка, сервер удалит cookie
     // Фронт удалит CSRF токен. По итогу произойдет операция logout
+    // TODO разобраться с переходами на connection error
     if (window.localStorage.getItem('csrfToken') && !Constants.DEV_MODE) {
       try {
         const response = await fetch(Constants.SERVER_URL + '/api/restore-data', Constants.GET_INIT)
