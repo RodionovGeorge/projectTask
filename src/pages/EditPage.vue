@@ -125,7 +125,25 @@
         style="width:100px"
         class="content-background"
         :loading="submitting"
-        @click="returnImagesFlag = true"
+        :disable="decisionStage === ''"
+        @click="onSavingAsResult"
+        no-caps
+      >
+        <template
+          v-slot:loading
+        >
+          <q-spinner
+            :thickness="2"
+          />
+        </template>
+      </q-btn>
+      <q-btn
+        label="Сохранить как черновик"
+        text-colot="black"
+        style="width:200px"
+        class="content-background"
+        :loading="submitting"
+        @click="onSavingAsDraftWork"
         no-caps
       >
         <template
@@ -159,7 +177,7 @@ export default {
       errorDialogShow: false,
       showProblemFlag: true,
       submitting: false,
-      saveLeavingPage: false,
+      saveLeavingPage: true,
       attemptAlreadyChecked: false,
       pageLoading: true,
       commentaryToSolutionLength: Constants.LENGTHS.commentaryToTeacherFeedback,
@@ -170,21 +188,31 @@ export default {
       problemPath: null,
       imagePaths: null,
       returnImagesFlag: false,
-      solutionDegrees: Constants.SOLUTION_DEGREES
+      solutionDegrees: Constants.SOLUTION_DEGREES,
+      savingStatus: ''
     }
   },
   methods: {
+    onSavingAsDraftWork () {
+      this.savingStatus = 'Черновик отзыва'
+      this.returnImagesFlag = true
+    },
+    onSavingAsResult () {
+      this.savingStatus = 'Отзыв не просмотрен учеником'
+      this.returnImagesFlag = true
+    },
     async onReturn (resultImages) {
       this.submitting = true
       this.returnImagesFlag = false
-      const sessionID = this.$route.params.session_id
+      const attemptID = this.$route.params.attempt_id
       const requestData = {
         pages: resultImages,
-        teacherCommentary: this.teacherCommentary,
-        solutionDegree: this.decisionStage,
-        csrfToken: window.localStorage.getItem('csrfToken')
+        teacherCommentary: this.teacherCommentary || '',
+        solutionDegree: this.decisionStage || '',
+        csrfToken: window.localStorage.getItem('csrfToken'),
+        status: this.savingStatus
       }
-      const response = await fetch(Constants.SERVER_URL + '/api/check-attempt/' + sessionID, {
+      const response = await fetch(Constants.SERVER_URL + '/api/check-attempt/' + attemptID, {
         method: 'POST',
         headers: Constants.HEADERS,
         credentials: 'same-origin',
@@ -200,8 +228,8 @@ export default {
     },
     async initPage () {
       this.pageLoading = true
-      const sessionID = this.$route.params.session_id
-      const response = await fetch(Constants.SERVER_URL + '/api/check-attempt/' + sessionID, Constants.GET_INIT)
+      const attemptID = this.$route.params.attempt_id
+      const response = await fetch(Constants.SERVER_URL + '/api/check-attempt/' + attemptID, Constants.GET_INIT)
       const responseData = await response.json()
       if (responseData.message !== 'success') {
         throw new Error(responseData.message)
@@ -209,6 +237,9 @@ export default {
       this.informationAboutAuthor = responseData.authorInf
       this.problemPath = responseData.problemPath
       this.imagePaths = responseData.imagePaths
+      this.teacherCommentary = responseData.authorCommentary
+      this.decisionStage = responseData.solutionDegree
+      this.saveLeavingPage = false
       this.pageLoading = false
     },
     async onBack () {
@@ -241,7 +272,7 @@ export default {
     }
   },
   async created () {
-    this.onReturn = exceptionHandlerDecorator.call(this, [this.onReturn])
+    this.onReturn = exceptionHandlerDecorator.call(this, [this.onReturn], 'submitting')
     while (this.$store.getters['userDataStore/userInformationGetter'] === null) {
       await new Promise((resolve, reject) => setTimeout(resolve, 200))
     }

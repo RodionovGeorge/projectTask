@@ -37,7 +37,7 @@
           :label="studentAttempt.status"
         />
         <q-badge
-          v-if="teacherFeedbackStatus !== ''"
+          v-if="teacherFeedbackStatus !== '' && (isTeacher || teacherFeedbackStatus !== 'Черновик отзыва')"
           class="q-ml-sm"
           rounded
           color="primary"
@@ -78,6 +78,10 @@
 export default {
   name: 'Attempt',
   props: {
+    isTeacher: {
+      type: Boolean,
+      require: true
+    },
     studentAttempt: {
       type: Object,
       require: true

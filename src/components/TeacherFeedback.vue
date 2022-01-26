@@ -10,7 +10,7 @@
       class="text-h6"
       style="font-weight: 400"
     >
-      Отзыв к попытке от {{ attemptDate }}
+      Отзыв к попытке от {{ localeCheckDate(attemptDate) }}
     </div>
     <q-btn
       v-if="showDeleteButton"
@@ -52,7 +52,7 @@
       <td
       style="width: 25%"
       >
-        {{checkDate !== '-' ? localeCheckDate : '-'}}
+        {{checkDate !== '-' ? localeCheckDate(checkDate) : '-'}}
       </td>
     </tr>
     <tr
@@ -87,6 +87,7 @@
             </q-tooltip>
           </q-btn>
           <q-btn
+            v-if="showEyeButton"
             flat
             icon="bi-eye"
             @click="showProblem = true"
@@ -130,6 +131,19 @@ export default {
     },
     onDelete () {
       this.$emit('delete')
+    },
+    localeCheckDate (date) {
+      const x = date ? new Date(date) : null
+      let day, month, hour, minute
+      if (x) {
+        day = x.getDate() < 10 ? '' + 0 + x.getDate() : x.getDate()
+        month = (x.getMonth() + 1) < 10 ? '' + 0 + (x.getMonth() + 1) : (x.getMonth() + 1)
+        hour = x.getHours() < 10 ? '' + 0 + x.getHours() : x.getHours()
+        minute = x.getMinutes() < 10 ? '' + 0 + x.getMinutes() : x.getMinutes()
+      }
+      return x
+        ? day + '.' + month + '.' + x.getFullYear() + ', ' + hour + ':' + minute
+        : '-'
     }
   },
   data () {
@@ -158,27 +172,12 @@ export default {
     showDeleteButton: {
       type: Boolean
     },
+    showEyeButton: {
+      type: Boolean
+    },
     deleting: {
       type: Boolean,
       default: false
-    }
-  },
-  computed: {
-    cCheckDate () {
-      return this.checkDate ? new Date(this.checkDate) : null
-    },
-    localeCheckDate () {
-      const x = this.cCheckDate
-      let day, month, hour, minute
-      if (x) {
-        day = x.getDate() < 10 ? '' + 0 + x.getDate() : x.getDate()
-        month = (x.getMonth() + 1) < 10 ? '' + 0 + (x.getMonth() + 1) : (x.getMonth() + 1)
-        hour = x.getHours() < 10 ? '' + 0 + x.getHours() : x.getHours()
-        minute = x.getMinutes() < 10 ? '' + 0 + x.getMinutes() : x.getMinutes()
-      }
-      return x
-        ? day + '.' + month + '.' + x.getFullYear() + ', ' + hour + ':' + minute
-        : '-'
     }
   }
 }

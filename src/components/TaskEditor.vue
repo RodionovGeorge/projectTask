@@ -235,7 +235,9 @@ export default {
       handler: async function (val, oldVal) {
         if (val) {
           this.$emit('loadingOn')
+          this.imageTransformationCounter = 0
           this.imageLoading = true
+          const saveCurrentPageNumber = this.currentPage
           this.$nextTick()
           const resultB64Array = new Array(this.imagePaths.length)
           for (let i = 0; i < this.imagePaths.length; i++) {
@@ -256,6 +258,17 @@ export default {
               resultB64Array[i] = b.toDataURL('image/png').replace('data:image/png;base64,', '')
               this.imageTransformationCounter++
               if (this.imageTransformationCounter === this.imagePaths.length) {
+                const ctx = document.getElementById('background-canvas').getContext('2d')
+                const img = new Image(794, 1224)
+                img.onload = () => {
+                  ctx.drawImage(img, 0, 0)
+                  this.redraw(this.editorCtx, saveCurrentPageNumber)
+                  this.currentPage = saveCurrentPageNumber
+                  this.imageLoading = false
+                }
+                img.src = this.imagePaths[saveCurrentPageNumber]
+                this.disablePrevPageBtn = saveCurrentPageNumber === 0
+                this.disableNextPageBtn = saveCurrentPageNumber + 1 === this.imagePaths.length
                 this.$emit('returndata', resultB64Array)
               }
             }

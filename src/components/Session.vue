@@ -4,6 +4,8 @@
     class="q-mb-sm"
     clickable
     v-ripple
+    :active="sessionID.toString() === activeSessionID"
+    active-class="active-session"
     @click="onClick"
   >
     <q-item-section
@@ -30,7 +32,7 @@
         caption
         lines="1"
       >
-        {{ studentGroup === '-1' ? '-' : studentGroup }}
+        {{ studentGroup === '-1' ? 'Группа не указана' : studentGroup }}
       </q-item-label>
     </q-item-section>
 
@@ -64,6 +66,10 @@ export default {
       require: true
     },
     unverifiedAttemptCount: {
+      type: String,
+      require: true
+    },
+    activeSessionID: {
       type: String,
       require: true
     },
