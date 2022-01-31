@@ -28,6 +28,7 @@
     >
       <q-btn
         icon="bi-trash"
+        color="black"
         dense
         flat
         :loading="loading"

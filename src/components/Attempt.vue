@@ -37,7 +37,7 @@
           :label="studentAttempt.status"
         />
         <q-badge
-          v-if="teacherFeedbackStatus !== '' && (isTeacher || teacherFeedbackStatus !== 'Черновик отзыва')"
+          v-if="showTeacherFeedbackStatus"
           class="q-ml-sm"
           rounded
           color="primary"
@@ -60,6 +60,7 @@
           dense
           round
           size="15px"
+          :loading="innerLoadingFlag && parentLoadingFlag || (button.eventName === 'deleteClick' && parentLoadingFlag)"
           @click.stop="onButtonClick(index)"
         >
           <q-tooltip
@@ -78,12 +79,12 @@
 export default {
   name: 'Attempt',
   props: {
-    isTeacher: {
-      type: Boolean,
-      require: true
-    },
     studentAttempt: {
       type: Object,
+      require: true
+    },
+    showTeacherFeedbackStatus: {
+      type: Boolean,
       require: true
     },
     attemptHasNewCommentary: {
@@ -101,6 +102,10 @@ export default {
     buttonInformation: {
       type: Array,
       require: true
+    },
+    parentLoadingFlag: {
+      type: Boolean,
+      require: true
     }
   },
   methods: {
@@ -108,7 +113,24 @@ export default {
       this.$emit('click', this.studentAttempt.id)
     },
     onButtonClick (index) {
+      if (this.buttonInformation[index].eventName === 'deleteClick') {
+        this.innerLoadingFlag = true
+      }
       this.$emit(this.buttonInformation[index].eventName, this.studentAttempt.id)
+    }
+  },
+  data () {
+    return {
+      innerLoadingFlag: false
+    }
+  },
+  watch: {
+    parentLoadingFlag: {
+      handler (val, oldVal) {
+        if (!val) {
+          this.innerLoadingFlag = false
+        }
+      }
     }
   },
   computed: {

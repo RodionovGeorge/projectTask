@@ -5,9 +5,25 @@
   <LoadingSpinner
     :loading="pageLoading"
   />
+  <q-banner
+    inline-actions
+    class="content-shadow q-my-xs"
+    v-if="problemWasDeletedFlag"
+  >
+    Задача была успешно удалена.
+    <template v-slot:action>
+      <q-btn
+        no-caps
+        color="white"
+        text-color="black"
+        label="На главную"
+        @click="onMainPage"
+      />
+    </template>
+  </q-banner>
   <div
     class="column items-center q-py-sm q-gutter-y-sm"
-    v-if="!pageLoading && !problemIsBanned"
+    v-if="!pageLoading && !problemIsBanned && !problemWasDeletedFlag"
   >
     <TaskInfo
       v-bind="problemInformation"
@@ -62,30 +78,50 @@
           style="width:calc(10% - 5px)"
         />
       </div>
-      <q-virtual-scroll
-        ref="sessionList"
-        class="session-list-for-task"
-        :items="sessions"
+      <div
+        v-if="listLoading"
+        class="column items-center justify-center"
       >
-        <template
-          v-slot="{ item }"
+        <LoadingSpinner
+          :loading="listLoading"
+        />
+      </div>
+      <div
+        v-if="!listLoading"
+      >
+        <q-virtual-scroll
+          ref="sessionList"
+          class="session-list-for-task"
+          :items="sessions"
         >
-          <Session
-            v-bind="item"
-            :active-session-i-d="currentSessionID.toString()"
-            @click="getAttempts"
-          />
-        </template>
-      </q-virtual-scroll>
-      Всего найдено учеников: {{ allSessionCount }}
+          <template
+            v-slot="{ item }"
+          >
+            <Session
+              v-bind="item"
+              :active-session-i-d="currentSessionID.toString()"
+              @click="getAttempts"
+            />
+          </template>
+        </q-virtual-scroll>
+        Всего найдено учеников: {{ allSessionCount }}</div>
     </div>
     <q-banner
       class="content-shadow q-my-xs"
       style="width: 100%"
-      v-if="isTeacher && !currentSessionID"
+      v-if="!attemptsLoading && isTeacher && !currentSessionID"
     >
       Пожалуйста, выберите ученика.
     </q-banner>
+    <div
+      v-if="attemptsLoading"
+      class="column items-center justify-center q-mt-xs content-background content-shadow"
+      style="padding: 3px 3px 3px 3px; width: 100%"
+    >
+      <LoadingSpinner
+        :loading="attemptsLoading"
+      />
+    </div>
     <q-btn
       v-if="problemInformation.userStatus === 'Нет' && userHaveStudentRole"
       class="content-background"
@@ -96,13 +132,14 @@
     <q-banner
       class="content-shadow q-my-xs"
       style="width: 100%"
-      v-if="currentSessionStatus === 'Заблокирована'"
+      v-if="!attemptsLoading && currentSessionStatus === 'Заблокирована'"
     >
       Ход решения был заблокирован администратором.
     </q-banner>
     <div
       class="column no-wrap q-gutter-x-sm"
-      v-else-if="problemInformation.userStatus === 'Ученик' || (isTeacher && currentSessionID)"
+      v-if="!attemptsLoading && currentSessionStatus !== 'Заблокирована' &&
+      (problemInformation.userStatus === 'Ученик' || (isTeacher && currentSessionID))"
     >
       <div
         class="column q-gutter-y-sm items-center"
@@ -148,7 +185,8 @@
                 v-bind="item"
                 :button-information="isTeacher ? buttonInformationArrayForTeacher : buttonInformationArrayForStudent"
                 :active-attempt-i-d="currentAttemptID.toString()"
-                :is-teacher="isTeacher"
+                :parent-loading-flag="deleteStudentAttemptLoading"
+                :show-teacher-feedback-status="item.teacherFeedbackStatus !== '' && (isTeacher || item.teacherFeedbackStatus !== 'Черновик отзыва')"
                 @click="getAttempt"
                 @deleteClick="deleteStudentAttempt"
                 @downloadClick="fileDownload"
@@ -162,15 +200,24 @@
             {{ isTeacher ? 'Попыток у этого ученика: ' : 'Всего ваших попыток: ' }}{{ attempts.length }}
           </div>
         </div>
+        <div
+          v-if="attemptLoading"
+          class="column items-center justify-center content-shadow content-background"
+          style="width: 100%; padding: 3px 3px 3px 3px"
+        >
+          <LoadingSpinner
+            :loading="attemptLoading"
+          />
+        </div>
         <q-banner
           class="content-shadow q-my-xs"
           style="width: 100%"
-          v-if="!currentAttemptID"
+          v-if="!attemptLoading && !currentAttemptID"
         >
           Пожалуйста, выберите попытку.
         </q-banner>
         <div
-          v-if="currentAttemptID"
+          v-if="!attemptLoading && currentAttemptID"
           class="row no-wrap full-attempt"
         >
           <TeacherFeedback
@@ -193,7 +240,7 @@
         </div>
         <div
           class="attempt-discussion content-shadow content-background"
-          v-if="currentAttemptID"
+          v-if="!attemptLoading && currentAttemptID"
         >
           <div
             class="text-h6"
@@ -304,7 +351,6 @@
           Вы уверены? Это действие отменить нельзя.
         </p>
       </q-card-section>
-
       <q-card-actions
         align="right"
       >
@@ -551,6 +597,7 @@ export default {
       deleteTeacherFeedbackLoading: false,
       deleteStudentAttemptLoading: false,
       deleteProblemLoading: false,
+      problemWasDeletedFlag: false,
       statusChangeLoading: false,
       editTaskDialogShow: false,
       confirmDialogShow: false,
@@ -562,12 +609,24 @@ export default {
       infoDialogShow: false,
       helpDialogShow: false,
       attemptLoading: false,
+      attemptsLoading: false,
       errorDialogShow: false,
       editingLoading: false,
       commentaryToProblemLength: Constants.LENGTHS.commentaryToProblem,
       errorMessage: '',
       currentAttemptFileURL: '',
       filterValue: '',
+      /**
+       * @typedef {Object} buttonInformation
+       * @property {string} icon Иконка кнопки из Bootstrap
+       * @property {string} eventName Имя события, которая кнопка вызывает (событие содержит ID попытки, на котором кнопка была нажата)
+       * @property {string} tooltipMessage Содержание всплывающей подсказки при наведении на кнопку курсора
+       */
+      /**
+       * Для каждого объекта в массиве компонент создаст кнопку. Для создания будут использоватлься значения полей объекта
+       * Массив для отображения со стороны ученика
+       * @type {buttonInformation[]}
+       */
       buttonInformationArrayForStudent: [
         {
           icon: 'bi-eye',
@@ -585,6 +644,11 @@ export default {
           tooltipMessage: 'Удалить попытку'
         }
       ],
+      /**
+       * Для каждого объекта в массиве компонент создаст кнопку. Для создания будут использоватлься значения полей объекта
+       * Массив для отображения со стороны учителя
+       * @type {buttonInformation[]}
+       */
       buttonInformationArrayForTeacher: [
         {
           icon: 'bi-eye',
@@ -794,6 +858,8 @@ export default {
     },
     // CHECKED
     async getAttempt (attemptID) {
+      this.attemptLoading = true
+      this.currentAttemptID = attemptID
       const requestData = {
         attemptID: attemptID
       }
@@ -810,7 +876,6 @@ export default {
       if (responseData.message !== 'success') {
         throw new Error(responseData.message)
       } else {
-        this.currentAttemptID = attemptID
         this.currentAttempt.teacherFeedback = responseData.attempt.teacherFeedback
         this.currentAttempt.commentaries = responseData.attempt.commentaries
         this.currentAttemptObj.attemptHasNewCommentary = false
@@ -821,6 +886,7 @@ export default {
           this.studentInfo.fullName = this.currentSession?.studentFullName
           this.studentInfo.avatarPath = this.currentSession?.studentAvatarPath
         }
+        this.attemptLoading = false
       }
     },
     // CHECKED
@@ -841,7 +907,7 @@ export default {
         throw new Error(responseData.message)
       }
       window.localStorage.setItem('csrfToken', responseData.csrfToken)
-      await this.$router.push('/my/tasks')
+      this.problemWasDeletedFlag = true
     },
     // CHECKED
     async deleteStudentAttempt (attemptID) {
@@ -1029,6 +1095,8 @@ export default {
     },
     // CHECKED
     async getAttempts (sessionID) {
+      this.attemptsLoading = true
+      this.currentSessionID = sessionID
       const userStatus = this.problemInformation.userStatus
       const getParameters = new URLSearchParams()
       getParameters.append('problemID', userStatus === 'Учитель' ? '-1' : this.$route.params.task_id)
@@ -1054,8 +1122,8 @@ export default {
           }
           return 0
         })
-        this.currentSessionID = sessionID
         this.currentSession = this.sessions.find((e, i, a) => e.sessionID === this.currentSessionID)
+        this.attemptsLoading = false
       }
     },
     async initPage () {
@@ -1105,13 +1173,13 @@ export default {
   async created () {
     this.addNewCommentary = exceptionHandlerDecorator.call(this, [this.addNewCommentary], 'newCommentaryLoading')
     this.addNewAttempt = exceptionHandlerDecorator.call(this, [this.addNewAttempt], 'newAttemptLoading')
-    this.getAttempt = exceptionHandlerDecorator.call(this, [this.getAttempt], 'currentAttemptID')
-    this.getAttempts = exceptionHandlerDecorator.call(this, [this.getAttempts], 'currentSessionID')
+    this.getAttempt = exceptionHandlerDecorator.call(this, [this.getAttempt], 'currentAttemptID', 'attemptLoading')
+    this.getAttempts = exceptionHandlerDecorator.call(this, [this.getAttempts], 'currentSessionID', 'attemptsLoading')
 
     this.statusChange = exceptionHandlerDecorator.call(this, [this.statusChange], 'statusChangeLoading')
     this.onEditingProblem = exceptionHandlerDecorator.call(this, [this.onEditingProblem], 'editingLoading')
 
-    this.deleteProblem = exceptionHandlerDecorator.call(this, [this.deleteProblem])
+    this.deleteProblem = exceptionHandlerDecorator.call(this, [this.deleteProblem], 'deleteProblemLoading')
     this.deleteCommentary = exceptionHandlerDecorator.call(this, [this.deleteCommentary], 'deleteCommentaryLoading')
     this.deleteStudentAttempt = exceptionHandlerDecorator.call(this, [this.deleteStudentAttempt], 'deleteStudentAttemptLoading')
     this.deleteTeacherFeedback = exceptionHandlerDecorator.call(this, [this.deleteTeacherFeedback], 'deleteTeacherFeedbackLoading')

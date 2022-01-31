@@ -5,22 +5,38 @@
     <LoadingSpinner
       :loading="pageLoading"
     />
+    <q-banner
+      inline-actions
+      class="content-shadow q-my-xs"
+      v-if="problemWasDeletedFlag"
+    >
+      Задача была успешно удалена.
+      <template v-slot:action>
+        <q-btn
+          no-caps
+          color="white"
+          text-color="black"
+          label="На предыдущую страницу"
+          @click="onPreviousPage"
+        />
+      </template>
+    </q-banner>
     <div
       class="column items-center q-py-sm q-gutter-y-sm"
-      v-if="!pageLoading"
+      v-if="!pageLoading && !problemWasDeletedFlag"
     >
       <TaskInfo
         v-bind="problemInformation"
         :deleting="deleteProblemLoading"
-        :edit-button-show="false"
-        :sunrise-button-show="false"
-        :sunset-button-show="false"
         :delete-button-show="true"
-        delete-tooltip="Удалить задачу"
-        :complexity-show="complexityShow"
+        :edit-button-show="false"
+        :sunset-button-show="false"
+        :sunrise-button-show="false"
         :admin-commentary-show="rejectionReasonShow"
-        @delete="onProblemDeleting"
+        :complexity-show="complexityShow"
+        delete-tooltip="Удалить задачу"
         class="content-background content-shadow"
+        @delete="onProblemDeleting"
       />
       <div
         class="column student-table content-shadow content-background"
@@ -34,10 +50,10 @@
             outlined
             square
             style="width: 90%; margin-right: 5px"
+            @input="updateSessionListWithDecorator"
             debounce="1000"
-            label="Поиск"
             maxlength="60"
-            @input="updateSessionTableWithDecorator"
+            label="Поиск"
           >
             <template
               v-slot:append
@@ -54,72 +70,158 @@
             style="width:calc(10% - 5px)"
           />
         </div>
-        <q-table
-          square
-          flat
-          bordered
-          :columns="columns"
-          :visible-columns="visibleColumns"
-          :pagination.sync="pagination"
-          :loading="listLoading"
-          :rows-per-page-options="[pagination.rowsPerPage]"
-          row-key="sessionID"
-          binary-state-sort
-          @request="updateSessionTableWithDecorator"
-          @row-click="onRowClick"
-          :data="sessionData"
-          no-data-label="Ученики не найдены."
+        <div
+          v-if="listLoading"
+          class="column items-center justify-center"
         >
-          <template
-            v-slot:body-cell="props"
+          <LoadingSpinner
+            :loading="listLoading"
+          />
+        </div>
+        <div
+          v-if="!listLoading"
+        >
+          <q-virtual-scroll
+            ref="sessionList"
+            class="session-list-for-task"
+            :items="sessions"
           >
-            <q-td
-              :props="props"
-              :class="props.row.sessionID === currentSessionID ? 'bg-primary text-white' : 'bg-white text-black'"
+            <template
+              v-slot="{ item }"
             >
-              {{props.value}}
-            </q-td>
-          </template>
-        </q-table>
+              <Session
+                v-bind="item"
+                :active-session-i-d="currentSessionID.toString()"
+                @click="getAttempts"
+              />
+            </template>
+          </q-virtual-scroll>
+          Всего найдено учеников: {{ allSessionCount }}</div>
+      </div>
+      <q-banner
+        class="content-shadow q-my-xs"
+        style="width: 100%"
+        v-if="!attemptsLoading && !currentSessionID"
+      >
+        Пожалуйста, выберите ученика.
+      </q-banner>
+      <div
+        v-if="attemptsLoading"
+        class="column items-center justify-center q-mt-xs content-background content-shadow"
+        style="padding: 3px 3px 3px 3px; width: 100%"
+      >
+        <LoadingSpinner
+          :loading="attemptsLoading"
+        />
       </div>
       <div
+        v-if="!attemptsLoading && currentSessionID"
         class="column no-wrap q-gutter-x-sm"
-        v-if="currentSessionID"
       >
         <div
           class="column q-gutter-y-sm items-center"
         >
           <div
+            class="column content-background content-shadow"
+            style="width: 100%;"
+          >
+            <div
+              class="row q-pa-sm"
+              style="justify-content: space-between"
+            >
+              <div
+                class="text-h6"
+                style="font-weight: 400"
+              >
+                {{ 'Попытки ученика ' + currentSession.studentFullName }}
+              </div>
+            </div>
+            <q-virtual-scroll
+              ref="attemptList"
+              class="attempt-list q-px-sm"
+              :items="attempts"
+            >
+              <template
+                v-slot="{ item }"
+              >
+                <Attempt
+                  v-bind="item"
+                  :button-information="buttonInformationArray"
+                  :active-attempt-i-d="currentAttemptID.toString()"
+                  :parent-loading-flag="deleteStudentAttemptLoading"
+                  :show-teacher-feedback-status="item.teacherFeedbackStatus !== ''"
+                  @click="getAttempt"
+                  @deleteClick="onAttemptDeleting"
+                  @downloadClick="fileDownload"
+                  @eyeClick="onEyeClick"
+                />
+              </template>
+            </q-virtual-scroll>
+            <div
+              class="q-pb-sm q-px-sm"
+            >
+              Попыток у этого ученика: {{ attempts.length }}
+            </div>
+          </div>
+          <div
+            v-if="attemptLoading"
+            class="column items-center justify-center content-shadow content-background"
+            style="width: 100%; padding: 3px 3px 3px 3px"
+          >
+            <LoadingSpinner
+              :loading="attemptLoading"
+            />
+          </div>
+          <q-banner
+            class="content-shadow q-my-xs"
+            style="width: 100%"
+            v-if="!attemptLoading && !currentAttemptID"
+          >
+            Пожалуйста, выберите попытку.
+          </q-banner>
+          <div
+            v-if="!attemptLoading && currentAttemptID"
             class="row no-wrap full-attempt"
           >
-            <AttemptForStudent
-              v-bind="currentAttempt.studentAttempt"
-              :show-delete-button="true"
-              :deleting="deleteStudentAttemptLoading"
-              class="content-background content-shadow full-attempt-student"
-              @delete="onAttemptDeleting"
-            />
             <TeacherFeedback
+              v-if="currentAttempt.teacherFeedback"
               v-bind="currentAttempt.teacherFeedback"
               :deleting="deleteTeacherFeedbackLoading"
-              :show-delete-button="currentAttempt.studentAttempt.checkStatus === 'Проверена'"
-              class="content-background content-shadow full-attempt-teacher"
+              :show-delete-button="true"
+              :show-eye-button="true"
+              :attempt-date="currentAttemptObj.studentAttempt.dateOfLastChange"
               @delete="onTeacherFeedbackDeleting"
+              class="content-background content-shadow full-attempt-teacher"
             />
+            <q-banner
+              v-else
+              class="content-shadow q-px-sm"
+              style="width: 100%"
+            >
+              Преподаватель пока не дал отзыв на эту попытку.
+            </q-banner>
           </div>
           <div
             class="attempt-discussion content-shadow content-background"
+            v-if="!attemptLoading && currentAttemptID"
           >
             <div
               class="text-h6"
             >
-              Обсуждение попытки
+              Сообщения
             </div>
+            <q-banner
+              class="content-shadow q-my-xs"
+              style="width: 100%"
+              v-if="currentAttempt.commentaries.length === 0"
+            >
+              Сообщений нет.
+            </q-banner>
             <div
               class="q-gutter-y-sm"
+              v-else
             >
               <q-virtual-scroll
-                v-if="caCommentaryNotEmpty"
                 style="max-height: 400px"
                 :items="currentAttempt.commentaries"
               >
@@ -127,9 +229,9 @@
                   v-slot="{ item }"
                 >
                   <Commentary
-                    :author-full-name="teacherInfo.id === item.authorID ? teacherInfo.fullName : studentInfo.fullName"
+                    :author-full-name="item.authorID === teacherInfo.id ? teacherInfo.fullName : studentInfo.fullName"
                     :author-i-d="item.authorID"
-                    :avatar-path="teacherInfo.id === item.authorID ? teacherInfo.avatarPath : studentInfo.avatarPath"
+                    :avatar-path="item.authorID === teacherInfo.id ? teacherInfo.avatarPath : studentInfo.avatarPath"
                     :commentary-date="item.commentaryDate"
                     :commentary-i-d="item.commentaryID"
                     :commentary-text="item.commentaryText"
@@ -140,90 +242,8 @@
                   />
                 </template>
               </q-virtual-scroll>
-              <div
-                v-else
-              >
-                Комментариев нет.
-              </div>
             </div>
           </div>
-          <div
-            class="content-background content-shadow previous-attempts"
-            v-if="attemptMaxNumber > 1 && !attemptLoading"
-          >
-            <div
-              class="text-h6"
-            >
-              Предыдущие попытки
-            </div>
-            <div class="q-gutter-y-xs">
-              <q-pagination
-                class="flex flex-center"
-                v-model="currentPreviousAttemptNumber"
-                :max="attemptMaxNumber - 1"
-                @input="onPaginationClick"
-                boundary-numbers
-              />
-              <div
-                class="row no-wrap full-attempt"
-              >
-                <AttemptForStudent
-                  v-bind="previousAttempt.studentAttempt"
-                  :show-delete-button="false"
-                  class="content-shadow-for-white full-attempt-student"
-                />
-                <TeacherFeedback
-                  v-bind="previousAttempt.teacherFeedback"
-                  :show-delete-button="false"
-                  class="content-shadow-for-white full-attempt-teacher"
-                />
-              </div>
-              <div
-                class="commentary-list content-shadow-for-white"
-              >
-                <div
-                  class="text-h6"
-                >
-                  Обсуждение попытки
-                </div>
-                <div
-                  class="q-gutter-y-sm"
-                >
-                  <q-virtual-scroll
-                    v-if="paCommentaryNotEmpty"
-                    style="max-height: 200px"
-                    :items="previousAttempt.commentaries"
-                  >
-                    <template
-                      v-slot="{ item }"
-                    >
-                      <Commentary
-                        :author-full-name="teacherInfo.id === item.authorID ? teacherInfo.fullName : studentInfo.fullName"
-                        :author-i-d="item.authorID"
-                        :avatar-path="teacherInfo.id === item.authorID ? teacherInfo.avatarPath : studentInfo.avatarPath"
-                        :commentary-date="item.commentaryDate"
-                        :commentary-i-d="item.commentaryID"
-                        :commentary-text="item.commentaryText"
-                        :user-status="problemInformation.userStatus"
-                        :loading="deleteCommentaryLoading"
-                        :show-delete-button="true"
-                        @delete="onCommentaryDeleting"
-                      />
-                    </template>
-                  </q-virtual-scroll>
-                  <div
-                    v-else
-                  >
-                    Комментариев нет.
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <LoadingSpinner
-            v-if="attemptLoading"
-            :loading="attemptLoading"
-          />
         </div>
       </div>
     </div>
@@ -249,10 +269,9 @@
             class="q-ml-sm text-center"
             style="width: calc(100% - 70px)"
           >
-            Вы уверены? Это действие отменить нельзя. <br> Удаление влечет блокировку соответствующей роли у пользователя.
+            Вы уверены? Это действие отменить нельзя.
           </p>
         </q-card-section>
-
         <q-card-actions
           align="right"
         >
@@ -283,120 +302,107 @@
             Справка
           </div>
         </q-card-section>
-
-        <q-card-section class="q-pt-none">
+        <q-card-section
+          class="q-pt-none"
+        >
           Для фильтрации по имени нужно просто ввести необходимый запрос.<br>
           Для фильтрации по группе запрос нужно начать с '.g' (без кавычек).
         </q-card-section>
-
-        <q-card-actions align="right">
-          <q-btn flat label="OK" color="primary" v-close-popup />
+        <q-card-actions
+          align="right"
+        >
+          <q-btn
+            flat
+            label="OK"
+            color="primary"
+            v-close-popup
+          />
         </q-card-actions>
       </q-card>
+    </q-dialog>
+    <q-dialog
+      v-model="showProblemFlag"
+    >
+      <q-pdfviewer
+        v-model="showProblemFlag"
+        :src="currentAttemptFileURL"
+      >
+      </q-pdfviewer>
     </q-dialog>
   </q-page>
 </template>
 
 <script>
 import TaskInfo from 'components/TaskInfo'
-import AttemptForStudent from 'components/AttemptForStudent'
 import TeacherFeedback from 'components/TeacherFeedback'
+import Attempt from 'components/Attempt'
+import Session from 'components/Session'
 import Commentary from 'components/Commentary'
 import ErrorDialog from 'components/ErrorDialog'
 import LoadingSpinner from 'components/LoadingSpinner'
 import { Constants, exceptionHandlerDecorator, toLocalDate } from 'boot/Constants'
 export default {
-  components: { TaskInfo, AttemptForStudent, TeacherFeedback, Commentary, ErrorDialog, LoadingSpinner },
+  components: { TaskInfo, Attempt, Session, TeacherFeedback, Commentary, ErrorDialog, LoadingSpinner },
   name: 'Task',
   data () {
     return {
       errorDialogShow: false,
       pageLoading: false,
+      problemWasDeletedFlag: false,
       confirmDialogShow: false,
       attemptLoading: false,
+      attemptsLoading: false,
       deleteProblemLoading: false,
       deleteStudentAttemptLoading: false,
       listLoading: false,
       deleteTeacherFeedbackLoading: false,
       deleteCommentaryLoading: false,
+      showProblemFlag: false,
+      infoDialogShow: false,
+      buttonInformationArray: [
+        {
+          icon: 'bi-eye',
+          eventName: 'eyeClick',
+          tooltipMessage: 'Просмотр попытки'
+        },
+        {
+          icon: 'bi-box-arrow-in-down',
+          eventName: 'downloadClick',
+          tooltipMessage: 'Скачать файл с попыткой'
+        },
+        {
+          icon: 'bi-trash',
+          eventName: 'deleteClick',
+          tooltipMessage: 'Удалить попытку'
+        }
+      ],
       problemInformation: null,
       errorMessage: '',
       filterValue: '',
+      sessions: [],
+      allSessionCount: null,
+      attempts: [],
       target: {
         id: null,
         mode: null,
         successFunction: null,
         deletingFlag: null
       },
-      targetID: null,
-      targetMode: null,
       sessionData: null,
-      visibleColumns: ['studentFullName', 'studentGroup'],
-      columns: [
-        {
-          name: 'sessionID',
-          field: 'sessionID'
-        },
-        {
-          name: 'studentFullName',
-          label: 'Ученик',
-          align: 'center',
-          field: 'studentFullName',
-          sortable: true
-        },
-        {
-          name: 'studentGroup',
-          label: 'Группа',
-          align: 'center',
-          format: val => val === '-1' ? '-' : val,
-          field: 'studentGroup',
-          sortable: true
-        }
-      ],
-      pagination: {
-        sortBy: '',
-        descending: false,
-        page: 1,
-        rowsPerPage: 5,
-        rowsNumber: null
-      },
       currentSessionID: false,
+      currentSession: null,
+      currentAttemptID: false,
+      currentAttemptFileURL: '',
       teacherInfo: {
         id: null,
         avatarPath: null,
         fullName: null
       },
       studentInfo: {
-        id: null,
         avatarPath: null,
         fullName: null
       },
       currentAttempt: {
-        attemptID: null,
-        studentAttempt: {
-          attemptNumber: null,
-          checkStatus: null,
-          dateOfLastChange: null,
-          problemFileURL: null
-        },
-        teacherFeedback: {
-          decisionStage: null,
-          checkDate: null,
-          problemFileURL: null,
-          teacherCommentary: null
-        },
-        commentaries: null
-      },
-      attemptMaxNumber: 0,
-      currentPreviousAttemptNumber: null,
-      previousAttempt: {
-        attemptID: null,
-        studentAttempt: {
-          attemptNumber: null,
-          checkStatus: null,
-          dateOfLastChange: null,
-          problemFileURL: null
-        },
         teacherFeedback: {
           decisionStage: null,
           checkDate: null,
@@ -408,23 +414,25 @@ export default {
     }
   },
   computed: {
-    paCommentaryNotEmpty () {
-      return this.previousAttempt.commentaries?.length
-    },
-    caCommentaryNotEmpty () {
-      return this.currentAttempt.commentaries?.length
-    },
     rejectionReasonShow () {
       return this.problemInformation.problemStatus === 'Отклонена'
+    },
+    currentAttemptObj () {
+      return this.attempts.find((e, i, a) => e.studentAttempt.id === this.currentAttemptID)
     },
     complexityShow () {
       return this.problemInformation.problemStatus !== 'Отклонена' && this.problemInformation.problemStatus !== 'Проверяется'
     },
-    updateSessionTableWithDecorator () {
-      return exceptionHandlerDecorator.call(this, [this.updateSessionTable], 'listLoading')
+    updateSessionListWithDecorator () {
+      return exceptionHandlerDecorator.call(this, [this.updateSessionList], 'listLoading')
     }
   },
   methods: {
+    onEyeClick (attemptID) {
+      const currentAttempt = this.attempts.find((e, i, a) => e.studentAttempt.id === attemptID)
+      this.currentAttemptFileURL = currentAttempt.studentAttempt.fileURL
+      this.showProblemFlag = true
+    },
     onProblemDeleting () {
       this.target.id = this.problemInformation.problemID
       this.target.mode = 'problem'
@@ -432,15 +440,15 @@ export default {
       this.target.deletingFlag = 'deleteProblemLoading'
       this.confirmDialogShow = true
     },
-    onAttemptDeleting () {
-      this.target.id = this.currentAttempt.attemptID
+    onAttemptDeleting (attemptID) {
+      this.target.id = attemptID
       this.target.mode = 'student attempt'
       this.target.successFunction = this.attemptSuccessFunction
       this.target.deletingFlag = 'deleteStudentAttemptLoading'
       this.confirmDialogShow = true
     },
     onTeacherFeedbackDeleting () {
-      this.target.id = this.currentAttempt.attemptID
+      this.target.id = this.currentAttemptID
       this.target.mode = 'teacher feedback'
       this.target.successFunction = this.teacherFeedbackSuccessFunction
       this.target.deletingFlag = 'deleteTeacherFeedbackLoading'
@@ -454,40 +462,44 @@ export default {
       this.confirmDialogShow = true
     },
     commentarySuccessFunction () {
-      let index = this.currentAttempt.commentaries.findIndex((e, i, a) => e.commentaryID === this.target.id)
-      if (~index) {
-        this.currentAttempt.commentaries.splice(index, 1)
-      } else {
-        index = this.previousAttempt.commentaries.findIndex((e, i, a) => e.commentaryID === this.target.id)
-        this.previousAttempt.commentaries.splice(index, 1)
-      }
+      const index = this.currentAttempt.commentaries.findIndex((e, i, a) => e.commentaryID === this.target.id)
+      this.currentAttempt.commentaries.splice(index, 1)
     },
     problemSuccessFunction () {
+      this.problemWasDeletedFlag = true
+    },
+    onPreviousPage () {
       this.$router.go(-1)
     },
+    fileDownload (attemptID) {
+      const a = document.createElement('a')
+      a.href = this.attempts.find((e, i, a) => e.studentAttempt.id === attemptID).studentAttempt.fileURL
+      a.download = '' + attemptID + 'student.pdf'
+      a.click()
+    },
     teacherFeedbackSuccessFunction () {
-      this.currentAttempt.studentAttempt.checkStatus = 'Проверяется'
-      for (const field of Object.keys(this.currentAttempt.teacherFeedback)) {
-        this.currentAttempt.teacherFeedback[field] = null
-      }
+      const currentAttempt = this.attempts.find((e, i, a) => e.studentAttempt.id === this.currentAttemptID)
+      currentAttempt.studentAttempt.status = 'Попытка проверяется учителем'
+      currentAttempt.teacherFeedbackStatus = ''
+      this.currentAttempt.teacherFeedback = null
     },
     async attemptSuccessFunction () {
-      this.attemptMaxNumber--
-      if (this.attemptMaxNumber === 0) {
-        this.$router.go(-1)
+      if (this.attempts.length === 1) {
+        this.sessions = this.sessions.filter(e => e.sessionID !== this.currentSessionID)
+        this.allSessionCount--
+        this.currentAttemptID = false
+        this.currentSessionID = false
+        this.$q.notify({
+          type: 'info',
+          color: 'primary',
+          textColor: 'white',
+          message: 'Попытка удалена.'
+        })
       } else {
-        const newCurrentAttempt = await this.getAttempt(this.attemptMaxNumber)
-        this.currentAttempt.attemptID = newCurrentAttempt.attemptID
-        this.currentAttempt.studentAttempt = newCurrentAttempt.studentAttempt
-        this.currentAttempt.teacherFeedback = newCurrentAttempt.teacherFeedback
-        this.currentAttempt.commentaries = newCurrentAttempt.commentariesInfo.commentaries || []
-        if (this.attemptMaxNumber > 1) {
-          const lastPreviousAttempt = await this.getAttempt(this.attemptMaxNumber - 1)
-          this.previousAttempt.attemptID = lastPreviousAttempt.attemptID
-          this.previousAttempt.studentAttempt = lastPreviousAttempt.studentAttempt
-          this.previousAttempt.teacherFeedback = lastPreviousAttempt.teacherFeedback
-          this.previousAttempt.commentaries = lastPreviousAttempt.commentariesInfo.commentaries || []
+        if (this.currentAttemptID === this.target.id) {
+          this.currentAttemptID = false
         }
+        this.attempts = this.attempts.filter(e => e.studentAttempt.id !== this.target.id)
       }
     },
     async deleteTarget () {
@@ -523,42 +535,17 @@ export default {
       }
       data.data.problemStartLine = toLocalDate(data.data.problemStartLine)
       data.data.problemDeadline = toLocalDate(data.data.problemDeadline)
+      this.teacherInfo.id = data.data.authorID
+      this.teacherInfo.avatarPath = data.data.authorAvatarPath
+      this.teacherInfo.fullName = data.data.authorFullName
       this.problemInformation = data.data
     },
-    async onRowClick (...args) {
-      this.listLoading = true
-      const r = args[1]
-      this.currentSessionID = r.sessionID
-      await this.getSession()
-      this.listLoading = false
-    },
-    async onPaginationClick (attemptNumber) {
+    // CHECKED
+    async getAttempt (attemptID) {
       this.attemptLoading = true
-      const attempt = await this.getAttempt(attemptNumber)
-      this.previousAttempt.attemptID = attempt.attemptID
-      this.previousAttempt.studentAttempt = attempt.studentAttempt
-      this.previousAttempt.teacherFeedback = attempt.teacherFeedback
-      this.previousAttempt.commentaries = attempt.commentariesInfo.commentaries || []
-      this.attemptLoading = false
-    },
-    async getAttemptNumber () {
-      const getParameters = new URLSearchParams()
-      getParameters.append('sessionID', this.currentSessionID)
-      const response = await fetch(
-        Constants.SERVER_URL + '/api/admin/get-session?' + getParameters.toString(),
-        Constants.GET_INIT
-      )
-      const responseData = await response.json()
-      if (responseData.message !== 'success') {
-        throw new Error(responseData.message)
-      } else {
-        this.attemptMaxNumber = responseData.attemptNumber
-      }
-    },
-    async getAttempt (attemptNumber) {
+      this.currentAttemptID = attemptID
       const requestData = {
-        sessionID: this.currentSessionID,
-        requestAttemptNumber: attemptNumber
+        attemptID: attemptID
       }
       const response = await fetch(
         Constants.SERVER_URL + '/api/admin/get-session',
@@ -573,41 +560,49 @@ export default {
       if (responseData.message !== 'success') {
         throw new Error(responseData.message)
       } else {
-        return responseData.attempt
+        this.currentAttempt.teacherFeedback = responseData.attempt.teacherFeedback
+        this.currentAttempt.commentaries = responseData.attempt.commentaries
+        this.attemptLoading = false
       }
     },
-    async getSession () {
-      await this.getAttemptNumber()
-      const currentAttempt = await this.getAttempt(this.attemptMaxNumber)
-      this.teacherInfo = currentAttempt.commentariesInfo.teacherInfo
-      this.studentInfo = currentAttempt.commentariesInfo.studentInfo
-      if (this.attemptMaxNumber > 1) {
-        const lastPreviousAttempt = await this.getAttempt(this.attemptMaxNumber - 1)
-        this.previousAttempt.attemptID = lastPreviousAttempt.attemptID
-        this.previousAttempt.studentAttempt = lastPreviousAttempt.studentAttempt
-        this.previousAttempt.teacherFeedback = lastPreviousAttempt.teacherFeedback
-        this.previousAttempt.commentaries = lastPreviousAttempt.commentariesInfo.commentaries || []
-        this.currentPreviousAttemptNumber = this.attemptMaxNumber - 1
+    // CHECKED
+    async getAttempts (sessionID) {
+      this.attemptsLoading = true
+      this.currentSessionID = sessionID
+      const getParameters = new URLSearchParams()
+      getParameters.append('sessionID', sessionID)
+      const response = await fetch(
+        Constants.SERVER_URL + '/api/admin/get-session?' + getParameters.toString(),
+        Constants.GET_INIT
+      )
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      } else {
+        this.attempts = responseData.attempts
+        this.attempts.sort((lhs, rhs) => {
+          const lhsDate = new Date(lhs.studentAttempt.dateOfLastChange)
+          const rhsDate = new Date(rhs.studentAttempt.dateOfLastChange)
+          if (lhsDate < rhsDate) {
+            return 1
+          }
+          if (lhsDate > rhsDate) {
+            return -1
+          }
+          return 0
+        })
+        this.currentSession = this.sessions.find((e, i, a) => e.sessionID === this.currentSessionID)
+        this.studentInfo.avatarPath = this.currentSession.studentAvatarPath
+        this.studentInfo.fullName = this.currentSession.studentFullName
+        this.attemptsLoading = false
       }
-      this.currentAttempt.attemptID = currentAttempt.attemptID
-      this.currentAttempt.studentAttempt = currentAttempt.studentAttempt
-      this.currentAttempt.teacherFeedback = currentAttempt.teacherFeedback
-      this.currentAttempt.commentaries = currentAttempt.commentariesInfo.commentaries || []
     },
-    async updateSessionTable (...args) {
+    // CHECKED
+    async updateSessionList (...args) {
       this.listLoading = true
-      const props = args[0]
-      const { page, rowsPerPage, sortBy, descending } =
-        typeof props === 'string'
-          ? this.pagination
-          : props.pagination
       const currentProblemID = this.$route.params.task_id
       const getParameters = new URLSearchParams()
       getParameters.append('filterValue', this.filterValue)
-      getParameters.append('currentPage', page)
-      getParameters.append('pageSize', rowsPerPage)
-      getParameters.append('sortField', sortBy || 'studentFullName')
-      getParameters.append('sortDir', descending ? 'desc' : 'asc')
       const response = await fetch(
         Constants.SERVER_URL + '/api/admin/get-sessions-by-problem/' + currentProblemID + '?' + getParameters.toString(),
         Constants.GET_INIT
@@ -616,12 +611,8 @@ export default {
       if (data.message !== 'success') {
         throw new Error(data.message)
       }
-      this.sessionData = data.sessionInfo
-      this.pagination.rowsNumber = data.sessionCount
-      this.pagination.rowsPerPage = rowsPerPage
-      this.pagination.page = page
-      this.pagination.sortBy = sortBy
-      this.pagination.descending = descending
+      this.sessions = data.sessionInfo
+      this.allSessionCount = data.sessionCount
       this.listLoading = false
     },
     async initPage () {
@@ -630,20 +621,24 @@ export default {
         await new Promise((resolve, reject) => setTimeout(resolve, 200))
       }
       await this.getProblem()
+      await this.updateSessionList()
       if (this.$route.params.session_id !== '-1') {
         this.currentSessionID = Number(this.$route.params.session_id)
       }
       if (this.currentSessionID) {
-        await this.getSession()
-        this.filterValue = this.studentInfo.fullName
+        await this.getAttempts(this.currentSessionID)
       }
-      await this.updateSessionTable('random string')
       this.pageLoading = false
+      if (this.currentSessionID) {
+        await this.$nextTick()
+        const sessionIndex = this.sessions.findIndex((e, i, a) => e.sessionID === this.currentSessionID)
+        this.$refs.sessionList.scrollTo(sessionIndex)
+      }
     }
   },
   async created () {
-    this.onRowClick = exceptionHandlerDecorator.call(this, [this.onRowClick], 'listLoading', 'currentSessionID')
-    this.onPaginationClick = exceptionHandlerDecorator.call(this, [this.onPaginationClick], 'attemptLoading')
+    this.getAttempt = exceptionHandlerDecorator.call(this, [this.getAttempt], 'currentAttemptID', 'attemptLoading')
+    this.getAttempts = exceptionHandlerDecorator.call(this, [this.getAttempts], 'currentSessionID', 'attemptsLoading')
     this.deleteTarget = exceptionHandlerDecorator.call(this, [this.deleteTarget], 'deleteProblemLoading', 'deleteStudentAttemptLoading', 'deleteTeacherFeedbackLoading', 'deleteCommentaryLoading')
     await exceptionHandlerDecorator.call(this, [this.initPage, true])()
   },

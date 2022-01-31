@@ -13,8 +13,8 @@
 const AT_404 = '/error-404'
 
 const Constants = {
-  // SERVER_URL: 'http://78.81.147.165',
-  SERVER_URL: 'http://192.168.100.6',
+  SERVER_URL: 'http://78.81.147.165',
+  // SERVER_URL: 'http://192.168.100.6',
   TASK_DISCIPLINES: [
     'Дискретная математика',
     'Алгебра и геометрия',
@@ -84,7 +84,8 @@ const Constants = {
     'user already admin': { message: 'У пользователя может быть или администратором, или его помощником.', path: '/error-400' },
     'session status not found': { message: 'Такой статус не найден.', path: AT_404 },
     'problem is admitting now': { message: 'Данная задача проверяется в данный момент.', path: '/error-403' },
-    'information not found': { message: 'Справка не найдена.', path: AT_404 }
+    'information not found': { message: 'Справка не найдена.', path: AT_404 },
+    'attempt can not be added': { message: 'Попытка не может быть добавлена.', path: '/permission-error' }
   },
   PATHS_WITHOUT_AUTHENTICATION: [
     '/login',
