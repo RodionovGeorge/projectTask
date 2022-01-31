@@ -306,7 +306,8 @@
           class="q-pt-none"
         >
           Для фильтрации по имени нужно просто ввести необходимый запрос.<br>
-          Для фильтрации по группе запрос нужно начать с '.g' (без кавычек).
+          Для фильтрации по группе запрос нужно начать с '.g' (без кавычек).<br>
+          Чтобы найти учеников, которые не указали группу, введите '.g-' (без кавычек).
         </q-card-section>
         <q-card-actions
           align="right"
@@ -569,6 +570,7 @@ export default {
     async getAttempts (sessionID) {
       this.attemptsLoading = true
       this.currentSessionID = sessionID
+      this.currentAttemptID = false
       const getParameters = new URLSearchParams()
       getParameters.append('sessionID', sessionID)
       const response = await fetch(

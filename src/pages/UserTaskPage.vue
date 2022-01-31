@@ -458,7 +458,8 @@
         class="q-pt-none"
       >
         Для фильтрации по имени нужно просто ввести необходимый запрос.<br>
-        Для фильтрации по группе запрос нужно начать с '.g' (без кавычек).
+        Для фильтрации по группе запрос нужно начать с '.g' (без кавычек).<br>
+        Чтобы найти учеников, которые не указали группу, введите '.g-' (без кавычек).
       </q-card-section>
       <q-card-actions
         align="right"
@@ -1097,6 +1098,7 @@ export default {
     async getAttempts (sessionID) {
       this.attemptsLoading = true
       this.currentSessionID = sessionID
+      this.currentAttemptID = false
       const userStatus = this.problemInformation.userStatus
       const getParameters = new URLSearchParams()
       getParameters.append('problemID', userStatus === 'Учитель' ? '-1' : this.$route.params.task_id)
@@ -1109,7 +1111,6 @@ export default {
       if (responseData.message !== 'success') {
         throw new Error(responseData.message)
       } else {
-        this.currentSessionStatus = responseData.sessionStatus
         this.attempts = responseData.attempts
         this.attempts.sort((lhs, rhs) => {
           const lhsDate = new Date(lhs.studentAttempt.dateOfLastChange)
@@ -1123,6 +1124,7 @@ export default {
           return 0
         })
         this.currentSession = this.sessions.find((e, i, a) => e.sessionID === this.currentSessionID)
+        this.currentSessionStatus = responseData.sessionStatus
         this.attemptsLoading = false
       }
     },
@@ -1140,8 +1142,9 @@ export default {
           case 'Учитель':
             await this.updateSessionList()
             if (this.currentSessionID && this.currentAttemptID) {
+              const attemptID = this.currentAttemptID
               await this.getAttempts(this.currentSessionID)
-              await this.getAttempt(this.currentAttemptID)
+              await this.getAttempt(attemptID)
             }
             break
           case 'Ученик':
