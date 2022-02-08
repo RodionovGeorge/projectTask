@@ -1,8 +1,12 @@
 <template>
   <q-page
-    class="row items-center justify-center no-wrap"
+    class="column items-center justify-center no-wrap"
   >
+    <LoadingSpinner
+      :loading="loadingPage"
+    />
     <div
+      v-if="!loadingPage"
       class="column new-task-page content-background content-shadow items-center q-gutter-y-sm"
     >
       <div
@@ -36,11 +40,11 @@
             label="Файл с условием"
           />
           <q-select
+            ref="select"
             v-model="selectedTaskDiscipline"
             outlined
             input-debounce="0"
-            label="Дисциплина"
-            ref="discipline"
+            label="Предмет"
             use-input
             hide-selected
             fill-input
@@ -48,7 +52,79 @@
             :rules="[value => !!value || 'Пожалуйста, выберите дисциплину']"
             @filter="filter"
             @input-value="setModel"
-          />
+            @input="onInput"
+          >
+            <template
+              v-if="isAdmin"
+              v-slot:append
+            >
+              <q-btn
+                round
+                dense
+                flat
+                icon="bi-plus"
+                @click.stop="newDisciplineDialogShow = true"
+              >
+                <q-tooltip
+                  :delay="800"
+                >
+                  Добавить возможный предмет
+                </q-tooltip>
+              </q-btn>
+            </template>
+            <template
+              v-slot:no-option
+            >
+              <q-item>
+                <q-item-section
+                  class="text-italic text-grey"
+                >
+                  Возможных вариантов предмета для задачи не обнаружено
+                </q-item-section>
+              </q-item>
+            </template>
+            <template
+              v-slot:option="{ itemProps, itemEvents, opt }"
+            >
+              <q-item
+                v-bind="itemProps"
+                v-on="itemEvents"
+              >
+                <q-item-section>
+                  <q-item-label>
+                    {{ opt.label }}
+                  </q-item-label>
+                </q-item-section>
+                <q-item-section
+                  v-if="isAdmin"
+                  side
+                >
+                  <q-btn
+                    round
+                    dense
+                    flat
+                    color="black"
+                    icon="bi-trash"
+                    :loading="deleting"
+                    @click.stop="deleteTaskDiscipline(opt.id)"
+                  >
+                    <template
+                      v-slot:loading
+                    >
+                      <q-spinner
+                        :thickness="2"
+                      />
+                    </template>
+                    <q-tooltip
+                      :delay="800"
+                    >
+                      Удалить возможный предмет
+                    </q-tooltip>
+                  </q-btn>
+                </q-item-section>
+              </q-item>
+            </template>
+          </q-select>
           <q-input
             v-model="authorCommentary"
             type="textarea"
@@ -163,26 +239,89 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
+    <q-dialog
+      v-model="newDisciplineDialogShow"
+      persistent
+      transition-show="scale"
+      transition-hide="scale"
+    >
+      <q-card
+        style="min-width: 350px"
+      >
+        <q-card-section>
+          <div
+            class="text-h6"
+          >
+            Добавление нового предмета для задач
+          </div>
+        </q-card-section>
+        <q-card-section
+          class="q-pt-none"
+        >
+          <q-input
+            ref="newDisciplineInput"
+            v-model="newDisciplineLabel"
+            maxlength="30"
+            label="Название нового предмета"
+            outlined
+            :rules="[value => !!value || 'Пожалуйста, введите название предмета']"
+          />
+        </q-card-section>
+        <q-card-actions
+          align="right"
+          class="text-primary"
+        >
+          <q-btn
+            flat
+            no-caps
+            label="Назад"
+            v-close-popup
+          />
+          <q-btn
+            flat
+            no-caps
+            :loading="adding"
+            label="Добавить"
+            @click="addNewTaskDiscipline"
+          >
+            <template
+              v-slot:loading
+            >
+              <q-spinner
+                :thickness="2"
+              />
+            </template>
+          </q-btn>
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
 <script>
 import { Constants, exceptionHandlerDecorator, toBase64 } from 'boot/Constants'
 import { date } from 'quasar'
+import LoadingSpinner from 'components/LoadingSpinner'
 
 export default {
   name: 'NewTaskPage',
+  components: { LoadingSpinner },
   data () {
     return {
       errorDialogShow: false,
       infoDialogShow: false,
       errorMessage: '',
       submitting: false,
+      adding: false,
+      deleting: false,
+      loadingPage: false,
+      newDisciplineDialogShow: false,
       commentaryMaxLength: Constants.LENGTHS.commentaryToProblem,
       taskName: '',
-      selectedTaskDiscipline: '',
-      autoCompleteDisciplines: Constants.TASK_DISCIPLINES,
-      taskDisciplines: Constants.TASK_DISCIPLINES,
+      selectedTaskDiscipline: null,
+      autoCompleteDisciplines: null,
+      taskDisciplines: null,
+      newDisciplineLabel: '',
       dateRange: {
         to: '',
         from: ''
@@ -204,15 +343,18 @@ export default {
     filter (val, update, abort) {
       update(() => {
         const lowerCaseVal = val.toLowerCase()
-        this.taskDisciplines = this.autoCompleteDisciplines.filter(v => ~v.toLowerCase().indexOf(lowerCaseVal))
+        this.taskDisciplines = this.autoCompleteDisciplines.filter(v => ~v.label.toLowerCase().indexOf(lowerCaseVal))
       })
     },
     setModel (v) {
       this.selectedTaskDiscipline = v
     },
+    onInput (v) {
+      this.selectedTaskDiscipline = v.label
+    },
     async onEnter () {
       const correctTitleEnter = this.$refs.taskName.validate()
-      const correctDisciplinesChoose = this.$refs.discipline.validate()
+      const correctDisciplinesChoose = this.$refs.select.validate()
       const correctFileChoose = this.$refs.file.validate()
       if (this.dateRange === null || this.dateRange.to === '' || this.dateRange.from === '') {
         this.errorMessage = 'Пожалуйста, выберите интервал приема решений.'
@@ -247,12 +389,88 @@ export default {
         await this.$router.go(-1)
         this.submitting = false
       }
+    },
+    async addNewTaskDiscipline () {
+      const correctNewDisciplineLabel = this.$refs.newDisciplineInput.validate()
+      if (correctNewDisciplineLabel) {
+        this.adding = true
+        const requestData = {
+          csrfToken: window.localStorage.getItem('csrfToken'),
+          label: this.newDisciplineLabel
+        }
+        const response = await fetch(Constants.SERVER_URL + '/api/admin/problem-discipline', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: Constants.HEADERS,
+          body: JSON.stringify(requestData)
+        })
+        const responseData = await response.json()
+        if (responseData.message !== 'success') {
+          throw new Error(responseData.message)
+        }
+        this.taskDisciplines.push({
+          id: responseData.id,
+          label: this.newDisciplineLabel
+        })
+        this.autoCompleteDisciplines = this.taskDisciplines
+        this.$refs.select.refresh()
+        localStorage.setItem('csrfToken', responseData.csrfToken)
+        this.adding = false
+        this.newDisciplineDialogShow = false
+        this.newDisciplineLabel = ''
+      }
+    },
+    async deleteTaskDiscipline (id) {
+      this.deleting = true
+      this.$refs.select.showPopup()
+      const requestData = {
+        csrfToken: window.localStorage.getItem('csrfToken'),
+        id: id
+      }
+      const response = await fetch(Constants.SERVER_URL + '/api/admin/problem-discipline', {
+        method: 'PUT',
+        credentials: 'same-origin',
+        headers: Constants.HEADERS,
+        body: JSON.stringify(requestData)
+      })
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      }
+      this.taskDisciplines = this.taskDisciplines.filter(e => e.id !== id)
+      this.autoCompleteDisciplines = this.taskDisciplines
+      this.$refs.select.showPopup()
+      localStorage.setItem('csrfToken', responseData.csrfToken)
+      this.deleting = false
+    },
+    async initPage () {
+      this.loadingPage = true
+      while (this.$store.getters['userDataStore/userInformationGetter'] === null) {
+        await new Promise((resolve, reject) => setTimeout(resolve, 200))
+      }
+      const response = await fetch(Constants.SERVER_URL + '/api/admin/problem-discipline', Constants.GET_INIT)
+      const responseData = await response.json()
+      if (responseData.message !== 'success') {
+        throw new Error(responseData.message)
+      }
+      this.taskDisciplines = responseData.data
+      this.autoCompleteDisciplines = responseData.data
+      this.loadingPage = false
     }
   },
   async created () {
     this.onEnter = exceptionHandlerDecorator.call(this, [this.onEnter], 'submitting')
-    while (this.$store.getters['userDataStore/userInformationGetter'] === null) {
-      await new Promise((resolve, reject) => setTimeout(resolve, 200))
+    this.addNewTaskDiscipline = exceptionHandlerDecorator.call(this, [this.addNewTaskDiscipline], 'adding')
+    this.deleteTaskDiscipline = exceptionHandlerDecorator.call(this, [this.deleteTaskDiscipline], 'deleting')
+    await exceptionHandlerDecorator.call(this, [this.initPage, true])()
+  },
+  computed: {
+    userInformation () {
+      return this.$store.getters['userDataStore/userInformationGetter']
+    },
+    isAdmin () {
+      return this.userInformation?.roles?.includes('Администратор') ||
+        this.userInformation?.roles?.includes('Помощник администратора')
     }
   }
 }

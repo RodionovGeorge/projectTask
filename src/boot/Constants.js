@@ -15,12 +15,6 @@ const AT_404 = '/error-404'
 const Constants = {
   SERVER_URL: 'http://78.81.147.165',
   // SERVER_URL: 'http://192.168.100.6',
-  TASK_DISCIPLINES: [
-    'Дискретная математика',
-    'Алгебра и геометрия',
-    'Математический анализ',
-    'Математическая логика и теория алгоритмов'
-  ],
   LENGTHS: {
     commentaryToProblem: 400,
     commentaryToTeacherFeedback: 400
@@ -85,7 +79,9 @@ const Constants = {
     'session status not found': { message: 'Такой статус не найден.', path: AT_404 },
     'problem is admitting now': { message: 'Данная задача проверяется в данный момент.', path: '/error-403' },
     'information not found': { message: 'Справка не найдена.', path: AT_404 },
-    'attempt can not be added': { message: 'Попытка не может быть добавлена.', path: '/permission-error' }
+    'attempt can not be added': { message: 'Попытка не может быть добавлена.', path: '/permission-error' },
+    'user already activated': { message: 'Ваш аккаунт уже активирован.', path: '/error-400' },
+    'discipline not found': { message: 'Этот предмет не найден. Возможно он уже был удален.', path: AT_404 }
   },
   PATHS_WITHOUT_AUTHENTICATION: [
     '/login',

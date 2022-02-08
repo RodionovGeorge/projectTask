@@ -68,7 +68,7 @@
           </tr>
           <tr>
             <td>
-              Дисциплина
+              Предмет
             </td>
             <td>
               {{ problemDiscipline }}
